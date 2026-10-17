@@ -9,20 +9,24 @@ import (
 
 // Event types. The vocabulary is shared by ride models and metrics.
 const (
-	EvRunStart   = "run_start"   // Info: run parameters
-	EvQueueJoin  = "queue_join"  // Guest, N=party size, Info=lane
-	EvBoard      = "board"       // Guest, Train, N=party size
-	EvTrainEnter = "train_enter" // Train, Block
-	EvHoldStart  = "hold_start"  // Train, Block, Info=reason
-	EvHoldEnd    = "hold_end"    // Train, Block
-	EvHoldYield  = "hold_yield"  // Train, Block, Info=rule that yielded to avoid a circular wait
-	EvLoadDone   = "load_done"   // Train, N=riders aboard
-	EvDispatch   = "dispatch"    // Train, Block (the station block left), N=riders
-	EvUnload     = "unload"      // Train, N=riders off
-	EvRideStop   = "ride_stop"   // Info=cause
-	EvCascade    = "cascade"     // Train, Block: the train blocked past blocked_tolerance_s
-	EvRideResume = "ride_resume" // Info=cause
-	EvRunEnd     = "run_end"
+	EvRunStart      = "run_start"       // Info: run parameters
+	EvQueueJoin     = "queue_join"      // Guest, N=party size, Info=lane
+	EvBoard         = "board"           // Guest, Train, N=party size
+	EvTrainEnter    = "train_enter"     // Train, Block
+	EvHoldStart     = "hold_start"      // Train, Block, Info=reason
+	EvHoldEnd       = "hold_end"        // Train, Block
+	EvHoldYield     = "hold_yield"      // Train, Block, Info=rule that yielded to avoid a circular wait
+	EvLoadDone      = "load_done"       // Train, N=riders aboard
+	EvDispatch      = "dispatch"        // Train, Block (the station block left), N=riders
+	EvUnload        = "unload"          // Train, N=riders off
+	EvRideStop      = "ride_stop"       // Info=cause
+	EvCascade       = "cascade"         // Train, Block: the train blocked past blocked_tolerance_s
+	EvRideResume    = "ride_resume"     // Info=cause
+	EvBarnSwap      = "barn_swap"       // Train, Info=add_train|remove_train, N=swap ms
+	EvTrainToBarn   = "train_to_barn"   // Train, N=trains in service after
+	EvTrainFromBarn = "train_from_barn" // Train, N=trains in service after
+	EvOpsRejected   = "ops_rejected"    // Info=reason
+	EvRunEnd        = "run_end"
 )
 
 // Event is one observable change. Field order is fixed, so JSON encoding is byte-stable.

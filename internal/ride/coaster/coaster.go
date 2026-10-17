@@ -127,6 +127,11 @@ type Coaster struct {
 	stopDepth map[string]int // per cause, lookups only
 
 	cascadeEnabled bool
+
+	nextTrainID   int
+	pendingRemove int
+	pendingAdd    int
+	swapping      bool
 }
 
 var _ ride.Ride = (*Coaster)(nil)
@@ -224,8 +229,9 @@ func (c *Coaster) Start() {
 		placed = append(placed, b)
 		b = prev[b]
 	}
-	for i, pb := range placed {
-		t := &train{id: i + 1, seats: c.cfg.Trains.SeatsPerTrain}
+	for _, pb := range placed {
+		c.nextTrainID++
+		t := &train{id: c.nextTrainID, seats: c.cfg.Trains.SeatsPerTrain}
 		c.trains = append(c.trains, t)
 		c.enter(t, pb)
 	}
@@ -274,11 +280,11 @@ func (c *Coaster) enter(t *train, b *block) {
 	case roleTrack:
 		c.startWork(t, c.sampleTrack(*b.cfg.TransitS), func() { c.workComplete(t) })
 	case roleUnload:
-		c.startUnload(t, func() { c.workComplete(t) })
+		c.startUnload(t, func() { c.unloadDone(t, func() { c.workComplete(t) }) })
 	case roleLoad:
 		c.startLoad(t)
 	case roleBoth:
-		c.startUnload(t, func() { c.startLoad(t) })
+		c.startUnload(t, func() { c.unloadDone(t, func() { c.startLoad(t) }) })
 	}
 }
 
@@ -482,6 +488,7 @@ func (c *Coaster) depart(t *train) {
 		c.unloadAdvances++
 	}
 	from.occupant = nil
+	defer c.tryAdd() // an emptied unload station may let a pending barn insertion start
 	if len(from.switches) > 0 && c.cfg.Clearance.SwitchRealignS != nil {
 		d := c.sampleTrack(*c.cfg.Clearance.SwitchRealignS)
 		for _, s := range from.switches {
