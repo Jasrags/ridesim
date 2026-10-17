@@ -79,7 +79,7 @@ func TestRnRSlowStationCreatesBackPressure(t *testing.T) {
 // Park party mix with 5% single riders: rows cost some seats, single riders recover part of them.
 func TestRnRPartiesAndSingleRiders(t *testing.T) {
 	ds := loadData(t)
-	prof, err := guestProfile(ds, loadRnR(t), &config.ScenarioGuests{ParkID: "synthetic_park_v0", Abandonment: new(bool)})
+	prof, err := guestProfile(ds, loadRnR(t).Queues, &config.ScenarioGuests{ParkID: "synthetic_park_v0", Abandonment: new(bool)})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -104,7 +104,7 @@ func TestRnRPartiesAndSingleRiders(t *testing.T) {
 // Determinism and Little's Law (with reneging) for the full M3 guest flow under failures.
 func TestRnRFullFlowDeterministicAndLittle(t *testing.T) {
 	ds := loadData(t)
-	prof, err := guestProfile(ds, loadRnR(t), &config.ScenarioGuests{ParkID: "synthetic_park_v0"})
+	prof, err := guestProfile(ds, loadRnR(t).Queues, &config.ScenarioGuests{ParkID: "synthetic_park_v0"})
 	if err != nil {
 		t.Fatal(err)
 	}

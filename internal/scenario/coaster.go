@@ -47,6 +47,67 @@ type CoasterRun struct {
 }
 
 // FromFile builds the run described by a validated scenario file. ds supplies the ride.
+// shared holds scenario fields every archetype uses.
+type shared struct {
+	Guests     guest.Profile
+	Arrivals   guest.Curve
+	LLArrivals guest.Curve
+	Weather    []Window
+	SRClosed   []Window
+}
+
+func parseShared(ds *config.Dataset, f *config.ScenarioFile, queues config.Queues) (shared, error) {
+	s := f.Scenario
+	var out shared
+	off := func(v string) (engine.Duration, error) {
+		sec, err := config.ParseOffset(v)
+		return engine.Seconds(sec), err
+	}
+	prof, err := guestProfile(ds, queues, s.Guests)
+	if err != nil {
+		return out, fmt.Errorf("scenario %s: %w", s.ID, err)
+	}
+	out.Guests = prof
+	curve := func(steps []config.ArrivalStep) (guest.Curve, error) {
+		var c guest.Curve
+		for _, a := range steps {
+			at, err := off(a.At)
+			if err != nil {
+				return nil, err
+			}
+			c = append(c, guest.Segment{Start: at, RatePerHr: a.RatePerHr})
+		}
+		return c, nil
+	}
+	if out.Arrivals, err = curve(s.Arrivals); err != nil {
+		return out, err
+	}
+	if ll := s.LightningLane; ll != nil {
+		if out.LLArrivals, err = curve(ll.Arrivals); err != nil {
+			return out, err
+		}
+	}
+	windows := func(name string, ws []config.WeatherWindow) ([]Window, error) {
+		var out []Window
+		for _, w := range ws {
+			from, err1 := off(w.From)
+			to, err2 := off(w.To)
+			if err1 != nil || err2 != nil {
+				return nil, fmt.Errorf("scenario %s: %s window %s-%s", s.ID, name, w.From, w.To)
+			}
+			out = append(out, Window{From: from, To: to})
+		}
+		return out, nil
+	}
+	if out.Weather, err = windows("weather", s.Weather); err != nil {
+		return out, err
+	}
+	if out.SRClosed, err = windows("single_rider_closed", s.SingleRiderClosed); err != nil {
+		return out, err
+	}
+	return out, nil
+}
+
 func FromFile(ds *config.Dataset, f *config.ScenarioFile) (CoasterRun, error) {
 	s := f.Scenario
 	rf := ds.Ride(s.RideID)
@@ -65,49 +126,17 @@ func FromFile(ds *config.Dataset, f *config.ScenarioFile) (CoasterRun, error) {
 	if pw := s.PostedWait; pw != nil {
 		r.PostedWait = coaster.PostedWaitOptions{Algorithm: pw.Algorithm, PaddingPct: pw.PaddingPct, LastN: pw.LastN, RefreshS: pw.RefreshS}
 	}
-	prof, err := guestProfile(ds, rf.Coaster, s.Guests)
+	shared, err := parseShared(ds, f, rf.Coaster.Queues)
 	if err != nil {
-		return CoasterRun{}, fmt.Errorf("scenario %s: %w", s.ID, err)
+		return CoasterRun{}, err
 	}
-	r.Guests = prof
-	for _, a := range s.Arrivals {
-		at, err := off(a.At)
-		if err != nil {
-			return CoasterRun{}, err
-		}
-		r.Arrivals = append(r.Arrivals, guest.Segment{Start: at, RatePerHr: a.RatePerHr})
-	}
-	if ll := s.LightningLane; ll != nil {
-		for _, a := range ll.Arrivals {
-			at, err := off(a.At)
-			if err != nil {
-				return CoasterRun{}, err
-			}
-			r.LLArrivals = append(r.LLArrivals, guest.Segment{Start: at, RatePerHr: a.RatePerHr})
-		}
-	}
+	r.Guests, r.Arrivals, r.LLArrivals, r.Weather, r.SRClosed = shared.Guests, shared.Arrivals, shared.LLArrivals, shared.Weather, shared.SRClosed
 	for _, o := range s.Ops {
 		at, err := off(o.At)
 		if err != nil {
 			return CoasterRun{}, err
 		}
 		r.Ops = append(r.Ops, OpsAt{At: at, Action: o.Action})
-	}
-	for _, w := range s.SingleRiderClosed {
-		from, err1 := off(w.From)
-		to, err2 := off(w.To)
-		if err1 != nil || err2 != nil {
-			return CoasterRun{}, fmt.Errorf("scenario %s: single_rider_closed window %s-%s", s.ID, w.From, w.To)
-		}
-		r.SRClosed = append(r.SRClosed, Window{From: from, To: to})
-	}
-	for _, w := range s.Weather {
-		from, err1 := off(w.From)
-		to, err2 := off(w.To)
-		if err1 != nil || err2 != nil {
-			return CoasterRun{}, fmt.Errorf("scenario %s: weather window %s-%s", s.ID, w.From, w.To)
-		}
-		r.Weather = append(r.Weather, Window{From: from, To: to})
 	}
 	return r, nil
 }
@@ -185,7 +214,7 @@ func (r CoasterRun) Run() (*engine.Log, error) {
 }
 
 // guestProfile resolves a scenario guests section against the park file and ride.
-func guestProfile(ds *config.Dataset, ride *config.CoasterFile, g *config.ScenarioGuests) (guest.Profile, error) {
+func guestProfile(ds *config.Dataset, queues config.Queues, g *config.ScenarioGuests) (guest.Profile, error) {
 	if g == nil {
 		return guest.Profile{}, nil
 	}
@@ -208,7 +237,7 @@ func guestProfile(ds *config.Dataset, ride *config.CoasterFile, g *config.Scenar
 	if g.Abandonment == nil || *g.Abandonment {
 		prof.PatienceMin = patience
 	}
-	if ride.Queues.SingleRider.Enabled {
+	if queues.SingleRider.Enabled {
 		prof.SingleRiderShare = config.DefaultSingleRiderShare
 		if g.SingleRiderShare != nil {
 			prof.SingleRiderShare = *g.SingleRiderShare

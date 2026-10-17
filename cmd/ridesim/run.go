@@ -85,12 +85,12 @@ func runScenarioFile(ds *config.Dataset, path string, seed uint64, seedSet bool,
 	if sf == nil {
 		return fmt.Errorf("%s is not a scenario under the data directory", path)
 	}
-	run, err := scenario.FromFile(ds, sf)
+	run, err := scenario.Load(ds, sf)
 	if err != nil {
 		return err
 	}
 	if seedSet {
-		run.Seed = seed
+		run = scenario.WithSeed(run, seed)
 	}
 	log, err := run.Run()
 	if err != nil {
@@ -101,7 +101,7 @@ func runScenarioFile(ds *config.Dataset, path string, seed uint64, seedSet bool,
 			return err
 		}
 	}
-	m, err := metrics.Compute(log.Events(), run.Warmup)
+	m, err := metrics.Compute(log.Events(), run.WarmupDuration())
 	if err != nil {
 		return err
 	}

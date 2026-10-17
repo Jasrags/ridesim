@@ -147,3 +147,7 @@ func TestEverestFailureCalibration(t *testing.T) {
 		t.Fatalf("%.0f riders/hr, availability %.3f, %.2f cascades/hr; want ~2,012, >= 96%%, 0 < cascades <= 1/hr", perHr, avail, casc)
 	}
 }
+
+type metricsReport = metrics.Report
+
+var metricsCompute = metrics.Compute

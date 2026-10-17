@@ -49,6 +49,8 @@ conveyor:
 # Ordered route from the Park Lore map (schematic, not to scale). Path lengths were eyeballed from the dotted ride path in
 # pixels (+/-30%), then scaled so load + scenes + unload = ride_duration_s (435 s, ~0.17 s per px). Treat every est_s as [assumed].
 # Scene sequence itself is [map]. Use for show-event timing, per-scene stops and scene-level failures, not for capacity.
+# M5 (decision 2026-10-17): spacing drives the loop (count x spacing = 576 s); every est_s is stretched by 576 / sum(est_s)
+# at run time, so load-to-unload is ~531 s rather than 435 s until spacing is observed.
 route:
   - { id: load_zone,        kind: load,   map_px: 120, est_s: 20 }
   - { id: ascent,           kind: scene,  map_px: 210, est_s: 36 }
@@ -76,7 +78,8 @@ vehicles:
   spacing_s: 3.6                     # [assumed] chosen so capacity ~2,400 at ~2.4 riders per buggy; real spacing unverified
                                      # NOTE map cross-check: (435 s ride + ~37 s return) / 160 buggies ~ 3.0 s spacing, which would mean
                                      # ~2.0 riders per buggy at 2,400/hr. Low confidence (eyeballed lengths); revisit when spacing is observed.
-  occupancy_target: { mean: 2.4, sd: 0.4 }   # [assumed] average riders per buggy under load
+  occupancy_target: { mean: 2.4, sd: 0.4 }   # [assumed] average riders per buggy under load. Not a sim input since M5: occupancy emerges from parties
+                                             # (up to 3 per buggy, strangers never share; decision 2026-10-17); used only as the posted-wait fallback rate
 
 load_zone:                           # split from the old single loading_zone (map shows separate Load and Unload areas)
   type: moving_walkway_synced        # [wiki] carpet synced to the buggies
@@ -114,8 +117,10 @@ preshow:                             # the stretching room: batch stage before t
   fill_rule: full_or_max_wait
   max_fill_wait_s: 30                # [assumed]
   release_rule: when_load_area_has_room
+  load_area_capacity: 120            # [user] at normal loads at least one preshow's group is already in the load area ahead of yours: two rooms' worth
+  # [user] no staging at the foyer: the external line feeds the foyer directly
   party_integrity: true
-  merge_point: true                  # [assumed] standby and Lightning Lane merge before the stretching room
+  merge_point: true                  # [user] Lightning Lane merges right before the foyer (was [assumed])
   bypass_for_single_rider: false
 
 queues:
@@ -124,7 +129,7 @@ queues:
   single_rider: { enabled: false }       # [assumed] none found
   skip_line:
     enabled: true                    # [fan] included in Lightning Lane Multi Pass, not Single Pass
-    merge_point: preshow_entrance    # [assumed]
+    merge_point: preshow_entrance    # [user] right before the foyer
     merge:
       unit: guests
       empty_lane_rule: pull_other

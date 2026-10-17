@@ -11,6 +11,7 @@ const (
 	FailBriefStop    = "brief_stop"
 	FailLongDowntime = "long_downtime"
 	FailCascadeStop  = "cascade_stop"
+	FailChainStop    = "chain_stop" // continuous_load: the whole chain halts
 )
 
 // Ops actions.
@@ -35,7 +36,7 @@ const (
 var (
 	validDispatchRules = map[string]bool{DispatchHoldForFullOrMaxWait: true, DispatchWhenReady: true, DispatchHoldForFull: true}
 	validPostedWait    = map[string]bool{PostedQueueLenOverThroughput: true, PostedLastNObserved: true, PostedPadded: true}
-	validFailureKinds  = map[string]bool{FailBriefStop: true, FailLongDowntime: true, FailCascadeStop: true}
+	validFailureKinds  = map[string]bool{FailBriefStop: true, FailLongDowntime: true, FailCascadeStop: true, FailChainStop: true}
 )
 
 // ScenarioFile is one run definition: which ride, how long, what demand, which failures, and scripted
@@ -46,21 +47,23 @@ type ScenarioFile struct {
 }
 
 type Scenario struct {
-	ID           string              `yaml:"id"`
-	Description  string              `yaml:"description"`
-	RideID       string              `yaml:"ride_id"`
-	Seed         uint64              `yaml:"seed"`
-	DurationH    float64             `yaml:"duration_h"`
-	WarmupMin    float64             `yaml:"warmup_min"`
-	Trains       int                 `yaml:"trains"` // 0 = trains.default_in_service
-	FixedTimes   bool                `yaml:"fixed_times"`
-	Failures     []string            `yaml:"failures"`
-	DispatchRule string              `yaml:"dispatch_rule"` // "" = the ride file's rule
-	PostedWait   *ScenarioPostedWait `yaml:"posted_wait"`
-	Arrivals     []ArrivalStep       `yaml:"arrivals"`
-	Ops          []OpsEvent          `yaml:"ops"`
-	Weather      []WeatherWindow     `yaml:"weather"`
-	Guests       *ScenarioGuests     `yaml:"guests"`
+	ID          string  `yaml:"id"`
+	Description string  `yaml:"description"`
+	RideID      string  `yaml:"ride_id"`
+	Seed        uint64  `yaml:"seed"`
+	DurationH   float64 `yaml:"duration_h"`
+	WarmupMin   float64 `yaml:"warmup_min"`
+	// AccessibilityHolds turns continuous_load accessibility holds off when false (default on).
+	AccessibilityHolds *bool               `yaml:"accessibility_holds"`
+	Trains             int                 `yaml:"trains"` // 0 = trains.default_in_service
+	FixedTimes         bool                `yaml:"fixed_times"`
+	Failures           []string            `yaml:"failures"`
+	DispatchRule       string              `yaml:"dispatch_rule"` // "" = the ride file's rule
+	PostedWait         *ScenarioPostedWait `yaml:"posted_wait"`
+	Arrivals           []ArrivalStep       `yaml:"arrivals"`
+	Ops                []OpsEvent          `yaml:"ops"`
+	Weather            []WeatherWindow     `yaml:"weather"`
+	Guests             *ScenarioGuests     `yaml:"guests"`
 	// LightningLane holds Lightning Lane return arrivals (guests/hr). Party sizes follow guests.
 	LightningLane *ScenarioLL `yaml:"lightning_lane"`
 	// SingleRiderClosed are windows when operations close the single-rider line ([user]: it is not
@@ -167,6 +170,38 @@ func checkScenarioGuests(f *ScenarioFile) (bool, string) {
 		return false, "guests section is empty; give park_id or explicit values"
 	}
 	return true, fmt.Sprintf("park_id %q", g.ParkID)
+}
+
+func checkContinuousScenario(ds *Dataset, rf *File, f *ScenarioFile) Result {
+	r := Result{CheckID: "scenario.ride_refs", Severity: SevError, Status: StatusFail}
+	s, c := f.Scenario, rf.Continuous
+	switch {
+	case s.Trains != 0 || len(s.Ops) > 0:
+		r.Detail = fmt.Sprintf("%s is continuous_load: trains and barn ops do not apply", s.RideID)
+		return r
+	case s.DispatchRule != "":
+		r.Detail = "dispatch_rule does not apply to continuous_load"
+		return r
+	case s.LightningLane != nil && !c.Queues.SkipLine.Enabled:
+		r.Detail = fmt.Sprintf("lightning_lane arrivals but %s has no skip_line", s.RideID)
+		return r
+	case len(s.SingleRiderClosed) > 0 && !c.Queues.SingleRider.Enabled:
+		r.Detail = fmt.Sprintf("single_rider_closed windows but %s has no single-rider line", s.RideID)
+		return r
+	}
+	for _, k := range s.Failures {
+		if (k == FailChainStop && c.Failures.ChainStop == nil) || (k == FailLongDowntime && c.Failures.LongDowntime == nil) ||
+			k == FailBriefStop || k == FailCascadeStop {
+			r.Detail = fmt.Sprintf("failure %s not configured for continuous_load ride %s", k, s.RideID)
+			return r
+		}
+	}
+	if g := s.Guests; g != nil && g.ParkID != "" && ds.Park(g.ParkID) == nil {
+		r.Detail = fmt.Sprintf("guests.park_id %s not found", g.ParkID)
+		return r
+	}
+	r.Status, r.Detail = StatusPass, fmt.Sprintf("%s (%s), continuous_load", s.RideID, rf.Path)
+	return r
 }
 
 // Park returns the loaded park file with the given id, or nil.
@@ -314,8 +349,8 @@ func checkScenarioRide(ds *Dataset, f *ScenarioFile) Result {
 	if rf == nil {
 		return fail("ride_id %s not found", s.RideID)
 	}
-	if rf.Kind != KindCoaster {
-		return fail("ride %s is %s; only %s scenarios run so far", s.RideID, rf.Kind, ArchetypeMultiTrainCoaster)
+	if rf.Kind == KindContinuous {
+		return checkContinuousScenario(ds, rf, f)
 	}
 	c := rf.Coaster
 	trains := s.Trains
