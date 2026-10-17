@@ -52,8 +52,12 @@ abandonment). Everest picks up the same guest flow.
 3. Riders-by-lane counted only guests who joined in the window. It now counts boardings in the window.
 
 ## Flags and open data
-1. Rock 'n' Roller's preshow length (150 s), turnover (30 s) and load area (130) are [assumed]. Whether the
-   observed 130 guests is the hallway or the room is still open (spec §13 gap #3).
+1. Resolved 2026-10-17 [user]: the ~130 guests are one group that gathers in the hallway, watches the
+   preshow together, then goes to the ride line. The next group gathers in the hallway during the show
+   (`preshow.staging: hallway`). The preshow felt like 2-3 min, so 150 s is now [user]. Turnover (30 s)
+   and load area (130) remain [assumed]. With the hallway the baseline day is unchanged (1,426/hr,
+   19.8 min); partial shows rise to 90 of 118 because whoever is in the hallway walks in when the room
+   frees, and demand that day is below the preshow's 2,600/hr.
 2. With 4 trains, Rock 'n' Roller trains wait ~26 s every lap at PRE_UNLOAD_HOLD, which is station-bound.
    A cascade can therefore only come from the mid-course brake.
 3. The single-rider share (5%) is [assumed]; observed shares would sharpen the empty-seat numbers.

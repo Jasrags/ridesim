@@ -141,3 +141,48 @@ func TestPreshowReentrantHostEmptiesRoomOnce(t *testing.T) {
 		t.Fatalf("%d room empties, want 10", n)
 	}
 }
+
+// Hallway staging: 10 guests show at 0 s; 3 more arrive at 50 s during the show and gather in the
+// hallway. Their 30 s max fill wait passes at 80 s, so they walk in as soon as the room is free at
+// 120 s (100 s show + 20 s turnover). Without a hallway they start gathering only at 120 s and show at
+// 150 s.
+func TestPreshowHallwayGathersDuringShow(t *testing.T) {
+	for _, c := range []struct {
+		staging string
+		want    engine.Time
+	}{{config.PreshowStagingHallway, engine.Time(120 * engine.Second)}, {"", engine.Time(150 * engine.Second)}} {
+		sim, h, p := newPreshow(1000)
+		p.cfg.Staging = c.staging
+		if c.staging != "" {
+			p.hall = &room{idx: -1}
+		}
+		p.Start()
+		for i := 0; i < 10; i++ {
+			arrive(sim, h, p, 0, int64(i+1), 1)
+		}
+		for i := 0; i < 3; i++ {
+			arrive(sim, h, p, 50, int64(i+11), 1)
+		}
+		sim.RunUntil(engine.Time(10 * engine.Minute))
+		shows := eventsOf(sim, EvPreshowShow)
+		if len(shows) != 2 || shows[0].T != 0 || shows[1].T != c.want || shows[1].N != 3 {
+			t.Errorf("staging %q: shows %+v, want 10 at 0 s then 3 at %v", c.staging, shows, c.want)
+		}
+	}
+}
+
+// Saturated demand: the hallway does not change the show cycle (100 + 20 s).
+func TestPreshowHallwaySaturatedCycle(t *testing.T) {
+	sim, h, p := newPreshow(1 << 30)
+	h.reenter = p
+	p.cfg.Staging = config.PreshowStagingHallway
+	p.hall = &room{idx: -1}
+	p.Start()
+	for i := 0; i < 2000; i++ {
+		arrive(sim, h, p, 0, int64(i+1), 1)
+	}
+	sim.RunUntil(engine.Time(1200 * engine.Second))
+	if n := len(eventsOf(sim, EvPreshowShow)); n != 11 {
+		t.Fatalf("%d shows in 1200 s, want 11", n)
+	}
+}

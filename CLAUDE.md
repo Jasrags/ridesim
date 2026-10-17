@@ -80,5 +80,7 @@ numbers come from `data/`. Read both before changing simulation logic.
 - Preshow back-pressure uses `preshow.load_area_capacity` [assumed]: 130 on Rock 'n' Roller (one show's
   release; 48 starved the station). The post-preshow line is one combined line [user]: release order is kept,
   single riders at the front board in order, and the grouper pulls the earliest single rider to fill gaps.
+- Rock 'n' Roller preshow [user]: the 130-guest batch gathers in a hallway (`preshow.staging: hallway`) while
+  the previous group watches the ~2-3 min show (150 s), then walks in when the room frees.
 - Guest parameters (party sizes, single-rider share, patience) are scenario fields that default to the
   park file's guests section. Ad hoc runs without them keep single guests and no abandonment.

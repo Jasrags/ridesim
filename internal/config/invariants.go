@@ -161,6 +161,9 @@ func checkPreshowThroughput(c rideCtx) (bool, string) {
 	if c.preshow == nil || !c.preshow.Enabled {
 		return true, "no preshow"
 	}
+	if s := c.preshow.Staging; s != "" && s != PreshowStagingHallway {
+		return false, fmt.Sprintf("unknown preshow.staging %q", s)
+	}
 	tp := preshowThroughputPerHr(c.preshow)
 	detail := fmt.Sprintf("%d room(s) x %d / (%.0f + %.0f s) = %.0f/hr vs listed %.0f/hr",
 		c.preshow.Rooms, c.preshow.BatchSize, c.preshow.DurationS.Mean, c.preshow.TurnoverS.Mean, tp, c.ride.ListedCapacityPerHr)

@@ -65,6 +65,11 @@ type Preshow struct {
 	// set a flag and the outer call loops, so a room is never released or emptied twice.
 	draining, redrain bool
 	pulling, repull   bool
+
+	// hall is the staging batch when cfg.Staging is "hallway": it gathers while rooms are busy and walks
+	// into the next free room once full or max_fill_wait_s after its first guest ([user] Rock 'n' Roller).
+	hall     *room
+	hallFull bool // the next party would not fit
 }
 
 // NewPreshow builds the stage. Call Start once the host is ready.
@@ -73,15 +78,27 @@ func NewPreshow(sim *engine.Sim, cfg *config.Preshow, host PreshowHost) *Preshow
 	for i := 0; i < cfg.Rooms; i++ {
 		p.rooms = append(p.rooms, &room{idx: i})
 	}
+	if cfg.Staging == config.PreshowStagingHallway {
+		p.hall = &room{idx: -1}
+	}
 	return p
 }
 
-// Start opens the first room for filling.
-func (p *Preshow) Start() { p.openNextRoom() }
+// Start opens the first room (or the hallway) for filling.
+func (p *Preshow) Start() {
+	if p.hall != nil {
+		p.Pull()
+		return
+	}
+	p.openNextRoom()
+}
 
-// Guests is how many guests are inside the rooms.
+// Guests is how many guests are inside the hallway and rooms.
 func (p *Preshow) Guests() int {
 	n := 0
+	if p.hall != nil {
+		n += p.hall.guests
+	}
 	for _, r := range p.rooms {
 		n += r.guests
 	}
@@ -102,6 +119,10 @@ func (p *Preshow) filling() *room {
 }
 
 func (p *Preshow) openNextRoom() {
+	if p.hall != nil {
+		p.admit()
+		return
+	}
 	if p.filling() != nil {
 		return
 	}
@@ -140,7 +161,62 @@ func (p *Preshow) Pull() {
 	p.pulling = false
 }
 
+// pullHall fills the hallway batch, starting its max-fill timer on the first guest.
+func (p *Preshow) pullHall() {
+	h := p.hall
+	for !p.hallFull {
+		next := p.host.NextParty()
+		if next == nil {
+			break
+		}
+		if h.guests+next.Size > p.cfg.BatchSize {
+			p.hallFull = h.guests > 0
+			break
+		}
+		p.host.TakeParty()
+		next.Committed = true
+		if h.guests == 0 {
+			h.gen++
+			gen := h.gen
+			p.emit(EvPreshowFill, h, 0)
+			p.sim.After(engine.Seconds(p.cfg.MaxFillWaitS), func() {
+				if h.gen == gen && h.guests > 0 {
+					h.timedOut = true
+					p.admit()
+				}
+			})
+		}
+		h.parties = append(h.parties, next)
+		h.guests += next.Size
+		p.hallFull = h.guests == p.cfg.BatchSize
+	}
+	p.admit()
+}
+
+// admit walks a ready hallway batch into a free room and shows it.
+func (p *Preshow) admit() {
+	h := p.hall
+	if h.guests == 0 || !(p.hallFull || h.timedOut) {
+		return
+	}
+	for _, r := range p.rooms {
+		if r.state != roomEmpty {
+			continue
+		}
+		r.parties, r.guests = h.parties, h.guests
+		h.parties, h.guests, h.timedOut, p.hallFull = nil, 0, false, false
+		h.gen++
+		p.show(r)
+		p.Pull() // the hallway refills behind them
+		return
+	}
+}
+
 func (p *Preshow) pullOnce() {
+	if p.hall != nil {
+		p.pullHall()
+		return
+	}
 	r := p.filling()
 	if r == nil {
 		return

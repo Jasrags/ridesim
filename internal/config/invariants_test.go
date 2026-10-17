@@ -81,6 +81,7 @@ func TestErrorChecksFailOnBrokenFixtures(t *testing.T) {
 		{"ride.filename", fxCoaster, "testdata/wrong-name.yaml", "", ""},
 		{"queues.merge_phases", fxCoaster, "", "when_ll_queue_guests_below: null", "when_ll_queue_guests_below: 30"},
 		{"preshow.throughput", fxCoaster, "", "batch_size: 100", "batch_size: 10"},
+		{"preshow.throughput", fxCoaster, "", "batch_size: 100", "batch_size: 100\n  staging: lobby"},
 
 		// multi_train_coaster
 		{"coaster.duration_sum", fxCoaster, "", "transit_s: { mean: 40, sd: 1 }", "transit_s: { mean: 50, sd: 1 }"},

@@ -115,7 +115,7 @@ barn:                                  # [map] labeled "Vehicle Storage"; replac
 
 guest_path: [outdoor_queue, lobby, preshow, alley, load_zone]   # [map]; "alley" assumed to be the corridor between preshow and load
 exit_path: [unload_zone, exit, retail]                           # [map]
-# [map] note: the map labels Lobby -> Preshow -> Alley; it is unclear which space the observed ~130-guest "hallway" count refers to.
+# [map] note: the map labels Lobby -> Preshow -> Alley. [user] 2026-10-17: the ~130 count is the group in the hallway before the preshow (same group as the show).
 
 failures:
   cascade_stop:
@@ -135,8 +135,9 @@ failures:
 preshow:                               # NEW stage: batch holding room between standby queue and load station [fan]
   enabled: true
   rooms: 1                             # [user] one preshow room
-  batch_size: 130                      # [user] ~130 guests per show (hallway plus room), observed in queue Oct 2026
-  duration_s: { mean: 150, sd: 10 }    # [assumed] new Muppets preshow w/ Scooter animatronic; length unknown
+  batch_size: 130                      # [user] ~130 guests per show, observed Oct 2026; the same group gathers in the hallway, watches the preshow, then goes to the ride line (Jason, 2026-10-17)
+  staging: hallway                     # [user] the next group gathers in the hallway while the current group is in the show
+  duration_s: { mean: 150, sd: 10 }    # [user] felt like 2-3 min (Jason, 2026-10-17); mean is the midpoint. sd [assumed]: scripted show
   turnover_s: { mean: 30, sd: 5 }      # [assumed] empty, refill, reset between shows
   fill_rule: full_or_max_wait
   max_fill_wait_s: 45                  # [assumed] start a partial batch after this long

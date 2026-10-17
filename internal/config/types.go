@@ -109,7 +109,13 @@ type Preshow struct {
 	MergePoint           bool    `yaml:"merge_point"`
 	BypassForSingleRider bool    `yaml:"bypass_for_single_rider"`
 	LoadAreaCapacity     int     `yaml:"load_area_capacity"` // guests between preshow and boarding; 0 = unlimited
+	// Staging "hallway": the next batch gathers in a hallway while the room shows and enters when the
+	// room is free. "" = the batch gathers in the room itself after turnover.
+	Staging string `yaml:"staging"`
 }
+
+// PreshowStagingHallway is the only staging mode besides none.
+const PreshowStagingHallway = "hallway"
 
 type Queues struct {
 	PartySplitPolicy string      `yaml:"party_split_policy"`
