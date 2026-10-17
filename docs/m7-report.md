@@ -58,7 +58,7 @@ Approved `[assumed]` park-file changes are in `docs/tuning-log.md`:
 |---|---|---|
 | target [fan] (Queue-Times) | 19 / 35 min | 26 / 42 min |
 | sim, medium (10 seeds) | 23.4 / 46.1 | 29.2 / 56.0 |
-| sim, medium without seed 6 (cascade storm, below) | 21.2 / 35.6 | 28.6 / 50.0 |
+| sim, medium without seed 6 (cascade storm, below) | 21.2 / 35.6 | 29.3 / 57.5 |
 | sim, low / high | 9.2 / 30.0, 28.4 / 44.7 | 12.9 / 22.3, 39.0 / 59.1 |
 | before calibration (medium, 3 seeds) | 16.3 / 23.7 | 20.8 / 26.4 |
 
