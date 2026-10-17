@@ -38,3 +38,4 @@ M7 calibration result (10 seeds per crowd level, failures on, congestion walking
 stats with 15 min recovery, Jason's decision; after the code-review stream fixes): medium posted avg / peak hour Everest 23.4 / 46.1 min
 (21.2 / 35.6 without the seed-6 cascade storm; target 19 / 35), HM 29.2 / 56.0 (target 26 / 42). Realized LL share Everest / RnR / HM:
 low 12.4 / 16.4 / 14.3%, medium 23.2 / 29.1 / 26.1%, high 30.1 / 33.7 / 37.0% (bands 13 / 26 / 33). HM's peak hour runs high on posted-wait spikes after chain stops and accessibility holds (docs/m7-report.md).
+| 2026-10-17 | park-synthetic.yaml | nodes.*.x / y | (new) | mockup layout | New [assumed] map positions for the M8 front end (Jason's decision); synthetic park, no real map. Not simulation inputs. |

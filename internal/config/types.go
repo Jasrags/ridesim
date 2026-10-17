@@ -451,6 +451,8 @@ type ParkNode struct {
 	ServiceTimeMin    *Dist    `yaml:"service_time_min"`
 	VisitMin          *Dist    `yaml:"visit_min"`      // elsewhere: time spent per visit
 	QueueCapacity     int      `yaml:"queue_capacity"` // ride_simple: physical queue; overflow spills (0 = never)
+	X                 *float64 `yaml:"x"`              // map position (front end); all nodes or none
+	Y                 *float64 `yaml:"y"`
 }
 
 type ParkEdge struct {

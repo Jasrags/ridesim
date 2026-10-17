@@ -10,14 +10,14 @@ park:
   close_hour: 22
   walking_mode: congestion           # fixed_delay | congestion  (same TravelTime interface, swappable)
 
-nodes:
-  - { id: gate,   kind: entrance }
-  - { id: hub,    kind: plaza, comfortable_guests: 3000 }               # [assumed]
-  - { id: everest, kind: ride, ride_id: wdw.ak.expedition_everest, appeal: 0.85, thrill: 0.80 }  # appeal/thrill [assumed]
-  - { id: rnrc,    kind: ride, ride_id: wdw.dhs.rock_n_roller_coaster, appeal: 0.90, thrill: 1.00 }
-  - { id: haunted_mansion, kind: ride, ride_id: wdw.mk.haunted_mansion, appeal: 0.90, thrill: 0.30 }
-  - { id: boat_ride, kind: ride_simple, capacity_per_hr: 2400, duration_s: 540, appeal: 0.70, thrill: 0.10, queue_capacity: 800 }   # [assumed] filler
-  - { id: flat_ride, kind: ride_simple, capacity_per_hr: 800,  duration_s: 150, appeal: 0.40, thrill: 0.40, queue_capacity: 300 }   # [assumed] filler
+nodes:                               # x, y: map position for the front end [assumed] (synthetic layout, M8)
+  - { id: gate,   kind: entrance, x: 60, y: 300 }
+  - { id: hub,    kind: plaza, comfortable_guests: 3000, x: 230, y: 215 }               # [assumed]
+  - { id: everest, kind: ride, ride_id: wdw.ak.expedition_everest, appeal: 0.85, thrill: 0.80, x: 120, y: 90 }  # appeal/thrill [assumed]
+  - { id: rnrc,    kind: ride, ride_id: wdw.dhs.rock_n_roller_coaster, appeal: 0.90, thrill: 1.00, x: 250, y: 60 }
+  - { id: haunted_mansion, kind: ride, ride_id: wdw.mk.haunted_mansion, appeal: 0.90, thrill: 0.30, x: 420, y: 150 }
+  - { id: boat_ride, kind: ride_simple, capacity_per_hr: 2400, duration_s: 540, appeal: 0.70, thrill: 0.10, queue_capacity: 800, x: 400, y: 290 }   # [assumed] filler
+  - { id: flat_ride, kind: ride_simple, capacity_per_hr: 800,  duration_s: 150, appeal: 0.40, thrill: 0.40, queue_capacity: 300, x: 120, y: 215 }   # [assumed] filler
   - id: theater
     kind: show
     capacity_guests: 1000            # [assumed]
@@ -25,9 +25,11 @@ nodes:
     schedule: ["10:30", "12:30", "14:30", "16:30"]   # [assumed]
     exit_edge: theater_haunted_mansion   # show lets out next to Haunted Mansion [fan: known real-world surge pattern]
     appeal: 0.50
-  - { id: dining, kind: dining, seats: 600, service_time_min: { mean: 35, sd: 10 }, appeal: 0.60 }  # [assumed]
-  - { id: elsewhere, kind: elsewhere, visit_min: { mean: 30, sd: 15 }, appeal: 0.60, thrill: 0.40 }   # [assumed] the rest of the park (decision 2026-10-17)
-  - { id: exit,   kind: exit }
+    x: 510
+    y: 70
+  - { id: dining, kind: dining, seats: 600, service_time_min: { mean: 35, sd: 10 }, appeal: 0.60, x: 300, y: 320 }  # [assumed]
+  - { id: elsewhere, kind: elsewhere, visit_min: { mean: 30, sd: 15 }, appeal: 0.60, thrill: 0.40, x: 520, y: 230 }   # [assumed] the rest of the park (decision 2026-10-17)
+  - { id: exit,   kind: exit, x: 60, y: 340 }
 
 edges:                               # bidirectional; length in ft, width in ft [assumed]
   - { id: gate_hub,        from: gate, to: hub,              length_ft: 600, width_ft: 60 }

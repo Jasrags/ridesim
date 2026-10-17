@@ -21,6 +21,28 @@ var parkChecks = []check[*ParkFile]{
 	{"park.party_sizes", SevError, checkPartySizes},
 	{"park.decision", SevError, checkDecision},
 	{"park.lightning_lane", SevError, checkParkLightningLane},
+	{"park.map_positions", SevError, checkMapPositions},
+}
+
+// checkMapPositions: map coordinates are optional, but all nodes have both x and y or none do.
+func checkMapPositions(p *ParkFile) (bool, string) {
+	with := 0
+	var bad []string
+	for _, n := range p.Nodes {
+		switch {
+		case n.X != nil && n.Y != nil:
+			with++
+		case n.X != nil || n.Y != nil:
+			bad = append(bad, n.ID)
+		}
+	}
+	if len(bad) > 0 || (with != 0 && with != len(p.Nodes)) {
+		return false, fmt.Sprintf("%d of %d nodes have x and y; give every node both or none (half set: %s)", with, len(p.Nodes), strings.Join(bad, ", "))
+	}
+	if with == 0 {
+		return true, "no map positions (the front end lays the graph out itself)"
+	}
+	return true, fmt.Sprintf("all %d nodes have map positions", with)
 }
 
 func checkNodeIDs(p *ParkFile) (bool, string) {

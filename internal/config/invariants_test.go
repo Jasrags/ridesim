@@ -127,7 +127,9 @@ func TestErrorChecksFailOnBrokenFixtures(t *testing.T) {
 		{"park.lightning_lane", fxPark, "", "advance_bookings: 3", "advance_bookings: -1"},
 		{"park.decision", fxPark, "", "temperature: 0.25", "temperature: 0"},
 		{"park.decision", fxPark, "", `meal_windows: ["11:30-13:30"]`, `meal_windows: ["13:30-11:30"]`},
-		{"park.connected", fxPark, "", "  - { id: exit, kind: exit }", "  - { id: island, kind: plaza, comfortable_guests: 1 }\n  - { id: exit, kind: exit }"},
+		{"park.map_positions", fxPark, "", "kind: entrance, x: 0, y: 300", "kind: entrance, x: 0"},
+		{"park.map_positions", fxPark, "", "kind: entrance, x: 0, y: 300", "kind: entrance"},
+		{"park.connected", fxPark, "", "  - { id: exit, kind: exit, x: 0, y: 380 }", "  - { id: island, kind: plaza, comfortable_guests: 1, x: 9, y: 9 }\n  - { id: exit, kind: exit, x: 0, y: 380 }"},
 	}
 	for _, c := range cases {
 		t.Run(c.check+"/"+c.new, func(t *testing.T) {

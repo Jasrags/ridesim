@@ -2,14 +2,14 @@
 schema_version: "1.0"
 park: { id: fx_park, open_hour: 9, close_hour: 18, walking_mode: congestion }
 nodes:
-  - { id: gate, kind: entrance }
-  - { id: hub, kind: plaza, comfortable_guests: 100 }
-  - { id: coaster, kind: ride, ride_id: test.fx.coaster, appeal: 0.5, thrill: 0.5 }
-  - { id: filler, kind: ride_simple, capacity_per_hr: 100, duration_s: 60, appeal: 0.1, thrill: 0.1 }
-  - { id: theater, kind: show, capacity_guests: 10, duration_min: 5, schedule: ["10:00"], exit_edge: theater_hub, appeal: 0.1 }
-  - { id: dining, kind: dining, seats: 10, service_time_min: { mean: 30, sd: 5 }, appeal: 0.1 }
-  - { id: elsewhere, kind: elsewhere, visit_min: { mean: 40, sd: 10 }, appeal: 0.5, thrill: 0.3 }
-  - { id: exit, kind: exit }
+  - { id: gate, kind: entrance, x: 0, y: 300 }
+  - { id: hub, kind: plaza, comfortable_guests: 100, x: 200, y: 200 }
+  - { id: coaster, kind: ride, ride_id: test.fx.coaster, appeal: 0.5, thrill: 0.5, x: 200, y: 40 }
+  - { id: filler, kind: ride_simple, capacity_per_hr: 100, duration_s: 60, appeal: 0.1, thrill: 0.1, x: 380, y: 200 }
+  - { id: theater, kind: show, capacity_guests: 10, duration_min: 5, schedule: ["10:00"], exit_edge: theater_hub, appeal: 0.1, x: 380, y: 60 }
+  - { id: dining, kind: dining, seats: 10, service_time_min: { mean: 30, sd: 5 }, appeal: 0.1, x: 200, y: 360 }
+  - { id: elsewhere, kind: elsewhere, visit_min: { mean: 40, sd: 10 }, appeal: 0.5, thrill: 0.3, x: 40, y: 200 }
+  - { id: exit, kind: exit, x: 0, y: 380 }
 edges:
   - { id: gate_hub, from: gate, to: hub, length_ft: 100, width_ft: 10 }
   - { id: hub_coaster, from: hub, to: coaster, length_ft: 100, width_ft: 10 }
