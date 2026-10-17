@@ -11,6 +11,9 @@ scenario:
   warmup_min: 60
   trains: 5
   failures: [brief_stop, long_downtime, cascade_stop]
+  guests:
+    park_id: synthetic_park_v0         # party sizes and patience (M3)
+    single_rider_share: 0.05           # [assumed]
   arrivals:                            # [assumed] standby demand, guests/hr; shape follows park arrival_curve
     - { at: "00:00", rate_per_hr: 2600 }
     - { at: "01:00", rate_per_hr: 2300 }

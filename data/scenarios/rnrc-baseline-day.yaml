@@ -1,0 +1,22 @@
+# Rock 'n' Roller baseline operating day: 4 trains (max [fan]), preshow, single rider, park guest mix with
+# balking and reneging, all failure kinds on. Standby demand only (Lightning Lane is M4).
+# Confidence tags: [assumed] = our placeholder, tune later
+schema_version: "1.0"
+scenario:
+  id: rnrc_baseline_day
+  description: "10 h day, rope-drop surge then taper; park party mix, 5% single riders, patience from the park file"
+  ride_id: wdw.dhs.rock_n_roller_coaster
+  seed: 1
+  duration_h: 10
+  warmup_min: 60
+  trains: 4
+  failures: [brief_stop, long_downtime, cascade_stop]
+  guests:
+    park_id: synthetic_park_v0         # party sizes and patience
+    single_rider_share: 0.05           # [assumed]
+  arrivals:                            # [assumed] standby demand, guests/hr
+    - { at: "00:00", rate_per_hr: 2100 }
+    - { at: "01:00", rate_per_hr: 1900 }
+    - { at: "03:00", rate_per_hr: 1700 }
+    - { at: "06:00", rate_per_hr: 1500 }
+    - { at: "08:00", rate_per_hr: 1100 }

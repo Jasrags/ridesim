@@ -11,6 +11,9 @@ scenario:
   warmup_min: 30
   trains: 5
   failures: [brief_stop, cascade_stop]
+  guests:
+    park_id: synthetic_park_v0         # party sizes and patience (M3)
+    single_rider_share: 0.05           # [assumed]
   arrivals:
     - { at: "00:00", rate_per_hr: 2200 }     # [assumed]
   ops:
