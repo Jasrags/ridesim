@@ -21,6 +21,16 @@ var coasterChecks = []check[*CoasterFile]{
 	{"coaster.barn_capacity", SevError, checkBarnCapacity},
 	{"coaster.dispatch_rule", SevError, checkDispatchRule},
 	{"coaster.cascade_scope", SevError, checkCascadeScope},
+	{"coaster.seat_rows", SevError, checkSeatRows},
+}
+
+func checkSeatRows(c *CoasterFile) (bool, string) {
+	t := c.Trains
+	ok := t.SeatsPerRow > 0 && t.SeatsPerTrain > 0 && t.SeatsPerTrain%t.SeatsPerRow == 0
+	if !ok {
+		return false, fmt.Sprintf("seats_per_train %d must be a positive multiple of seats_per_row %d", t.SeatsPerTrain, t.SeatsPerRow)
+	}
+	return true, fmt.Sprintf("%d rows of %d", t.SeatsPerTrain/t.SeatsPerRow, t.SeatsPerRow)
 }
 
 func checkCascadeScope(c *CoasterFile) (bool, string) {

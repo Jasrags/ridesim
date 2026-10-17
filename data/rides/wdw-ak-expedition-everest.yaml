@@ -30,6 +30,7 @@ trains:
   default_in_service: 5
   cars_per_train: 6               # [wiki]
   seats_per_train: 34             # [wiki] 5 cars x 6 + last car x 4; forum estimates range 30-34, so keep configurable
+  seats_per_row: 2                # [wiki] 2 across (17 rows); parties take whole rows, odd seats go to single riders
   layout: "2 across, 3 rows per car, last car 2 rows"
   restraints: individual_lap_bar  # [wiki]
 

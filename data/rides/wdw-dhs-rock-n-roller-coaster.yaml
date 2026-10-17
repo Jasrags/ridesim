@@ -39,10 +39,11 @@ ride:
 
 trains:
   fleet_size: 5                    # [wiki][rcdb] 5 trains
-  max_in_service: 5
-  default_in_service: 4            # [assumed] derived: ceil(cycle / dispatch interval) ~ 4, see config_invariants
+  max_in_service: 4                # [fan] web summary Oct 2026: at most 4 on the circuit, a 5th would stack; the 5th rotates through the barn (was 5, untagged)
+  default_in_service: 4            # [fan] same summary (previously [assumed] from ceil(cycle / dispatch interval) ~ 4)
   cars_per_train: 6                # [wiki]
   seats_per_train: 24              # [wiki] 2 across x 2 rows x 6 cars
+  seats_per_row: 2                 # [wiki] 2 across; parties take whole rows, odd seats go to single riders
   layout: "2 across, 2 rows per car"
   restraints: over_the_shoulder    # [user] confirmed
 
@@ -109,7 +110,7 @@ layout:                                # [map] Park Lore map via Reddit; schemat
 
 barn:                                  # [map] labeled "Vehicle Storage"; replaces the earlier "no barn" note
   location: beside_return_straight     # [map] appears to branch off near the unload end; the exact switch is not shown
-  storage_bays: null                   # unknown; the strip looks long enough for more than one train
+  storage_bays: null                   # unknown; the strip looks long enough for more than one train. [fan] swaps are empty trains, usually outside operating hours
   swap_time_s: { mean: 300, sd: 90 }   # [assumed] pulling or inserting a train (Everest placeholder is 240 s)
 
 guest_path: [outdoor_queue, lobby, preshow, alley, load_zone]   # [map]; "alley" assumed to be the corridor between preshow and load
@@ -139,6 +140,7 @@ preshow:                               # NEW stage: batch holding room between s
   fill_rule: full_or_max_wait
   max_fill_wait_s: 45                  # [assumed] start a partial batch after this long
   release_rule: when_load_area_has_room   # back-pressure: room stays RELEASING until load area has space
+  load_area_capacity: 48               # [assumed] guests between preshow and trains: two trains' worth (one boarding, one at the gates); decision 2026-10-17
   party_integrity: true                # parties never split across batches
   merge_point: true                    # [user] standby, single rider and Lightning Lane all merge in the preshow hallway
   bypass_for_single_rider: false       # [user] corrects earlier default; singles and LL share the hallway and show

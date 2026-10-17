@@ -19,6 +19,7 @@ trains:
   default_in_service: 2
   cars_per_train: 4
   seats_per_train: 20
+  seats_per_row: 2
 blocks:
   - { id: UNLOAD, kind: station, next: LOAD }
   - { id: LOAD, kind: station, next: LIFT }

@@ -105,6 +105,7 @@ type Preshow struct {
 	PartyIntegrity       bool    `yaml:"party_integrity"`
 	MergePoint           bool    `yaml:"merge_point"`
 	BypassForSingleRider bool    `yaml:"bypass_for_single_rider"`
+	LoadAreaCapacity     int     `yaml:"load_area_capacity"` // guests between preshow and boarding; 0 = unlimited
 }
 
 type Queues struct {
@@ -204,6 +205,7 @@ type Trains struct {
 	DefaultInService int    `yaml:"default_in_service"`
 	CarsPerTrain     int    `yaml:"cars_per_train"`
 	SeatsPerTrain    int    `yaml:"seats_per_train"`
+	SeatsPerRow      int    `yaml:"seats_per_row"` // parties take whole rows
 	Layout           string `yaml:"layout"`
 	Restraints       string `yaml:"restraints"`
 }
