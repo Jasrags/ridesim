@@ -121,3 +121,24 @@ func TestLLDeterministic(t *testing.T) {
 		t.Fatal("same seed, different logs with Lightning Lane")
 	}
 }
+
+// Spec §11 merge target: realized LL share lands in the [fan] 13 / 26 / 33% bands at low / medium / high
+// crowds, for both coasters, with the calibrated crowd scenarios (3 seeds each, within 2 points).
+func TestLLShareBands(t *testing.T) {
+	ds := loadData(t)
+	bands := map[string]float64{"low": 0.13, "medium": 0.26, "high": 0.33}
+	for _, ride := range []string{"everest", "rnrc"} {
+		for level, want := range bands {
+			r := scenarioRun(t, ds, ride+"_crowd_"+level)
+			var share float64
+			for seed := uint64(1); seed <= 3; seed++ {
+				r.Seed = seed
+				_, m := compute(t, r)
+				share += m.LLShare / 3
+			}
+			if share < want-0.02 || share > want+0.02 {
+				t.Errorf("%s %s: LL share %.1f%%, want %.0f%% +/- 2", ride, level, share*100, want*100)
+			}
+		}
+	}
+}

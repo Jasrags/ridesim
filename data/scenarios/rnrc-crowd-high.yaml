@@ -1,0 +1,21 @@
+# rnrc at a high crowd: standby demand ~130% of capacity (~1450/hr with the park mix and failures),
+# Lightning Lane demand calibrated so the realized LL share lands near the [fan] 33% band (M4, docs/tuning-log.md).
+# Confidence tags: [assumed] = our placeholder, tune later
+schema_version: "1.0"
+scenario:
+  id: rnrc_crowd_high
+  description: "constant high-crowd demand, park guest mix, all failures; LL share target ~33%"
+  ride_id: wdw.dhs.rock_n_roller_coaster
+  seed: 1
+  duration_h: 11
+  warmup_min: 60
+  trains: 4
+  failures: [brief_stop, long_downtime, cascade_stop]
+  guests:
+    park_id: synthetic_park_v0
+    single_rider_share: 0.05           # [assumed]
+  arrivals:
+    - { at: "00:00", rate_per_hr: 1885 }     # [assumed] 130% of capacity
+  lightning_lane:
+    arrivals:
+      - { at: "00:00", rate_per_hr: 505 }   # [assumed] calibrated to the 33% band
