@@ -49,8 +49,8 @@ numbers come from `data/`. Read both before changing simulation logic.
 - Station block handoff (UNLOAD -> LOAD) takes 0 s of move time (no data); revisit if data appears.
 - `hold_until_clear` also yields when another held train needs that block empty (avoids the 5-train circular
   wait the [fan] rules create; the real ride runs 5 trains). Yields are logged as `hold_yield`.
-- The Everest [assumed] retune in `docs/m1-report.md` is a proposal only: it lives in test code
-  (`proposedTuning`) until Jason approves it. Then it goes in the YAML plus `docs/tuning-log.md`.
+- The Everest [assumed] retune (approved 2026-10-17) is in the YAML and `docs/tuning-log.md`; the pre-retune
+  values live in test code (`preTuneValues`) to keep the literal-clearance bottleneck under test.
 - Data files are read-only on disk; unlock, edit, relock (`chmod u+w` / `chmod a-w`) only with approval.
 
 ## Commands

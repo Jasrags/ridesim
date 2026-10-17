@@ -31,12 +31,12 @@ func loadEverest(t *testing.T) *config.CoasterFile {
 	return f.Coaster
 }
 
-// proposedTuning applies the [assumed]-only retune proposed in docs/m1-report.md, in memory. The YAML
-// is untouched until Jason signs off. Sourced values (PEAK_BRAKE 6 s, REVERSE 20 s [fan]) are kept.
-func proposedTuning(c *config.CoasterFile) *config.CoasterFile {
+// preTuneValues restores the [assumed] values the file had before the approved 2026-10-17 retune
+// (docs/tuning-log.md), in memory. It keeps the literal-clearance bottleneck under test.
+func preTuneValues(c *config.CoasterFile) *config.CoasterFile {
 	out := *c
 	out.Blocks = append([]config.Block(nil), c.Blocks...)
-	transit := map[string]float64{"LIFT": 40, "SHADOW_BRAKE": 20, "MOUNTAIN_EXIT": 32, "HELIX_TO_BRAKES": 20, "YETI_BRAKE": 6, "PRE_UNLOAD_HOLD": 26}
+	transit := map[string]float64{"LIFT": 45, "SHADOW_BRAKE": 12, "MOUNTAIN_EXIT": 45, "HELIX_TO_BRAKES": 24, "YETI_BRAKE": 4, "PRE_UNLOAD_HOLD": 14}
 	for i, b := range out.Blocks {
 		if m, ok := transit[b.ID]; ok {
 			d := *b.TransitS
@@ -44,7 +44,7 @@ func proposedTuning(c *config.CoasterFile) *config.CoasterFile {
 			out.Blocks[i].TransitS = &d
 		}
 	}
-	out.Station.LoadS.Mean = 43
+	out.Station.LoadS.Mean = 44
 	return &out
 }
 
@@ -75,16 +75,16 @@ func holds(m *metrics.Report, block string) metrics.BlockHolds {
 
 func within(got, want, tolPct float64) bool { return math.Abs(got-want) <= want*tolPct/100 }
 
-// Hand math for the data as authored, with fixed times and clearance rules applied literally.
+// Hand math for the pre-retune values, with fixed times and clearance rules applied literally.
 // dispatch_out_of_mountain makes MOUNTAIN_EXIT + HELIX_TO_BRAKES one 45 + 24 = 69 s region gated at
 // SHADOW_BRAKE, where the next train is always waiting, so it also pays the 2 s brake release:
-// headway 71 s -> 3600 / 71 x 34 = 1,724 riders/hr. This misses the spec target of 54 s / 2,267/hr;
-// see docs/m1-report.md. Four trains give the same headway because 4 x 71 = 284 s > the 263 s lap.
-func TestEverestAsAuthoredMatchesClearanceHandMath(t *testing.T) {
+// headway 71 s -> 3600 / 71 x 34 = 1,724 riders/hr, the miss that motivated the retune. Four trains give
+// the same headway because 4 x 71 = 284 s > the 263 s lap.
+func TestEverestPreTuneMatchesClearanceHandMath(t *testing.T) {
 	const wantInterval = 45 + 24 + 2.0
 	wantPerHr := 3600 / wantInterval * 34
 	for _, trains := range []int{5, 4} {
-		_, m := run(t, loadEverest(t), trains, 1, true, 6, saturated)
+		_, m := run(t, preTuneValues(loadEverest(t)), trains, 1, true, 6, saturated)
 		if !within(m.Interval.Mean, wantInterval, 0.2) || m.Interval.Max-m.Interval.Min > 0.01 {
 			t.Errorf("%d trains: interval %+v, want constant %.0f s", trains, m.Interval, wantInterval)
 		}
@@ -104,10 +104,10 @@ func TestEverestAsAuthoredMatchesClearanceHandMath(t *testing.T) {
 	}
 }
 
-// With the proposed [assumed] retune no clearance region is longer than the 54 s station cycle
-// (load 43 + check 8 + clearance 3), so the station sets the pace.
-func TestEverestProposedTuningHitsSpecTargets(t *testing.T) {
-	_, m := run(t, proposedTuning(loadEverest(t)), 5, 1, true, 6, saturated)
+// Spec §11: with the data file (retuned 2026-10-17) no clearance region is longer than the 54 s
+// station cycle (load 43 + check 8 + clearance 3), so the station sets the pace.
+func TestEverestFiveTrainsHitSpecTargets(t *testing.T) {
+	_, m := run(t, loadEverest(t), 5, 1, true, 6, saturated)
 	if !within(m.Interval.Mean, 54, 0.2) {
 		t.Errorf("interval %.2f s, want 54", m.Interval.Mean)
 	}
@@ -124,8 +124,8 @@ func TestEverestProposedTuningHitsSpecTargets(t *testing.T) {
 
 // Four trains leave the slot where the fifth would be: three dispatches at the 54 s station pace,
 // then a long gap, averaging lap / 4 = (170 ride + 38 unload + 54 load) / 4 = 65.5 s.
-func TestEverestProposedTuningFourTrainsShowGap(t *testing.T) {
-	_, m := run(t, proposedTuning(loadEverest(t)), 4, 1, true, 6, saturated)
+func TestEverestFourTrainsShowGap(t *testing.T) {
+	_, m := run(t, loadEverest(t), 4, 1, true, 6, saturated)
 	if !within(m.Interval.Mean, 262.0/4, 1) {
 		t.Errorf("mean interval %.2f s, want ~65.5", m.Interval.Mean)
 	}
@@ -181,10 +181,10 @@ func TestReplayedLogGivesSameMetrics(t *testing.T) {
 	}
 }
 
-// Little's Law at steady state: Poisson arrivals at 97% of the 1,724/hr capacity (data as authored),
+// Little's Law at steady state: Poisson arrivals at ~98% of the ~2,070/hr stochastic capacity,
 // stochastic times, 24 h measured after a 1 h warmup.
 func TestLittlesLawSteadyState(t *testing.T) {
-	_, m := run(t, loadEverest(t), 5, 11, false, 25, 1680)
+	_, m := run(t, loadEverest(t), 5, 11, false, 25, 2030)
 	if m.Wait.N < 30000 || m.Little.L < 5 {
 		t.Fatalf("too little queueing to test: n=%d L=%.1f", m.Wait.N, m.Little.L)
 	}
@@ -194,12 +194,12 @@ func TestLittlesLawSteadyState(t *testing.T) {
 	t.Logf("L %.2f vs lambda*W %.2f (%.2f%% apart); wait mean %.1f s", m.Little.L, m.Little.LambdaW, m.Little.ErrPct, m.Wait.Mean)
 }
 
-// Little's Law over a rope-drop surge: 2,600/hr for 2 h then 1,000/hr. The queue builds to ~1,700
+// Little's Law over a rope-drop surge: 3,000/hr for 2 h then 1,200/hr. The queue builds to ~1,800
 // guests and drains, so measured from t=0 to a drained end the sample-path identity L = lambda W holds.
 func TestLittlesLawSurgeAndDrain(t *testing.T) {
 	log, err := CoasterRun{
 		Ride: loadEverest(t), Trains: 5, Seed: 5, Length: 8 * engine.Hour,
-		Arrivals: guest.Curve{{Start: 0, RatePerHr: 2600}, {Start: 2 * engine.Hour, RatePerHr: 1000}},
+		Arrivals: guest.Curve{{Start: 0, RatePerHr: 3000}, {Start: 2 * engine.Hour, RatePerHr: 1200}},
 	}.Run()
 	if err != nil {
 		t.Fatal(err)
@@ -218,9 +218,9 @@ func TestLittlesLawSurgeAndDrain(t *testing.T) {
 }
 
 // Regression: a train that becomes held later in the same kick pass than the shadow-room train must
-// still trigger the yield. LIFT +10% (49.5 s) once deadlocked the authored data with 5 trains.
+// still trigger the yield. LIFT +10% (49.5 s) once deadlocked the pre-retune data with 5 trains.
 func TestShadowHoldYieldsRegardlessOfEvaluationOrder(t *testing.T) {
-	c := loadEverest(t)
+	c := preTuneValues(loadEverest(t))
 	c.Blocks = append([]config.Block(nil), c.Blocks...)
 	for i := range c.Blocks {
 		if c.Blocks[i].ID == "LIFT" {
@@ -235,9 +235,9 @@ func TestShadowHoldYieldsRegardlessOfEvaluationOrder(t *testing.T) {
 	}
 }
 
-// No circular wait across seeds with stochastic times, as authored and with the proposed tuning.
+// No circular wait across seeds with stochastic times, with the file and the pre-retune values.
 func TestNoDeadlockStochastic(t *testing.T) {
-	for _, cfg := range []*config.CoasterFile{loadEverest(t), proposedTuning(loadEverest(t))} {
+	for _, cfg := range []*config.CoasterFile{loadEverest(t), preTuneValues(loadEverest(t))} {
 		for seed := uint64(1); seed <= 5; seed++ {
 			_, m := run(t, cfg, 5, seed, false, 9, saturated)
 			if hours := 8.0; float64(m.Dispatches) < hours*3600/90 {

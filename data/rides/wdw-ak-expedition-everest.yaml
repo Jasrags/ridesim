@@ -46,7 +46,7 @@ blocks:
     next: LIFT
   - id: LIFT
     kind: lift
-    transit_s: { mean: 45, sd: 1 }      # [assumed] chain lift to the broken track
+    transit_s: { mean: 40, sd: 1 }      # [assumed] chain lift to the broken track (was 45; tuned 2026-10-17, see docs/tuning-log.md)
     next: PEAK_BRAKE
   - id: PEAK_BRAKE                      # brake zone 1 [fan]: after pivot switch 1, trains pause at the broken track
     kind: brake
@@ -60,31 +60,32 @@ blocks:
     next: SHADOW_BRAKE
   - id: SHADOW_BRAKE                    # brake zone 2 [fan]: after pivot switch 2, yeti shadow projection
     kind: brake
-    transit_s: { mean: 12, sd: 1 }      # [assumed] yeti shadow scene
+    transit_s: { mean: 20, sd: 1 }      # [assumed] yeti shadow scene (was 12; tuned 2026-10-17, see docs/tuning-log.md)
     contains: [PIVOT_SWITCH_2]
     brake: { hold_capable: true, stop_policy: stop_if_next_occupied, release_delay_s: { mean: 2, sd: 0.5 } }
     hold_until_clear: true              # [fan] holds here until unload train advances to load (5-train mode); ignored with < 5 trains
     next: MOUNTAIN_EXIT
   - id: MOUNTAIN_EXIT
     kind: course
-    transit_s: { mean: 45, sd: 2 }      # [assumed] big drop out of mountain
+    transit_s: { mean: 32, sd: 2 }      # [assumed] big drop out of mountain (was 45; tuned 2026-10-17, see docs/tuning-log.md)
     next: HELIX_TO_BRAKES
   - id: HELIX_TO_BRAKES
     kind: course
-    transit_s: { mean: 24, sd: 2 }      # [assumed] helix after the drop, split off from the brake below (was 28 s)
+    transit_s: { mean: 20, sd: 2 }      # [assumed] helix after the drop, split off from the brake below (was 28 s, then 24; tuned 2026-10-17, see docs/tuning-log.md)
     next: YETI_BRAKE
   - id: YETI_BRAKE                      # brake zone 3 [fan]: before the final mountain entry, just before the yeti figure
     kind: brake
-    transit_s: { mean: 4, sd: 0.5 }     # [assumed]
+    transit_s: { mean: 6, sd: 0.5 }     # [assumed] (was 4; tuned 2026-10-17, see docs/tuning-log.md)
     brake: { hold_capable: true, stop_policy: stop_if_next_occupied, release_delay_s: { mean: 2, sd: 0.5 } }
     note: "[fan] trains rarely stop completely here, except with fewer than 5 trains where the shadow-room hold is ignored"
     next: PRE_UNLOAD_HOLD
   - id: PRE_UNLOAD_HOLD                 # brake zone 4 [fan]: before unload
     kind: brake
-    transit_s: { mean: 14, sd: 1 }      # [assumed] yeti animatronic scene to brake before unload
+    transit_s: { mean: 26, sd: 1 }      # [assumed] yeti animatronic scene to brake before unload (was 14; tuned 2026-10-17, see docs/tuning-log.md)
     brake: { hold_capable: true, stop_policy: stop_if_next_occupied, release_delay_s: { mean: 2, sd: 0.5 } }
     next: UNLOAD
-  # transit sum of non-station blocks = 45 + 6 + 20 + 12 + 45 + 24 + 4 + 14 = 170 = ride_duration_s
+  # transit sum of non-station blocks = 40 + 6 + 20 + 20 + 32 + 20 + 6 + 26 = 170 = ride_duration_s
+  # Clearance regions (literal rules) stay under the 54 s station cycle: LIFT+PEAK+realign 54, REVERSE+SHADOW 40, MOUNTAIN_EXIT+HELIX 52.
 
 # Dispatch clearance rules [fan]: a train may leave block `from` only when every requires_empty block is empty and every
 # condition holds. `from` was implicit in the rule names before v1.0; dispatch_out_of_mountain gates SHADOW_BRAKE because it
@@ -100,7 +101,7 @@ clearance:
 
 station:
   unload_s:        { mean: 38, sd: 8 }  # [assumed]
-  load_s:          { mean: 44, sd: 8 }  # [assumed]
+  load_s:          { mean: 43, sd: 8 }  # [assumed] (was 44; tuned 2026-10-17, see docs/tuning-log.md) station cycle 43 + 8 + 3 = 54 s
   restraint_check_s: { mean: 8, sd: 2 } # [assumed]
   dispatch_clearance_s: { mean: 3, sd: 1 } # [assumed]
   target_dispatch_interval_s: 54        # [fan] with 5 trains

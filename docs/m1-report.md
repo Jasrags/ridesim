@@ -1,11 +1,15 @@
 # M0/M1 results (2026-10-17)
 
+**Status:** the Everest retune below was approved and applied to the data file the same day (see
+`docs/tuning-log.md`). "Data as authored" columns describe the pre-retune values, now kept in test code as
+`preTuneValues` for the bottleneck regression.
+
 All numbers are reproducible with `go test ./...` (acceptance tests in `internal/scenario/everest_test.go`)
 or `ridesim run`. "Saturated" means 6,000 guests/hr of standby demand, so every train leaves full.
 
 ## Results against the targets
 
-| Target (spec §11) | Data as authored | With proposed retune (in memory, not applied) |
+| Target (spec §11) | Data as authored (pre-retune) | With retune (now in the data file) |
 |---|---|---|
 | 5 trains: dispatch ~54 s | **71.0 s (miss)** | 54.0 s |
 | 5 trains: ~2,267 riders/hr | **1,724/hr (miss)** | 2,264/hr |
@@ -26,7 +30,7 @@ LIFT + PEAK_BRAKE + switch realign = 45 + 6 + 8 = 59 s. The model matches this h
 Four trains don't show a gap because 4 x 71 = 284 s is longer than the 263 s unimpeded lap, so the
 bottleneck still sets the pace. The fifth train's slot shows up only as station idle time.
 
-### Proposed retune (needs your sign-off; [assumed] values only, sum stays 170 s)
+### Retune (approved and applied 2026-10-17; [assumed] values only, sum stays 170 s)
 | Field | Before | After | Why |
 |---|---|---|---|
 | LIFT.transit_s.mean | 45 | 40 | LIFT + PEAK + realign = 54 s |
@@ -37,8 +41,8 @@ bottleneck still sets the pace. The fifth train's slot shows up only as station 
 | PRE_UNLOAD_HOLD.transit_s.mean | 14 | 26 | keeps the sum at 170 (yeti scene + final stretch) |
 | station.load_s.mean | 44 | 43 | station cycle 43 + 8 + 3 = 54 s |
 
-PEAK_BRAKE (6 s) and REVERSE (20 s) are `[fan]` and unchanged. If approved, these go into the YAML and
-`docs/tuning-log.md`. The in-memory tests then become plain tests against the file.
+PEAK_BRAKE (6 s) and REVERSE (20 s) are `[fan]` and unchanged. Applied to the YAML and logged in
+`docs/tuning-log.md`; the acceptance tests now run against the file.
 
 ## Decisions made during M1
 - **hold_until_clear yields when it would deadlock** (your call). With 5 trains and literal clearance, the
