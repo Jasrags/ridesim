@@ -20,6 +20,7 @@ const (
 	EvDispatch   = "dispatch"    // Train, Block (the station block left), N=riders
 	EvUnload     = "unload"      // Train, N=riders off
 	EvRideStop   = "ride_stop"   // Info=cause
+	EvCascade    = "cascade"     // Train, Block: the train blocked past blocked_tolerance_s
 	EvRideResume = "ride_resume" // Info=cause
 	EvRunEnd     = "run_end"
 )

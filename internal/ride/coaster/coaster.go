@@ -28,6 +28,9 @@ type Options struct {
 	Trains     int      // trains in service; 0 means trains.default_in_service
 	FixedTimes bool     // use every distribution's mean (sd = 0)
 	Failures   []string // enabled failure kinds (config.Fail*); nil = failures off
+
+	CascadeScope      string  // CascadeBrakesAndStations (default) or CascadeBrakesOnly
+	CascadeToleranceS float64 // overrides failures.cascade_stop.blocked_tolerance_s when > 0 (analysis only)
 }
 
 // Hold reasons recorded in hold_start events.
@@ -89,7 +92,8 @@ type train struct {
 
 	held       bool
 	holdReason string
-	releasing  bool // brake release delay running
+	holdSeq    uint64 // increments on every hold segment; stale cascade checks compare it
+	releasing  bool   // brake release delay running
 
 	phase stationPhase
 	work  work // the one pending timer for this train's current block (transit, station phase, release)
@@ -368,7 +372,9 @@ func (c *Coaster) tryExit(t *train) {
 				c.sim.Emit(engine.Event{Type: engine.EvHoldEnd, Train: t.id, Block: t.at.cfg.ID})
 			}
 			t.held, t.holdReason = true, reason
+			t.holdSeq++
 			c.sim.Emit(engine.Event{Type: engine.EvHoldStart, Train: t.id, Block: t.at.cfg.ID, Info: reason})
+			c.watchCascade(t)
 			c.rekick = true // a newly held train can let a hold_until_clear yield (blockingUpstream)
 		}
 		if retryAt > c.sim.Now() {
