@@ -1,11 +1,14 @@
-# Expedition Everest — ride config v0.1
+# Expedition Everest — ride config, schema 1.0
 # Confidence tags: [wiki] = Wikipedia infobox, [fan] = forum/fan sources, [assumed] = our placeholder, tune later
 #
 # v0.5 changes: adds block.kind=brake with a `brake` field (hold + release behavior). Replaces kind=show_hold and kind=brake_hold.
 # Everest now has the four brake zones from a 2007 Wikipedia snapshot [fan]: after pivot switch 1 (peak), after pivot switch 2 (shadow room),
 # before the final mountain entry (yeti brake), and before unload.
+#
+# v1.0 (schema normalization): schema_version is 1.0 for every file. Clearance rules become a list; each names the
+# block it gates (`from`) and its extra conditions are typed (`conditions`). No values changed.
 
-schema_version: "0.5"
+schema_version: "1.0"
 
 ride:
   id: wdw.ak.expedition_everest        # <resort>.<park>.<ride>, unique across all parks
@@ -83,14 +86,17 @@ blocks:
     next: UNLOAD
   # transit sum of non-station blocks = 45 + 6 + 20 + 12 + 45 + 24 + 4 + 14 = 170 = ride_duration_s
 
-# Dispatch clearance rules [fan]: a train may leave block X only when the listed region is empty.
+# Dispatch clearance rules [fan]: a train may leave block `from` only when every requires_empty block is empty and every
+# condition holds. `from` was implicit in the rule names before v1.0; dispatch_out_of_mountain gates SHADOW_BRAKE because it
+# cannot require its own block (MOUNTAIN_EXIT) to be empty.
 clearance:
-  dispatch_from_load:         { requires_empty: [LIFT, PEAK_BRAKE], also: peak_switch_aligned_for_lift }
-  dispatch_reverse_from_peak: { requires_empty: [REVERSE, SHADOW_BRAKE] }
-  dispatch_out_of_mountain:   { requires_empty: [MOUNTAIN_EXIT, HELIX_TO_BRAKES] }
-  dispatch_from_yeti_brake:   { requires_empty: [PRE_UNLOAD_HOLD] }
-  dispatch_to_unload:         { requires_empty: [UNLOAD], and: load_clear_to_advance }
   switch_realign_s: { mean: 8, sd: 2 }  # [assumed] time for pivot track to flip back
+  rules:
+    - { id: dispatch_from_load,         from: LOAD,            requires_empty: [LIFT, PEAK_BRAKE], conditions: [{ kind: switch_aligned, switch: PIVOT_SWITCH_1 }] }
+    - { id: dispatch_reverse_from_peak, from: PEAK_BRAKE,      requires_empty: [REVERSE, SHADOW_BRAKE] }
+    - { id: dispatch_out_of_mountain,   from: SHADOW_BRAKE,    requires_empty: [MOUNTAIN_EXIT, HELIX_TO_BRAKES] }
+    - { id: dispatch_from_yeti_brake,   from: YETI_BRAKE,      requires_empty: [PRE_UNLOAD_HOLD] }
+    - { id: dispatch_to_unload,         from: PRE_UNLOAD_HOLD, requires_empty: [UNLOAD], conditions: [{ kind: load_clear_to_advance }] }
 
 station:
   unload_s:        { mean: 38, sd: 8 }  # [assumed]
@@ -126,7 +132,7 @@ queues:
   standby: { physical_capacity: 1400 }  # [assumed]
   single_rider: { enabled: true, fill_only_empty_seats: true }
   skip_line:
-    enabled: true                      # [wiki] Lightning Lane available; pass issuance/allocation still TBD (milestone M5)
+    enabled: true                      # [wiki] Lightning Lane available; pass issuance/allocation still TBD (milestone M4)
     merge_point: station_queue_entrance   # no preshow on Everest, so the merge feeds the load area directly
     merge:
       unit: guests                     # sources disagree guests vs parties; keep configurable
@@ -136,7 +142,7 @@ queues:
         - { name: normal,   when_ll_queue_guests_below: 60,  ll_per_standby: 2 }
         - { name: elevated, when_ll_queue_guests_below: 200, ll_per_standby: 4 }
         - { name: recovery, when_ll_queue_guests_below: null, ll_per_standby: 10 }
-      # Output metric: realized LL share of capacity (fan-reported ~13% low / 26% medium / 33% high crowds), not an input.         # milestone M5
+      # Output metric: realized LL share of capacity (fan-reported ~13% low / 26% medium / 33% high crowds), not an input.         # milestone M4
   posted_wait: { algorithm: queue_len_over_throughput, padding_pct: 0 }
 
 validation_targets:

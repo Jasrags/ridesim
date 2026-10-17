@@ -1,4 +1,4 @@
-# Haunted Mansion (Magic Kingdom) — ride config, schema v0.3 (first continuous-load / omnimover archetype)
+# Haunted Mansion (Magic Kingdom) — ride config, schema 1.0 (first continuous-load / omnimover archetype)
 # Confidence tags: [wiki] Wikipedia, [fan] fan/aggregator sources, [assumed] our placeholder, tune later
 #
 # v0.3 changes vs v0.2: archetype continuous_load replaces trains/blocks/dispatch with conveyor + vehicles + loading_zone.
@@ -6,8 +6,10 @@
 #
 # v0.4 changes (from the Park Lore ride map): adds `route` (ordered scenes with map-scaled timings), splits loading_zone into
 # load_zone and unload_zone, and marks the chain as a closed loop with a return run from Unload back to Load.
+#
+# v1.0 (schema normalization): schema_version is 1.0 for every file. No values changed.
 
-schema_version: "0.4"
+schema_version: "1.0"
 
 ride:
   id: wdw.mk.haunted_mansion           # <resort>.<park>.<ride>, unique across all parks

@@ -1,6 +1,8 @@
-# Synthetic composite park — crowd model config v0.1
+# Synthetic composite park — crowd model config, schema 1.0 (was unversioned v0.1)
 # Plugs the three modeled rides into one made-up layout, plus simple filler nodes. Not a real park.
 # Confidence tags: [fan] fan/aggregator, [assumed] our placeholder, tune against Queue-Times-style daily wait curves
+
+schema_version: "1.0"
 
 park:
   id: synthetic_park_v0

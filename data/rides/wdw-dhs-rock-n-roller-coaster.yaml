@@ -1,4 +1,4 @@
-# Rock 'n' Roller Coaster (Disney's Hollywood Studios) — ride config v0.2 schema
+# Rock 'n' Roller Coaster (Disney's Hollywood Studios) — ride config, schema 1.0
 # Confidence tags: [wiki] = Wikipedia/infobox, [rcdb] = RCDB, [fan] = forum/fan sources, [assumed] = our placeholder, tune later
 #
 # Schema v0.2 additions vs the Everest file (all optional, so the Everest file stays valid):
@@ -10,8 +10,11 @@
 # Adds an explicit MID_COURSE_BRAKE block; the final brake (PRE_UNLOAD_HOLD) is also kind=brake.
 # Also from the Park Lore ride map (via Reddit, schematic, not to scale): adds `barn` (vehicle storage beside the return straight),
 # `layout` (out-and-back topology) and `guest_path` (queue to load order). This corrects the earlier "no barn" assumption.
+#
+# v1.0 (schema normalization): schema_version is 1.0 for every file. Clearance rules become a list; each names the
+# block it gates (`from`) and its extra conditions are typed (`conditions`). No values changed.
 
-schema_version: "0.5"
+schema_version: "1.0"
 
 ride:
   id: wdw.dhs.rock_n_roller_coaster    # <resort>.<park>.<ride>, unique across all parks
@@ -78,10 +81,11 @@ blocks:
   # transit sum = 14 + 30 + 4 + 28 + 6 = 82 = ride_duration_s
 
 clearance:
-  dispatch_from_load:            { requires_empty: [LAUNCH_STAGING, COURSE_1] }   # [assumed] launch cannot fire into an occupied block
-  dispatch_from_mid_course_brake: { requires_empty: [COURSE_2] }                  # a train holds at MID_COURSE_BRAKE until COURSE_2 is clear
-  dispatch_from_course_2:        { requires_empty: [PRE_UNLOAD_HOLD] }
-  dispatch_to_unload:     { requires_empty: [UNLOAD], and: load_clear_to_advance }
+  rules:
+    - { id: dispatch_from_load,             from: LOAD,             requires_empty: [LAUNCH_STAGING, COURSE_1] }   # [assumed] launch cannot fire into an occupied block
+    - { id: dispatch_from_mid_course_brake, from: MID_COURSE_BRAKE, requires_empty: [COURSE_2] }                   # a train holds at MID_COURSE_BRAKE until COURSE_2 is clear
+    - { id: dispatch_from_course_2,         from: COURSE_2,         requires_empty: [PRE_UNLOAD_HOLD] }
+    - { id: dispatch_to_unload,             from: PRE_UNLOAD_HOLD,  requires_empty: [UNLOAD], conditions: [{ kind: load_clear_to_advance }] }
 
 station:
   separate_load_unload: true           # [fan] separate areas for loading and unloading
@@ -144,7 +148,7 @@ queues:
   standby: { physical_capacity: 1200 } # [assumed]
   single_rider: { enabled: true, fill_only_empty_seats: true }  # [wiki] single rider line available
   skip_line:
-    enabled: true                      # [user] LL merges in the preshow hallway; pass issuance/allocation still TBD (milestone M5)
+    enabled: true                      # [user] LL merges in the preshow hallway; pass issuance/allocation still TBD (milestone M4)
     merge_point: preshow_hallway
     merge:
       unit: guests                     # sources disagree guests vs parties; keep configurable
