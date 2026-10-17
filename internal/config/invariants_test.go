@@ -118,6 +118,13 @@ func TestErrorChecksFailOnBrokenFixtures(t *testing.T) {
 		{"park.party_sizes", fxPark, "", "2: 0.5", "2: 0.4"},
 		{"park.walking_mode", fxPark, "", "walking_mode: congestion", "walking_mode: teleport"},
 		{"park.hours", fxPark, "", "close_hour: 18", "close_hour: 10"},
+		{"park.node_fields", fxPark, "", "visit_min: { mean: 40, sd: 10 }, ", ""},
+		{"park.edge_refs", fxPark, "", "applies_to: [hub_coaster]", "applies_to: [gate_hub]"},
+		{"park.lightning_lane", fxPark, "", "inventory_share: 0.3", "inventory_share: 1.3"},
+		{"park.lightning_lane", fxPark, "", "window_min: 60", "window_min: 0"},
+		{"park.lightning_lane", fxPark, "", "advance_bookings: 3", "advance_bookings: -1"},
+		{"park.decision", fxPark, "", "temperature: 0.25", "temperature: 0"},
+		{"park.decision", fxPark, "", `meal_windows: ["11:30-13:30"]`, `meal_windows: ["13:30-11:30"]`},
 		{"park.connected", fxPark, "", "  - { id: exit, kind: exit }", "  - { id: island, kind: plaza, comfortable_guests: 1 }\n  - { id: exit, kind: exit }"},
 	}
 	for _, c := range cases {

@@ -395,6 +395,7 @@ const (
 	NodeShow       = "show"
 	NodeDining     = "dining"
 	NodeExit       = "exit"
+	NodeElsewhere  = "elsewhere" // the rest of the park: unlimited capacity, a visit-length distribution
 
 	WalkingFixedDelay = "fixed_delay"
 	WalkingCongestion = "congestion"
@@ -408,7 +409,21 @@ type ParkFile struct {
 	Congestion         Congestion         `yaml:"congestion"`
 	Guests             Guests             `yaml:"guests"`
 	Decision           Decision           `yaml:"decision"`
+	LightningLane      *ParkLightningLane `yaml:"lightning_lane"` // nil = no Lightning Lane in park runs
 	CalibrationTargets CalibrationTargets `yaml:"calibration_targets"`
+}
+
+// ParkLightningLane is pass issuance in park runs (decision 2026-10-17): purchasing parties book up to
+// AdvanceBookings before the day, then one more each time a pass is used or lapses. Each LL ride sells
+// InventoryShare of its listed hourly capacity per window. ElsewhereShare of bookings are for
+// attractions outside the modeled rides (they redeem as an elsewhere visit, unlimited inventory).
+type ParkLightningLane struct {
+	PurchaseShare   float64 `yaml:"purchase_share"`
+	AdvanceBookings int     `yaml:"advance_bookings"`
+	WindowMin       float64 `yaml:"window_min"`
+	GraceMin        float64 `yaml:"grace_min"`
+	InventoryShare  float64 `yaml:"inventory_share"`
+	ElsewhereShare  float64 `yaml:"elsewhere_share"`
 }
 
 type ParkInfo struct {
@@ -434,6 +449,8 @@ type ParkNode struct {
 	ExitEdge          string   `yaml:"exit_edge"`
 	Seats             int      `yaml:"seats"`
 	ServiceTimeMin    *Dist    `yaml:"service_time_min"`
+	VisitMin          *Dist    `yaml:"visit_min"`      // elsewhere: time spent per visit
+	QueueCapacity     int      `yaml:"queue_capacity"` // ride_simple: physical queue; overflow spills (0 = never)
 }
 
 type ParkEdge struct {
@@ -484,6 +501,7 @@ type Decision struct {
 	PostedWaitRefreshS float64  `yaml:"posted_wait_refresh_s"`
 	FatiguePerHour     float64  `yaml:"fatigue_per_hour"`
 	MealWindows        []string `yaml:"meal_windows"`
+	MealWindowBonus    float64  `yaml:"meal_window_bonus"` // added to dining utility inside a meal window
 }
 
 type Utility struct {

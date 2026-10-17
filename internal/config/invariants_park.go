@@ -18,6 +18,8 @@ var parkChecks = []check[*ParkFile]{
 	{"park.hours", SevError, checkHours},
 	{"park.arrival_shares", SevError, checkArrivalShares},
 	{"park.party_sizes", SevError, checkPartySizes},
+	{"park.decision", SevError, checkDecision},
+	{"park.lightning_lane", SevError, checkParkLightningLane},
 }
 
 func checkNodeIDs(p *ParkFile) (bool, string) {
@@ -76,6 +78,10 @@ func checkNodeFields(p *ParkFile) (bool, string) {
 			if len(n.Schedule) == 0 {
 				miss = append(miss, "schedule")
 			}
+		case NodeElsewhere:
+			if n.VisitMin == nil || n.VisitMin.Mean <= 0 {
+				miss = append(miss, "visit_min")
+			}
 		case NodeDining:
 			if n.Seats <= 0 {
 				miss = append(miss, "seats")
@@ -122,9 +128,17 @@ func checkEdgeRefs(p *ParkFile) (bool, string) {
 			bad = append(bad, fmt.Sprintf("node %s: exit_edge %q", n.ID, n.ExitEdge))
 		}
 	}
+	queues := map[string]bool{}
+	for _, n := range p.Nodes {
+		queues[n.ID] = n.Kind == NodeRide || n.Kind == NodeRideSimple
+	}
 	for _, id := range p.Congestion.Spillback.AppliesTo {
-		if !edges[id] {
+		e, ok := edgeByID(p, id)
+		switch {
+		case !ok:
 			bad = append(bad, fmt.Sprintf("spillback.applies_to %q", id))
+		case queues[e.From] == queues[e.To]:
+			bad = append(bad, fmt.Sprintf("spillback.applies_to %q must touch exactly one ride node (whose queue spills)", id))
 		}
 	}
 	if len(bad) > 0 {
@@ -225,4 +239,84 @@ func checkPartySizes(p *ParkFile) (bool, string) {
 		sum += p.Guests.PartySize[s]
 	}
 	return approxEqual(sum, 1, shareTolerance), fmt.Sprintf("party size shares sum to %.3f (sizes %v)", sum, sizes)
+}
+
+func edgeByID(p *ParkFile, id string) (ParkEdge, bool) {
+	for _, e := range p.Edges {
+		if e.ID == id {
+			return e, true
+		}
+	}
+	return ParkEdge{}, false
+}
+
+// Decision method and choice set names.
+const (
+	DecisionSoftmaxUtility = "softmax_utility"
+	ChoiceTopK             = "top_k_by_utility"
+)
+
+func checkDecision(p *ParkFile) (bool, string) {
+	d := p.Decision
+	var bad []string
+	if d.Method != DecisionSoftmaxUtility || d.ChoiceSet != ChoiceTopK {
+		bad = append(bad, fmt.Sprintf("method %q / choice_set %q (supported: %s / %s)", d.Method, d.ChoiceSet, DecisionSoftmaxUtility, ChoiceTopK))
+	}
+	if d.Temperature <= 0 || d.K < 1 || d.PostedWaitRefreshS <= 0 {
+		bad = append(bad, fmt.Sprintf("temperature %g, k %d, posted_wait_refresh_s %g must all be > 0", d.Temperature, d.K, d.PostedWaitRefreshS))
+	}
+	for _, w := range d.MealWindows {
+		if from, to, err := ParseClockWindow(w); err != nil || from >= to {
+			bad = append(bad, fmt.Sprintf("meal window %q must be HH:MM-HH:MM, start before end", w))
+		}
+	}
+	if len(bad) > 0 {
+		return false, strings.Join(bad, "; ")
+	}
+	return true, fmt.Sprintf("softmax over top %d, temperature %g, %d meal window(s)", d.K, d.Temperature, len(d.MealWindows))
+}
+
+// ParseClockWindow parses "HH:MM-HH:MM" into seconds after midnight.
+func ParseClockWindow(s string) (from, to float64, err error) {
+	a, b, ok := strings.Cut(s, "-")
+	if !ok {
+		return 0, 0, fmt.Errorf("window %q: want HH:MM-HH:MM", s)
+	}
+	if from, err = ParseClock(a); err != nil {
+		return 0, 0, err
+	}
+	to, err = ParseClock(b)
+	return from, to, err
+}
+
+// ParseClock parses a wall-clock "HH:MM" into seconds after midnight.
+func ParseClock(s string) (float64, error) {
+	h, m, ok := strings.Cut(strings.TrimSpace(s), ":")
+	hh, err1 := strconv.Atoi(h)
+	mm, err2 := strconv.Atoi(m)
+	if !ok || err1 != nil || err2 != nil || hh < 0 || hh > 24 || mm < 0 || mm > 59 {
+		return 0, fmt.Errorf("clock %q: want HH:MM", s)
+	}
+	return float64(hh*3600 + mm*60), nil
+}
+
+func checkParkLightningLane(p *ParkFile) (bool, string) {
+	ll := p.LightningLane
+	if ll == nil {
+		return true, "no lightning_lane section: park runs have no Lightning Lane"
+	}
+	var bad []string
+	for name, v := range map[string]float64{"purchase_share": ll.PurchaseShare, "inventory_share": ll.InventoryShare, "elsewhere_share": ll.ElsewhereShare} {
+		if v < 0 || v > 1 {
+			bad = append(bad, fmt.Sprintf("%s %g must be in [0, 1]", name, v))
+		}
+	}
+	if ll.WindowMin <= 0 || ll.GraceMin < 0 || ll.AdvanceBookings < 0 {
+		bad = append(bad, fmt.Sprintf("window_min %g > 0, grace_min %g >= 0, advance_bookings %d >= 0", ll.WindowMin, ll.GraceMin, ll.AdvanceBookings))
+	}
+	if len(bad) > 0 {
+		sort.Strings(bad)
+		return false, strings.Join(bad, "; ")
+	}
+	return true, fmt.Sprintf("%.0f%% buy, %d in advance, %g-min windows, %.0f%% of capacity sold", ll.PurchaseShare*100, ll.AdvanceBookings, ll.WindowMin, ll.InventoryShare*100)
 }
