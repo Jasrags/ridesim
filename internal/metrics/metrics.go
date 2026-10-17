@@ -75,6 +75,10 @@ type Report struct {
 	Little        Little
 	LoadIdleS     float64 // time the load station sat empty during the window
 	StationBlocks []string
+	Ops           Ops
+
+	joinTimes map[int64]engine.Time // every guest's join time, for computeOps
+	brakes    map[string]bool
 }
 
 // Compute builds the report for the window [run start + warmup, run end].
@@ -94,6 +98,7 @@ func Compute(events []engine.Event, warmup engine.Duration) (*Report, error) {
 	for _, b := range strings.Split(r.Run["brakes"], ",") {
 		brakes[b] = true
 	}
+	r.brakes, r.joinTimes = brakes, map[int64]engine.Time{}
 	loadBlock := r.Run["load"]
 	in := func(t engine.Time) bool { return t >= r.WindowStart && t <= r.WindowEnd }
 
@@ -137,6 +142,7 @@ func Compute(events []engine.Event, warmup engine.Duration) (*Report, error) {
 			q += e.N
 			r.QueueMax = max(r.QueueMax, q)
 			joinedAt[e.Guest] = e.T
+			r.joinTimes[e.Guest] = e.T
 			if in(e.T) {
 				joins += e.N
 			}
@@ -222,6 +228,7 @@ func Compute(events []engine.Event, warmup engine.Duration) (*Report, error) {
 	if r.Little.L > 0 {
 		r.Little.ErrPct = math.Abs(r.Little.L-r.Little.LambdaW) / r.Little.L * 100
 	}
+	computeOps(events, r)
 	return r, nil
 }
 
@@ -272,6 +279,7 @@ func (r *Report) Write(w io.Writer) error {
 		sort.Strings(reasons)
 		fmt.Fprintf(&b, "%-18s %-5s %7d %6d %9.0f %7.1f %7.1f %6d  %s\n", h.Block, brake, h.Passes, h.Holds, h.TotalS, h.MeanS, h.MaxS, h.Yields, strings.Join(reasons, " "))
 	}
+	r.Ops.write(&b, r.RidersPerHr)
 	_, err := io.WriteString(w, b.String())
 	return err
 }
