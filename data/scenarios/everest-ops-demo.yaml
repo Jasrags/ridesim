@@ -1,0 +1,20 @@
+# Everest ops demo: pull a train mid-day, run 4 trains (shadow-room hold off), reinsert it, then a
+# scripted lightning closure. Exercises barn swaps and weather holds.
+# Confidence tags: [assumed] = our placeholder, tune later
+schema_version: "1.0"
+scenario:
+  id: everest_ops_demo
+  description: "remove a train at 03:00, add it back at 05:00, 30 min weather hold at 06:00"
+  ride_id: wdw.ak.expedition_everest
+  seed: 2
+  duration_h: 8
+  warmup_min: 30
+  trains: 5
+  failures: [brief_stop, cascade_stop]
+  arrivals:
+    - { at: "00:00", rate_per_hr: 2200 }     # [assumed]
+  ops:
+    - { at: "03:00", action: remove_train }
+    - { at: "05:00", action: add_train }
+  weather:
+    - { from: "06:00", to: "06:30" }         # [assumed] lightning within range

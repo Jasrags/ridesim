@@ -20,6 +20,7 @@ const (
 	KindCoaster Kind = iota + 1
 	KindContinuous
 	KindPark
+	KindScenario
 )
 
 func (k Kind) String() string {
@@ -30,17 +31,20 @@ func (k Kind) String() string {
 		return ArchetypeContinuousLoad
 	case KindPark:
 		return "park"
+	case KindScenario:
+		return "scenario"
 	}
 	return "unknown"
 }
 
-// File is one loaded data file. Exactly one of Coaster, Continuous, Park is set.
+// File is one loaded data file. Exactly one of Coaster, Continuous, Park, Scenario is set.
 type File struct {
 	Path       string
 	Kind       Kind
 	Coaster    *CoasterFile
 	Continuous *ContinuousFile
 	Park       *ParkFile
+	Scenario   *ScenarioFile
 }
 
 // RideID returns the ride id for ride files and "" for park files.
@@ -74,7 +78,8 @@ type header struct {
 	Ride          *struct {
 		Archetype string `yaml:"archetype"`
 	} `yaml:"ride"`
-	Park *yaml.Node `yaml:"park"`
+	Park     *yaml.Node `yaml:"park"`
+	Scenario *yaml.Node `yaml:"scenario"`
 }
 
 // LoadBytes parses one file. name is used for error messages and the filename invariant.
@@ -91,14 +96,23 @@ func LoadBytes(name string, data []byte) (*File, error) {
 	}
 
 	f := &File{Path: name}
+	sections := 0
+	for _, present := range []bool{h.Ride != nil, h.Park != nil, h.Scenario != nil} {
+		if present {
+			sections++
+		}
+	}
 	switch {
-	case h.Ride != nil && h.Park != nil:
-		return nil, fmt.Errorf("%s: file has both ride and park sections", name)
+	case sections > 1:
+		return nil, fmt.Errorf("%s: file has more than one of ride, park, scenario", name)
+	case h.Scenario != nil:
+		f.Kind, f.Scenario = KindScenario, &ScenarioFile{}
+		return f, decodeStrict(name, data, f.Scenario)
 	case h.Park != nil:
 		f.Kind, f.Park = KindPark, &ParkFile{}
 		return f, decodeStrict(name, data, f.Park)
 	case h.Ride == nil:
-		return nil, fmt.Errorf("%s: no ride or park section", name)
+		return nil, fmt.Errorf("%s: no ride, park or scenario section", name)
 	}
 
 	switch h.Ride.Archetype {

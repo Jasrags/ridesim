@@ -86,6 +86,8 @@ func CheckFile(f *File) []Result {
 		return append(res, run(continuousChecks, f.Continuous)...)
 	case KindPark:
 		return run(parkChecks, f.Park)
+	case KindScenario:
+		return run(scenarioChecks, f.Scenario)
 	}
 	return nil
 }
@@ -105,6 +107,12 @@ var rideChecks = []check[rideCtx]{
 	{"ride.filename", SevError, checkRideFilename},
 	{"preshow.throughput", SevError, checkPreshowThroughput},
 	{"queues.merge_phases", SevError, checkMergePhases},
+	{"queues.posted_wait", SevError, checkPostedWaitAlgorithm},
+}
+
+func checkPostedWaitAlgorithm(c rideCtx) (bool, string) {
+	a := c.queues.PostedWait.Algorithm
+	return a == "" || validPostedWait[a], fmt.Sprintf("posted_wait.algorithm %q", a)
 }
 
 func validRideID(id string) bool {

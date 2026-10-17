@@ -53,6 +53,16 @@ numbers come from `data/`. Read both before changing simulation logic.
   values live in test code (`preTuneValues`) to keep the literal-clearance bottleneck under test.
 - Data files are read-only on disk; unlock, edit, relock (`chmod u+w` / `chmod a-w`) only with approval.
 
+## Decisions log (M2 kickoff, 2026-10-17)
+- cascade_stop counts unplanned holds only: `next_occupied` at brake and station blocks. Designed waits
+  (hold_until_clear, switch_realign, min_dispatch_interval, clearance) never trigger it. The [assumed]
+  blocked_tolerance_s is calibrated against the 2,050/hr derate (pre-approved; log it in tuning-log.md).
+- Ride stop = run to next brake: trains on lift/course/launch finish to the next brake or station and stop
+  there; station work, brake transits and release delays pause and resume with their remaining time.
+- Barn swaps are scripted ops events. A swap stops the ride for swap_time_s (cause barn_swap).
+- Scripted inputs (arrivals, ops events, weather windows, failure kinds, overrides) live in a versioned
+  scenario YAML under `data/scenarios/`, validated like every other data file. M6 extends it.
+
 ## Commands
 - `go test ./...`
 - `go run ./cmd/ridesim validate [-data data]`

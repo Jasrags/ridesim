@@ -1,0 +1,20 @@
+# Minimal valid scenario fixture against test-fx-coaster.yaml. Broken variants are patches in scenario_test.go.
+schema_version: "1.0"
+scenario:
+  id: fx_scenario
+  ride_id: test.fx.coaster
+  seed: 3
+  duration_h: 4
+  warmup_min: 30
+  trains: 2
+  failures: [cascade_stop]
+  dispatch_rule: dispatch_when_ready
+  posted_wait: { algorithm: last_n_observed, last_n: 50, refresh_s: 300 }
+  arrivals:
+    - { at: "00:00", rate_per_hr: 800 }
+    - { at: "02:00", rate_per_hr: 400 }
+  ops:
+    - { at: "01:00", action: add_train }
+    - { at: "03:00", action: remove_train }
+  weather:
+    - { from: "02:30", to: "02:45" }

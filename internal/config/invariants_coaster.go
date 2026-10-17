@@ -19,6 +19,12 @@ var coasterChecks = []check[*CoasterFile]{
 	{"coaster.loop_closed", SevError, checkLoopClosed},
 	{"coaster.dispatch_interval_order", SevError, checkDispatchIntervalOrder},
 	{"coaster.barn_capacity", SevError, checkBarnCapacity},
+	{"coaster.dispatch_rule", SevError, checkDispatchRule},
+}
+
+func checkDispatchRule(c *CoasterFile) (bool, string) {
+	r := c.Station.DispatchRule
+	return validDispatchRules[r], fmt.Sprintf("dispatch_rule %q", r)
 }
 
 var validBlockKinds = map[string]bool{BlockStation: true, BlockLift: true, BlockLaunch: true, BlockCourse: true, BlockBrake: true}

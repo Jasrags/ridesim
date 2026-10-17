@@ -1,0 +1,19 @@
+# Everest baseline operating day: 5 trains, all failure kinds on, standby only. Used to calibrate the
+# real-world derate (listed 2,050/hr) and later the Queue-Times targets (~19 min average standby).
+# Confidence tags: [assumed] = our placeholder, tune later
+schema_version: "1.0"
+scenario:
+  id: everest_baseline_day
+  description: "10 h day, rope-drop surge then taper; brief stops, long downtime and cascade stops enabled"
+  ride_id: wdw.ak.expedition_everest
+  seed: 1
+  duration_h: 10
+  warmup_min: 60
+  trains: 5
+  failures: [brief_stop, long_downtime, cascade_stop]
+  arrivals:                            # [assumed] standby demand, guests/hr; shape follows park arrival_curve
+    - { at: "00:00", rate_per_hr: 2600 }
+    - { at: "01:00", rate_per_hr: 2300 }
+    - { at: "03:00", rate_per_hr: 2100 }
+    - { at: "06:00", rate_per_hr: 1900 }
+    - { at: "08:00", rate_per_hr: 1400 }

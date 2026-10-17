@@ -44,9 +44,13 @@ func Validate(ds *Dataset) *Report {
 				Detail: fmt.Sprintf("ride.id %s appears in %d file(s)", ri.ID, idCount[ri.ID]),
 			})
 		}
-		if f.Kind == KindPark {
+		switch f.Kind {
+		case KindPark:
 			fr.ID = f.Park.Park.ID
 			fr.Results = append(fr.Results, checkParkRideRefs(ds, f.Park))
+		case KindScenario:
+			fr.ID = f.Scenario.Scenario.ID
+			fr.Results = append(fr.Results, checkScenarioRide(ds, f.Scenario))
 		}
 		rep.Files = append(rep.Files, fr)
 	}
