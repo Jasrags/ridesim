@@ -1,0 +1,20 @@
+# Haunted Mansion baseline operating day: park guest mix (up to 3 per buggy, parties never share), patience
+# from the park file, accessibility holds on, chain stops and long downtime on. Standby only.
+# Confidence tags: [assumed] = our placeholder, tune later
+schema_version: "1.0"
+scenario:
+  id: hm_baseline_day
+  description: "10 h day, rope-drop surge then taper; Queue-Times target ~26 min average standby"
+  ride_id: wdw.mk.haunted_mansion
+  seed: 1
+  duration_h: 10
+  warmup_min: 60
+  failures: [chain_stop, long_downtime]
+  guests:
+    park_id: synthetic_park_v0
+  arrivals:                            # [assumed] standby demand, guests/hr
+    - { at: "00:00", rate_per_hr: 2200 }
+    - { at: "01:00", rate_per_hr: 2000 }
+    - { at: "03:00", rate_per_hr: 1900 }
+    - { at: "06:00", rate_per_hr: 1700 }
+    - { at: "08:00", rate_per_hr: 1300 }

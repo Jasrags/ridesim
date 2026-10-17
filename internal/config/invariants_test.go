@@ -222,8 +222,8 @@ func TestRealData(t *testing.T) {
 	for _, le := range ds.LoadErrors {
 		t.Errorf("load error %s: %v", le.Path, le.Err)
 	}
-	if len(ds.Files) != 13 {
-		t.Fatalf("loaded %d files, want 13 (3 rides, 1 park, 9 scenarios)", len(ds.Files))
+	if len(ds.Files) != 14 {
+		t.Fatalf("loaded %d files, want 14 (3 rides, 1 park, 10 scenarios)", len(ds.Files))
 	}
 	rep := Validate(ds)
 	for _, fr := range rep.Files {
