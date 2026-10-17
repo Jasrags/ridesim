@@ -16,8 +16,8 @@ nodes:
   - { id: everest, kind: ride, ride_id: wdw.ak.expedition_everest, appeal: 0.85, thrill: 0.80 }  # appeal/thrill [assumed]
   - { id: rnrc,    kind: ride, ride_id: wdw.dhs.rock_n_roller_coaster, appeal: 0.90, thrill: 1.00 }
   - { id: haunted_mansion, kind: ride, ride_id: wdw.mk.haunted_mansion, appeal: 0.90, thrill: 0.30 }
-  - { id: boat_ride, kind: ride_simple, capacity_per_hr: 2400, duration_s: 540, appeal: 0.70, thrill: 0.10 }   # [assumed] filler
-  - { id: flat_ride, kind: ride_simple, capacity_per_hr: 800,  duration_s: 150, appeal: 0.40, thrill: 0.40 }   # [assumed] filler
+  - { id: boat_ride, kind: ride_simple, capacity_per_hr: 2400, duration_s: 540, appeal: 0.70, thrill: 0.10, queue_capacity: 800 }   # [assumed] filler
+  - { id: flat_ride, kind: ride_simple, capacity_per_hr: 800,  duration_s: 150, appeal: 0.40, thrill: 0.40, queue_capacity: 300 }   # [assumed] filler
   - id: theater
     kind: show
     capacity_guests: 1000            # [assumed]
@@ -26,6 +26,7 @@ nodes:
     exit_edge: theater_haunted_mansion   # show lets out next to Haunted Mansion [fan: known real-world surge pattern]
     appeal: 0.50
   - { id: dining, kind: dining, seats: 600, service_time_min: { mean: 35, sd: 10 }, appeal: 0.60 }  # [assumed]
+  - { id: elsewhere, kind: elsewhere, visit_min: { mean: 45, sd: 20 }, appeal: 0.60, thrill: 0.40 }   # [assumed] the rest of the park (decision 2026-10-17)
   - { id: exit,   kind: exit }
 
 edges:                               # bidirectional; length in ft, width in ft [assumed]
@@ -40,6 +41,7 @@ edges:                               # bidirectional; length in ft, width in ft 
   - { id: theater_hub,     from: theater, to: hub,           length_ft: 450, width_ft: 35 }
   - { id: boat_haunted,    from: boat_ride, to: haunted_mansion, length_ft: 350, width_ft: 25 }
   - { id: hub_exit,        from: hub, to: exit,              length_ft: 600, width_ft: 60 }
+  - { id: hub_elsewhere,   from: hub, to: elsewhere,         length_ft: 800, width_ft: 80 }   # [assumed] many paths to the rest of the park
 
 congestion:                          # BPR-style link travel time: t = t0 * (1 + alpha * (n / C)^beta)
   free_speed_fps: 4.0                # [assumed] relaxed group walking pace
@@ -86,6 +88,15 @@ decision:
   posted_wait_refresh_s: 300         # guests act on stale posted waits; drives herding
   fatigue_per_hour: 0.06             # raises walk penalty and drives departure
   meal_windows: ["11:30-13:30", "17:30-19:30"]  # [assumed] dining utility boosted in these windows
+  meal_window_bonus: 0.8             # [assumed] added to dining utility inside a meal window, until the party has eaten
+
+lightning_lane:                      # pass issuance in park runs (decision 2026-10-17)
+  purchase_share: 0.35               # [assumed] share of parties that buy Lightning Lane
+  advance_bookings: 3                # [user] booked before the day (count [assumed]); then one more after each use or lapse
+  window_min: 60                     # [assumed] return window length
+  grace_min: 15                      # [assumed] redeemable this long after the window ends
+  inventory_share: 0.30              # [assumed] share of listed hourly capacity sold per window, per ride
+  elsewhere_share: 0.70              # [assumed] share of bookings for attractions outside the modeled rides
 
 calibration_targets:                 # [fan] Queue-Times 2026 averages, not true ground truth
   everest_avg_standby_min: 19

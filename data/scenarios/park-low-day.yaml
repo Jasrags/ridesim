@@ -1,0 +1,12 @@
+# Synthetic park, low crowd: every modeled ride runs its full model; guests are agents (M7).
+# Confidence tags: [assumed] = our placeholder
+schema_version: "1.0"
+scenario:
+  id: park_low_day
+  description: "Full park day 09:00-22:00 at low attendance; failures on"
+  park_id: synthetic_park_v0
+  seed: 1
+  duration_h: 13
+  warmup_min: 60
+  crowd_level: low
+  failures: [brief_stop, long_downtime, cascade_stop, chain_stop]
