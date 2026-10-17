@@ -31,6 +31,9 @@ type Options struct {
 
 	CascadeScope      string  // CascadeBrakesAndStations (default) or CascadeBrakesOnly
 	CascadeToleranceS float64 // overrides failures.cascade_stop.blocked_tolerance_s when > 0 (analysis only)
+
+	DispatchRule string // overrides station.dispatch_rule when set
+	PostedWait   PostedWaitOptions
 }
 
 // Hold reasons recorded in hold_start events.
@@ -132,6 +135,9 @@ type Coaster struct {
 	pendingRemove int
 	pendingAdd    int
 	swapping      bool
+
+	recentDispatch []dispatchRecord
+	recentWaits    []engine.Duration
 }
 
 var _ ride.Ride = (*Coaster)(nil)
@@ -190,6 +196,13 @@ func New(sim *engine.Sim, cfg *config.CoasterFile, opts Options) (*Coaster, erro
 	return c, nil
 }
 
+func (c *Coaster) dispatchRule() string {
+	if c.opts.DispatchRule != "" {
+		return c.opts.DispatchRule
+	}
+	return c.cfg.Station.DispatchRule
+}
+
 func stationRole(b, prev *block) role {
 	switch {
 	case b.cfg.Kind != config.BlockStation:
@@ -208,13 +221,6 @@ func (c *Coaster) ID() string { return c.cfg.Ride.ID }
 
 // Status implements ride.Ride. Failures arrive in M2, so the ride is always open.
 func (c *Coaster) Status() ride.Status { return ride.Open }
-
-// PostedWait implements ride.Ride with queue_len_over_throughput against the target dispatch
-// interval. Posted-wait algorithms are M2 work; this is the default.
-func (c *Coaster) PostedWait() engine.Duration {
-	perHr := float64(c.cfg.Trains.SeatsPerTrain) * 3600 / c.cfg.Station.TargetDispatchIntervalS
-	return engine.Seconds(float64(c.standby.Guests()) / perHr * 3600)
-}
 
 // Start places the trains and begins operating. Trains are placed one per block walking backwards
 // from the load station (LOAD, UNLOAD, the brake before unload, ...) and begin that block's work at t=0.
@@ -236,6 +242,7 @@ func (c *Coaster) Start() {
 		c.enter(t, pb)
 	}
 	c.startFailures()
+	c.startPosting()
 	c.kick()
 }
 
@@ -307,11 +314,17 @@ func (c *Coaster) startLoad(t *train) {
 	}
 	c.startWork(t, c.sampleStation(c.cfg.Station.LoadS), func() {
 		c.sim.Emit(engine.Event{Type: engine.EvLoadDone, Train: t.id, Block: t.at.cfg.ID, N: t.riders})
-		if t.riders == t.seats || c.cfg.Station.DispatchRule != config.DispatchHoldForFullOrMaxWait || c.cfg.Station.MaxWaitAfterReadyS <= 0 {
+		rule := c.dispatchRule()
+		if t.riders == t.seats || rule == config.DispatchWhenReady ||
+			(rule == config.DispatchHoldForFullOrMaxWait && c.cfg.Station.MaxWaitAfterReadyS <= 0) {
 			c.startCheck(t)
 			return
 		}
 		t.phase = phaseFillWait
+		if rule == config.DispatchHoldForFull {
+			t.work = work{gen: t.work.gen + 1} // no timeout: Arrive starts the check once the train is full
+			return
+		}
 		c.startWork(t, engine.Seconds(c.cfg.Station.MaxWaitAfterReadyS), func() { c.startCheck(t) })
 	})
 }
@@ -334,6 +347,7 @@ func (c *Coaster) board(t *train) {
 			return
 		}
 		c.standby.Pop()
+		c.recordWait(c.sim.Now().Sub(p.JoinedAt))
 		t.riders += p.Size
 		c.sim.Emit(engine.Event{Type: engine.EvBoard, Train: t.id, Block: t.at.cfg.ID, Guest: p.ID, N: p.Size})
 	}
@@ -483,6 +497,7 @@ func (c *Coaster) depart(t *train) {
 	if from == c.load {
 		c.sim.Emit(engine.Event{Type: engine.EvDispatch, Train: t.id, Block: from.cfg.ID, N: t.riders})
 		c.lastDispatch, c.dispatched = c.sim.Now(), true
+		c.recordDispatch(t.riders)
 	}
 	if from.role == roleUnload {
 		c.unloadAdvances++

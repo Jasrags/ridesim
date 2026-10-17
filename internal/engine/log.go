@@ -26,6 +26,7 @@ const (
 	EvTrainToBarn   = "train_to_barn"   // Train, N=trains in service after
 	EvTrainFromBarn = "train_from_barn" // Train, N=trains in service after
 	EvOpsRejected   = "ops_rejected"    // Info=reason
+	EvPostedWait    = "posted_wait"     // N=posted seconds, Info=algorithm
 	EvRunEnd        = "run_end"
 )
 
