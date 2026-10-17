@@ -113,6 +113,8 @@ func TestErrorChecksFailOnBrokenFixtures(t *testing.T) {
 		{"park.edge_refs", fxPark, "", "exit_edge: theater_hub", "exit_edge: nowhere"},
 		{"park.edge_refs", fxPark, "", "applies_to: [hub_coaster]", "applies_to: [hub_nowhere]"},
 		{"park.node_fields", fxPark, "", "capacity_per_hr: 100", "capacity_per_hr: 0"},
+		{"park.node_fields", fxPark, "", "capacity_per_hr: 100", "capacity_per_hr: 50"},
+		{"park.node_fields", fxPark, "", "seats: 10,", "seats: 1,"},
 		{"park.node_fields", fxPark, "", "kind: ride, ride_id: test.fx.coaster,", "kind: ride,"},
 		{"park.arrival_shares", fxPark, "", `"10": 0.4`, `"10": 0.5`},
 		{"park.party_sizes", fxPark, "", "2: 0.5", "2: 0.4"},

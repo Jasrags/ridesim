@@ -1,6 +1,7 @@
 package park
 
 import (
+	"fmt"
 	"math"
 
 	"github.com/jasrags/ridesim/internal/config"
@@ -73,8 +74,11 @@ func (ll *lightningLane) book(a *agent, from engine.Time) bool {
 	if a.passes <= 0 {
 		return false
 	}
-	rng := ll.p.sim.Stream(engine.StreamLLChoice)
-	if ll.p.elsewhere >= 0 && rng.Float64() < ll.cfg.ElsewhereShare {
+	// Each party draws from its own stream, two values per booking, so what one party books never
+	// shifts another party's draws (common random numbers across variants).
+	rng := ll.p.sim.Stream(fmt.Sprintf("%s/%d", engine.StreamLLChoice, a.id))
+	toElsewhere, x0 := rng.Float64() < ll.cfg.ElsewhereShare, rng.Float64()
+	if ll.p.elsewhere >= 0 && toElsewhere {
 		w := ll.windowAt(from)
 		if engine.Time(w)*engine.Time(ll.window) >= ll.p.closeAt {
 			return false
@@ -92,7 +96,7 @@ func (ll *lightningLane) book(a *agent, from engine.Time) bool {
 		}
 	}
 	for len(cands) > 0 {
-		x, pick := rng.Float64()*weight, len(cands)-1
+		x, pick := x0*weight, len(cands)-1
 		for i, r := range cands {
 			if x -= r.appeal; x < 0 {
 				pick = i

@@ -35,6 +35,6 @@ long_downtime ([assumed]) cost 2.7% (-> ~2,011/hr). Accepted as a 1.9% miss agai
 | 2026-10-17 | park-synthetic.yaml | lightning_lane.purchase_share | 0.35 | 0.30 | M7 calibration (approved). Brings low crowds near the 13% band. |
 
 M7 calibration result (10 seeds per crowd level, failures on, congestion walking; long downtime closes the ride and is skipped in posted
-stats with 15 min recovery, Jason's decision): medium posted avg / peak hour Everest 21.5 / 36.4 min (target 19 / 35), HM 28.8 / 50.7
-(target 26 / 42). Realized LL share Everest / RnR / HM: low 12.5 / 16.7 / 14.4%, medium 22.9 / 29.4 / 26.0%, high 30.1 / 33.9 / 36.8%
-(bands 13 / 26 / 33). HM's peak hour runs high on posted-wait spikes after chain stops and accessibility holds (docs/m7-report.md).
+stats with 15 min recovery, Jason's decision; after the code-review stream fixes): medium posted avg / peak hour Everest 23.4 / 46.1 min
+(21.2 / 35.6 without the seed-6 cascade storm; target 19 / 35), HM 29.2 / 56.0 (target 26 / 42). Realized LL share Everest / RnR / HM:
+low 12.4 / 16.4 / 14.3%, medium 23.2 / 29.1 / 26.1%, high 30.1 / 33.7 / 37.0% (bands 13 / 26 / 33). HM's peak hour runs high on posted-wait spikes after chain stops and accessibility holds (docs/m7-report.md).

@@ -9,6 +9,9 @@ import (
 	"github.com/jasrags/ridesim/internal/guest"
 )
 
+// streamSingleRider is the park-scope stream for single-rider lane rolls.
+const streamSingleRider = "single_rider"
+
 // agent is one party in the park.
 type agent struct {
 	id       int64
@@ -93,6 +96,7 @@ func (p *Park) decide(a *agent) {
 func (p *Park) leave(a *agent) {
 	p.setState(a, "")
 	a.gone = true
+	a.held = nil // unused passes go home with the party: not a lapse, and the inventory stays sold
 	p.inPark -= a.size
 	p.sim.Emit(engine.Event{Type: EvParkLeave, Guest: a.id, N: a.size})
 }
@@ -101,13 +105,13 @@ func (p *Park) leave(a *agent) {
 func (p *Park) arriveAt(a *agent, c int) {
 	act := p.acts[c]
 	lane := guest.Standby
+	// Drawn on every visit from its own stream, so toggling LL or single-rider lines never shifts choices.
+	single := p.sim.Stream(streamSingleRider).Float64() < config.DefaultSingleRiderShare
 	if b := p.heldFor(a, c, p.sim.Now()); b != nil {
 		lane = guest.LightningLane
 		p.ll.redeem(a, b)
-	} else if a.size == 1 && c != p.elsewhere {
-		if ra, ok := act.(*rideAct); ok && ra.single && p.sim.Stream(engine.StreamGuestChoice).Float64() < config.DefaultSingleRiderShare {
-			lane = guest.SingleRider
-		}
+	} else if ra, ok := act.(*rideAct); ok && a.size == 1 && ra.single && single {
+		lane = guest.SingleRider
 	}
 	a.visits++
 	party := &guest.Party{ID: a.id<<visitBits | int64(a.visits%(1<<visitBits)), Size: a.size, Patience: a.patience}

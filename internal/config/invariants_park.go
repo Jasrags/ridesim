@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"math"
 	"sort"
 	"strconv"
 	"strings"
@@ -43,8 +44,15 @@ func checkNodeIDs(p *ParkFile) (bool, string) {
 	return true, fmt.Sprintf("%d nodes, %d edges, ids unique", len(p.Nodes), len(p.Edges))
 }
 
+// RideSimpleIntervalS is the ride_simple dispatch interval [assumed]; capacity is spread over it.
+const RideSimpleIntervalS = 60
+
 func checkNodeFields(p *ParkFile) (bool, string) {
 	var bad []string
+	maxParty := 0
+	for s := range p.Guests.PartySize {
+		maxParty = max(maxParty, s)
+	}
 	entrances, exits := 0, 0
 	for _, n := range p.Nodes {
 		var miss []string
@@ -64,6 +72,8 @@ func checkNodeFields(p *ParkFile) (bool, string) {
 		case NodeRideSimple:
 			if n.CapacityPerHr <= 0 {
 				miss = append(miss, "capacity_per_hr")
+			} else if seats := int(math.Max(1, math.Round(n.CapacityPerHr*RideSimpleIntervalS/3600))); seats < maxParty {
+				bad = append(bad, fmt.Sprintf("%s: %d seats per %d s vehicle cannot take a party of %d (parties never split)", n.ID, seats, RideSimpleIntervalS, maxParty))
 			}
 			if n.DurationS <= 0 {
 				miss = append(miss, "duration_s")
@@ -85,6 +95,8 @@ func checkNodeFields(p *ParkFile) (bool, string) {
 		case NodeDining:
 			if n.Seats <= 0 {
 				miss = append(miss, "seats")
+			} else if n.Seats < maxParty {
+				bad = append(bad, fmt.Sprintf("%s: %d seats cannot take a party of %d", n.ID, n.Seats, maxParty))
 			}
 			if n.ServiceTimeMin == nil {
 				miss = append(miss, "service_time_min")

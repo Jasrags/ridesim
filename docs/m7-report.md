@@ -57,16 +57,22 @@ Approved `[assumed]` park-file changes are in `docs/tuning-log.md`:
 | | Everest posted avg / peak hour | HM posted avg / peak hour |
 |---|---|---|
 | target [fan] (Queue-Times) | 19 / 35 min | 26 / 42 min |
-| sim, medium | 21.5 / 36.4 | 28.8 / 50.7 |
-| sim, low / high | 8.2 / 15.6, 29.0 / 47.0 | 12.9 / 21.9, 38.7 / 60.5 |
+| sim, medium (10 seeds) | 23.4 / 46.1 | 29.2 / 56.0 |
+| sim, medium without seed 6 (cascade storm, below) | 21.2 / 35.6 | 28.6 / 50.0 |
+| sim, low / high | 9.2 / 30.0, 28.4 / 44.7 | 12.9 / 22.3, 39.0 / 59.1 |
 | before calibration (medium, 3 seeds) | 16.3 / 23.7 | 20.8 / 26.4 |
 
 | Realized LL share (Everest / RnR / HM) | low | medium | high |
 |---|---|---|---|
 | band [fan] | 13% | 26% | 33% |
-| sim | 12.5 / 16.7 / 14.4% | 22.9 / 29.4 / 26.0% | 30.1 / 33.9 / 36.8% |
+| sim | 12.4 / 16.4 / 14.3% | 23.2 / 29.1 / 26.1% | 30.1 / 33.7 / 37.0% |
 
-- Averages run 8-13% above target. Jason chose to accept that over tuning into seed noise.
+- Numbers are after the code-review fixes below, which change random draws. Without the seed-6 outlier, averages run
+  8-12% above target and Everest's peak hour is on target. Jason chose to accept that over tuning into seed noise.
+- **Cascade storms after a stop (seed 6).** A brief stop leaves Everest's trains stacked. Each restart holds a train
+  at a course brake for more than 5 s, so it cascades again (45 s reset): 72 cascades in 2 h, a posted wait of
+  556 min, and 1,522 riders/hr for the day. It is the same coaster-model mechanism as the startup burst below. It
+  hits about 1 park day in 10, and is rare in ride-only runs.
 - **HM's peak hour is 20% high.** Chain stops and accessibility holds make `queue_len_over_throughput` spike,
   because it divides the queue by the last 15 minutes' throughput. Daily posted maxima on HM reach 80-200 min.
   This is a posted-algorithm effect from M2, not a park effect.
@@ -74,6 +80,12 @@ Approved `[assumed]` park-file changes are in `docs/tuning-log.md`:
   - giving `elsewhere` a wait that follows the rides' waits: the right effect on peaks, but it pushed so many
     guests to dining that `hub_dining` gridlocked;
   - having guests skip options whose wait exceeds their patience: no measurable effect.
+- **Code-review fixes:**
+  - The single-rider roll and Lightning Lane bookings now draw from their own streams (per party for LL), a fixed
+    number of draws each, so variants stay paired.
+  - Validation rejects a `ride_simple` vehicle or a dining room that cannot seat the largest party (it would block
+    the line forever).
+  - Parties that go home drop their passes and no longer count as lapses.
 - **Bug found during calibration and fixed** (9547a30): every leave from a jammed edge retried every waiter and
   logged another `edge_blocked`. One jam produced 2.7 million events and a 2 GB log. The baseline never jammed.
 
@@ -86,7 +98,7 @@ Approved `[assumed]` park-file changes are in `docs/tuning-log.md`:
 - **Lightning Lane return clustering:**
   - 16.5% of LL guests arrive in the first 5 minutes of their 60-minute window, about twice an even spread.
   - Arrivals then decay steadily to 4% in the last 5 minutes.
-  - About 17% of bookings lapse, about 21% on high days.
+  - About 16% of bookings lapse at medium (19% low, 13% high).
 - **Breakdown ripple: weak.** Same seed with and without long downtime (common random numbers), 7 Everest closures
   plus 30 min after each:
   - the flat ride gains 5%;
@@ -108,8 +120,9 @@ Approved `[assumed]` park-file changes are in `docs/tuning-log.md`:
     30-47 times in the first hour.
   - Warmup hides it from metrics, but in park runs rope-drop guests see Everest at about half capacity until it
     clears.
-  - **Recommended follow-up:** arm cascade detection only after each train's first full lap, or insert trains
-    from the barn at open.
+  - **Recommended follow-up** (also fixes the mid-day storms above): treat holds while a stacked ride recovers
+    from a stop, or from opening, as planned and not cascades. For example, arm cascade detection again only after
+    each train has completed one lap since the last resume. It changes coaster behaviour, so it needs Jason's call.
 
 ## Decisions (CLAUDE.md, M7)
 - `elsewhere` sink for the rest of the park.

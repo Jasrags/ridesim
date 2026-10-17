@@ -252,3 +252,19 @@ func TestSpillbackSlowsTheAdjoiningEdge(t *testing.T) {
 		t.Fatalf("overflow %d guests: crossing %v before, %v after; want slower", over, before, after)
 	}
 }
+
+// Passes held by a party that has gone home never lapse afterwards.
+func TestNoLapseAfterLeaving(t *testing.T) {
+	_, sim := runPark(t, 2, Options{Attendance: 1500}, 3*engine.Hour)
+	left := map[int64]engine.Time{}
+	for _, e := range sim.Log.Events() {
+		switch e.Type {
+		case EvParkLeave:
+			left[e.Guest] = e.T
+		case EvLLLapse:
+			if at, ok := left[e.Guest]; ok && e.T >= at {
+				t.Fatalf("guest %d lapsed a pass at %v after leaving at %v", e.Guest, e.T, at)
+			}
+		}
+	}
+}

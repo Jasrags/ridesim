@@ -88,8 +88,8 @@ type simpleRide struct {
 	trip  int
 }
 
-// simpleInterval is the ride_simple dispatch interval [assumed]; capacity is spread over it.
-const simpleInterval = 60 * engine.Second
+// simpleInterval is the ride_simple dispatch interval; validation checks a vehicle fits the largest party.
+const simpleInterval = config.RideSimpleIntervalS * engine.Second
 
 func newSimpleRide(sim *engine.Sim, n *Node) *simpleRide {
 	s := &simpleRide{n: n, sim: sim, seats: int(math.Max(1, math.Round(n.CapacityPerHr*simpleInterval.Seconds()/3600)))}
