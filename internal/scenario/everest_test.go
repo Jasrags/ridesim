@@ -216,3 +216,33 @@ func TestLittlesLawSurgeAndDrain(t *testing.T) {
 	}
 	t.Logf("max queue %d, wait mean %.1f min p95 %.1f; L %.1f vs lambda*W %.1f (%.2f%%)", m.QueueMax, m.Wait.Mean/60, m.Wait.P95/60, m.Little.L, m.Little.LambdaW, m.Little.ErrPct)
 }
+
+// Regression: a train that becomes held later in the same kick pass than the shadow-room train must
+// still trigger the yield. LIFT +10% (49.5 s) once deadlocked the authored data with 5 trains.
+func TestShadowHoldYieldsRegardlessOfEvaluationOrder(t *testing.T) {
+	c := loadEverest(t)
+	c.Blocks = append([]config.Block(nil), c.Blocks...)
+	for i := range c.Blocks {
+		if c.Blocks[i].ID == "LIFT" {
+			d := *c.Blocks[i].TransitS
+			d.Mean = 49.5
+			c.Blocks[i].TransitS = &d
+		}
+	}
+	_, m := run(t, c, 5, 1, true, 4, saturated)
+	if m.Dispatches < 150 {
+		t.Fatalf("%d dispatches in 3 h: deadlocked", m.Dispatches)
+	}
+}
+
+// No circular wait across seeds with stochastic times, as authored and with the proposed tuning.
+func TestNoDeadlockStochastic(t *testing.T) {
+	for _, cfg := range []*config.CoasterFile{loadEverest(t), proposedTuning(loadEverest(t))} {
+		for seed := uint64(1); seed <= 5; seed++ {
+			_, m := run(t, cfg, 5, seed, false, 9, saturated)
+			if hours := 8.0; float64(m.Dispatches) < hours*3600/90 {
+				t.Errorf("seed %d: %d dispatches in %.0f h: stalled", seed, m.Dispatches, hours)
+			}
+		}
+	}
+}

@@ -359,6 +359,7 @@ func (c *Coaster) tryExit(t *train) {
 			}
 			t.held, t.holdReason = true, reason
 			c.sim.Emit(engine.Event{Type: engine.EvHoldStart, Train: t.id, Block: t.at.cfg.ID, Info: reason})
+			c.rekick = true // a newly held train can let a hold_until_clear yield (blockingUpstream)
 		}
 		if retryAt > c.sim.Now() {
 			c.sim.At(retryAt, c.kick)
