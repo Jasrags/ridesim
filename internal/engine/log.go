@@ -35,14 +35,15 @@ const (
 
 // Event is one observable change. Field order is fixed, so JSON encoding is byte-stable.
 type Event struct {
-	T     Time   `json:"t"`
-	Type  string `json:"type"`
-	Src   string `json:"src,omitempty"`   // emitting scope (park node id); "" for single-ride runs
-	Train int    `json:"train,omitempty"` // 1-based; 0 means none
-	Block string `json:"block,omitempty"`
-	Guest int64  `json:"guest,omitempty"` // 1-based; 0 means none
-	N     int    `json:"n,omitempty"`
-	Info  string `json:"info,omitempty"`
+	T     Time     `json:"t"`
+	Type  string   `json:"type"`
+	Src   string   `json:"src,omitempty"`   // emitting scope (park node id); "" for single-ride runs
+	Train int      `json:"train,omitempty"` // 1-based; 0 means none
+	Block string   `json:"block,omitempty"`
+	Guest int64    `json:"guest,omitempty"` // 1-based; 0 means none
+	N     int      `json:"n,omitempty"`
+	D     Duration `json:"d,omitempty"` // a duration the event starts (walk time on an edge)
+	Info  string   `json:"info,omitempty"`
 }
 
 // Log is the append-only event log.
