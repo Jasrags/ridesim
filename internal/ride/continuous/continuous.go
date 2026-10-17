@@ -213,6 +213,9 @@ func (r *Ride) dispatch(id, n int, done *guest.Party) {
 // Stopped reports whether the chain is halted.
 func (r *Ride) Stopped() bool { return r.stopCount > 0 }
 
+// Closed reports a long downtime in progress: the sign says closed (decision 2026-10-17).
+func (r *Ride) Closed() bool { return r.stopDepth[CauseLongDowntime] > 0 }
+
 // Stop halts the whole chain for cause. Causes nest.
 func (r *Ride) Stop(cause string) {
 	r.sim.Emit(engine.Event{Type: engine.EvRideStop, Info: cause})

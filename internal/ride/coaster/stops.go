@@ -19,6 +19,9 @@ const (
 // Stopped reports whether any stop cause is active.
 func (c *Coaster) Stopped() bool { return c.stopCount > 0 }
 
+// Closed reports a long downtime in progress: the sign says closed (decision 2026-10-17).
+func (c *Coaster) Closed() bool { return c.stopDepth[CauseLongDowntime] > 0 }
+
 // Stop adds an active stop cause. Causes nest: the ride runs again only when every cause has resumed.
 // On the first cause, trains at stations and brakes pause where they are; trains on lifts and course
 // blocks run on to the next brake or station (decision 2026-10-17).

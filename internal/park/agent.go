@@ -211,6 +211,9 @@ func (p *Park) choose(a *agent) int {
 			continue
 		}
 		n := act.node()
+		if p.closed[n.Idx] {
+			continue
+		}
 		walkS := p.g.Distance(a.at, n.Idx) / p.cfg.Congestion.FreeSpeedFps
 		eta := now.Add(engine.Seconds(walkS))
 		waitMin := p.board[n.Idx].Seconds() / 60

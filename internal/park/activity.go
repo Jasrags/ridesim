@@ -48,10 +48,12 @@ type hostedRide interface {
 	ride.Ride
 	Start()
 	WaitingGuests() int
+	Closed() bool // long downtime: the sign says closed
 }
 
 type rideAct struct {
 	n        *Node
+	sim      *engine.Sim // the ride's scope
 	r        hostedRide
 	info     *config.RideInfo
 	capacity int  // physical standby capacity
@@ -59,11 +61,21 @@ type rideAct struct {
 	single   bool // single-rider line enabled
 }
 
-func (a *rideAct) node() *Node                           { return a.n }
-func (a *rideAct) posted() engine.Duration               { return a.r.PostedWait() }
-func (a *rideAct) visit(p *guest.Party, lane guest.Lane) { a.r.Arrive(p, lane) }
-func (a *rideAct) queueGuests() int                      { return a.r.WaitingGuests() }
-func (a *rideAct) queueCapacity() int                    { return a.capacity }
+func (a *rideAct) node() *Node             { return a.n }
+func (a *rideAct) posted() engine.Duration { return a.r.PostedWait() }
+func (a *rideAct) closed() bool            { return a.r.Closed() }
+
+// visit admits p; a party reaching a closed ride (it was open on the board they read) turns away.
+func (a *rideAct) visit(p *guest.Party, lane guest.Lane) {
+	if a.r.Closed() {
+		a.sim.Emit(engine.Event{Type: engine.EvBalk, Guest: p.ID, N: p.Size, Info: "closed"})
+		p.Exited(guest.Balked)
+		return
+	}
+	a.r.Arrive(p, lane)
+}
+func (a *rideAct) queueGuests() int   { return a.r.WaitingGuests() }
+func (a *rideAct) queueCapacity() int { return a.capacity }
 
 // simpleRide is a ride_simple node: a vehicle every simpleInterval takes capacity x interval guests in
 // line order (parties never split, nobody skips), rides duration_s and unloads. Guests balk on the

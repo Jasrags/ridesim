@@ -205,3 +205,21 @@ func TestJammedEdgeQueuesInOrderAndLogsOnce(t *testing.T) {
 		}
 	}
 }
+
+// A ride the board shows closed (long downtime) is never chosen.
+func TestClosedRideIsNotChosen(t *testing.T) {
+	ds, pf := fixtureDataset(t)
+	p, err := New(engine.New(5), ds, pf, Options{Attendance: 1, NoLightningLane: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	c := p.g.Node("coaster").Idx
+	p.closed[c] = true
+	a := &agent{id: 1, size: 2, thrill: 0.5, at: p.g.Node("hub").Idx, count: make([]int, len(p.g.Nodes)),
+		meals: make([]bool, len(p.meals)), llBooked: make([]bool, len(p.g.Nodes))}
+	for i := 0; i < 500; i++ {
+		if p.choose(a) == c {
+			t.Fatal("chose a closed ride")
+		}
+	}
+}

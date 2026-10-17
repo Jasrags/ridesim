@@ -118,3 +118,7 @@ numbers come from `data/`. Read both before changing simulation logic.
   Ride files are not touched.
 - One simulation hosts many rides: `Sim.Scope(src)` stamps events with `src` (the park node id) and gives each
   scope its own RNG streams (`src/name`), so a ride's randomness does not depend on its neighbours.
+- Long downtime closes a ride (M7, Jason's decision): the board shows it closed so guests do not choose it, guests who
+  arrive anyway turn away (balk, info closed), and posted-wait stats skip the closure plus 15 min after reopening, as
+  Queue-Times does. Brief stops are unchanged.
+- M7 calibration targets the medium crowd (Jason's decision); the approved changes are in tuning-log.md.

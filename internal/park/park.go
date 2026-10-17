@@ -41,6 +41,7 @@ type Park struct {
 
 	acts      []activity        // by node index; nil for gate, plazas and exit
 	board     []engine.Duration // posted waits guests see, by node index
+	closed    []bool            // rides the board shows closed (long downtime), by node index
 	ll        *lightningLane
 	entrance  int
 	exit      int
@@ -66,7 +67,7 @@ func New(root *engine.Sim, ds *config.Dataset, cfg *config.ParkFile, opts Option
 		return nil, err
 	}
 	p := &Park{root: root, sim: root.Scope(Scope), cfg: cfg, opts: opts, g: g, tt: NewTravelTime(cfg),
-		acts: make([]activity, len(g.Nodes)), board: make([]engine.Duration, len(g.Nodes)), elsewhere: -1,
+		acts: make([]activity, len(g.Nodes)), board: make([]engine.Duration, len(g.Nodes)), closed: make([]bool, len(g.Nodes)), elsewhere: -1,
 		closeAt: engine.Time(engine.Seconds(float64(cfg.Park.CloseHour-cfg.Park.OpenHour) * 3600)), states: map[string]int{}}
 	openS := float64(cfg.Park.OpenHour * 3600)
 	for _, w := range cfg.Decision.MealWindows {
@@ -134,7 +135,7 @@ func (p *Park) hostRide(ds *config.Dataset, sim *engine.Sim, n *Node) (*rideAct,
 	if rf == nil {
 		return nil, fmt.Errorf("park node %s: ride %s not found", n.ID, n.RideID)
 	}
-	a := &rideAct{n: n, info: rf.RideInfo()}
+	a := &rideAct{n: n, sim: sim, info: rf.RideInfo()}
 	failures := func(allowed ...string) []string {
 		var out []string
 		for _, f := range p.opts.Failures {
@@ -222,6 +223,9 @@ func (p *Park) Start() {
 		for i, a := range p.acts {
 			if a != nil {
 				p.board[i] = a.posted()
+			}
+			if ra, ok := a.(*rideAct); ok {
+				p.closed[i] = ra.closed()
 			}
 		}
 		p.sim.After(engine.Seconds(p.cfg.Decision.PostedWaitRefreshS), refresh)

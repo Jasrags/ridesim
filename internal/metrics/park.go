@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/jasrags/ridesim/internal/config"
 	"github.com/jasrags/ridesim/internal/engine"
 	"github.com/jasrags/ridesim/internal/park"
 )
@@ -124,6 +125,7 @@ func postedStats(evs []engine.Event, from, to engine.Time) (mean, peak float64) 
 		v  float64
 	}
 	var segs []seg
+	closed := closedSpans(evs)
 	for _, e := range evs {
 		if e.Type == engine.EvPostedWait {
 			segs = append(segs, seg{e.T, float64(e.N) / 60})
@@ -132,9 +134,8 @@ func postedStats(evs []engine.Event, from, to engine.Time) (mean, peak float64) 
 	if len(segs) == 0 {
 		return 0, 0
 	}
-	// integral of the step function over [a, b)
-	area := func(a, b engine.Time) float64 {
-		sum := 0.0
+	// integral of the step function and the open time over [a, b), skipping closed spans
+	area := func(a, b engine.Time) (sum, open float64) {
 		for i, s := range segs {
 			next := to
 			if i+1 < len(segs) {
@@ -142,19 +143,66 @@ func postedStats(evs []engine.Event, from, to engine.Time) (mean, peak float64) 
 			}
 			lo, hi := max(a, s.at), min(b, next)
 			if hi > lo {
-				sum += s.v * hi.Sub(lo).Seconds()
+				d := hi.Sub(lo).Seconds() - overlap(closed, lo, hi)
+				sum += s.v * d
+				open += d
 			}
 		}
-		return sum
+		return sum, open
 	}
-	mean = area(from, to) / to.Sub(from).Seconds()
+	if sum, open := area(from, to); open > 0 {
+		mean = sum / open
+	}
 	for h := from; h < to; h = h.Add(engine.Hour) {
-		hi := min(h.Add(engine.Hour), to)
-		if m := area(h, hi) / hi.Sub(h).Seconds(); m > peak {
-			peak = m
+		if sum, open := area(h, min(h.Add(engine.Hour), to)); open > 0 && sum/open > peak {
+			peak = sum / open
 		}
 	}
 	return mean, peak
+}
+
+// reopenRecovery is how long after a long downtime the posted wait is still skipped: the throughput
+// window behind queue_len_over_throughput needs that long to refill (decision 2026-10-17).
+const reopenRecovery = 15 * engine.Minute
+
+type span struct{ from, to engine.Time }
+
+// closedSpans are long-downtime closures plus the recovery after each (Queue-Times records a closure,
+// not a wait). Nested stops of the same cause close once.
+func closedSpans(evs []engine.Event) []span {
+	var out []span
+	depth, since := 0, engine.Time(0)
+	for _, e := range evs {
+		if e.Info != config.FailLongDowntime {
+			continue
+		}
+		switch e.Type {
+		case engine.EvRideStop:
+			if depth == 0 {
+				since = e.T
+			}
+			depth++
+		case engine.EvRideResume:
+			if depth--; depth == 0 {
+				out = append(out, span{since, e.T.Add(reopenRecovery)})
+			}
+		}
+	}
+	if depth > 0 {
+		out = append(out, span{since, engine.Time(math.MaxInt64)})
+	}
+	return out
+}
+
+// overlap is the seconds of [lo, hi) covered by spans.
+func overlap(spans []span, lo, hi engine.Time) float64 {
+	sum := 0.0
+	for _, s := range spans {
+		if a, b := max(lo, s.from), min(hi, s.to); b > a {
+			sum += b.Sub(a).Seconds()
+		}
+	}
+	return sum
 }
 
 func (r *ParkReport) in(t engine.Time) bool { return t >= r.WindowStart && t <= r.WindowEnd }
