@@ -71,6 +71,7 @@ numbers come from `data/`. Read both before changing simulation logic.
 - `go run ./cmd/ridesim report -log out/events.jsonl`
 - `go run ./cmd/ridesim run -scenario data/scenarios/everest-baseline-day.yaml`
 - `go run ./cmd/ridesim study -file data/studies/everest-operations.yaml -json out/study.json`
+- `go run ./cmd/ridesim run -scenario data/scenarios/park-medium-day.yaml -log out/park.jsonl` (park day, M7)
 
 ## Decisions log (M3 kickoff, 2026-10-17)
 - Rock 'n' Roller max_in_service 5 -> 4 [fan] (web summary: a 5th train stacks). The spec's "five give
@@ -122,3 +123,5 @@ numbers come from `data/`. Read both before changing simulation logic.
   arrive anyway turn away (balk, info closed), and posted-wait stats skip the closure plus 15 min after reopening, as
   Queue-Times does. Brief stops are unchanged.
 - M7 calibration targets the medium crowd (Jason's decision); the approved changes are in tuning-log.md.
+- Fatigue raises the walk penalty only; departure follows stay_hours (Jason's decision). Fatigue-driven departure
+  is a later refinement. Results, gaps and the recommended startup-cascade follow-up are in docs/m7-report.md.

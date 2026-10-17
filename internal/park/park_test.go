@@ -223,3 +223,32 @@ func TestClosedRideIsNotChosen(t *testing.T) {
 		}
 	}
 }
+
+// A ride queue past its physical capacity narrows the adjoining walkway, so crossing it takes longer.
+func TestSpillbackSlowsTheAdjoiningEdge(t *testing.T) {
+	ds, pf := fixtureDataset(t)
+	sim := engine.New(1)
+	p, err := New(sim, ds, pf, Options{Attendance: 1, NoLightningLane: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	e := p.g.Edge("hub_coaster")
+	ra := p.acts[p.g.Node("coaster").Idx].(*rideAct)
+	if e.spill == nil || ra.queueCapacity() <= 0 {
+		t.Fatal("hub_coaster should spill from the coaster queue")
+	}
+	cross := func() engine.Duration {
+		p.tt.Enter(e, 50) // a crowd already on the walkway
+		d, _ := p.tt.Enter(e, 2)
+		p.tt.Leave(e, 52)
+		return d
+	}
+	before := cross()
+	for i := int64(1); i <= int64(ra.queueCapacity())/2+200; i++ { // parties of 2: overflow by ~400 guests
+		ra.visit(&guest.Party{ID: i, Size: 2}, guest.Standby)
+	}
+	after := cross()
+	if over := ra.queueGuests() - ra.queueCapacity(); over < 300 || after <= before {
+		t.Fatalf("overflow %d guests: crossing %v before, %v after; want slower", over, before, after)
+	}
+}

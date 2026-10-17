@@ -86,7 +86,7 @@ decision:
     repeat_penalty: 0.8              # already ridden today
     ll_return_window_bonus: 0.5
   posted_wait_refresh_s: 300         # guests act on stale posted waits; drives herding
-  fatigue_per_hour: 0.06             # raises walk penalty and drives departure
+  fatigue_per_hour: 0.06             # raises the walk penalty (departure follows stay_hours; fatigue-driven departure is a later refinement)
   meal_windows: ["11:30-13:30", "17:30-19:30"]  # [assumed] dining utility boosted in these windows
   meal_window_bonus: 0.8             # [assumed] added to dining utility inside a meal window, until the party has eaten
 
