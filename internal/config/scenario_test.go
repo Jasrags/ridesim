@@ -29,6 +29,10 @@ func TestScenarioErrorChecks(t *testing.T) {
 		{"scenario.enums", "failures: [cascade_stop]", "failures: [meteor]"},
 		{"scenario.enums", "dispatch_rule: dispatch_when_ready", "dispatch_rule: yolo"},
 		{"scenario.enums", "algorithm: last_n_observed", "algorithm: vibes"},
+		{"scenario.guests", "party_size: { 1: 0.5, 2: 0.5 }", "party_size: { 1: 0.5, 2: 0.4 }"},
+		{"scenario.guests", "party_size: { 1: 0.5, 2: 0.5 }", "party_size: { 0: 0.5, 2: 0.5 }"},
+		{"scenario.guests", "single_rider_share: 0.1", "single_rider_share: 1.5"},
+		{"scenario.guests", "patience_min: { mean: 30, sd: 5 }", "patience_min: { mean: 0, sd: 5 }"},
 	}
 	for _, c := range cases {
 		t.Run(c.check+"/"+c.new, func(t *testing.T) {
@@ -47,6 +51,7 @@ func TestScenarioRideRefs(t *testing.T) {
 		{"ops exceed max", fxScenario, "trains: 2", "trains: 3"},
 		{"ops need barn", fxCoaster, "barn: { location: after_station, storage_bays: 3, swap_time_s: { mean: 100, sd: 10 } }\n", ""},
 		{"failure not configured", fxScenario, "failures: [cascade_stop]", "failures: [brief_stop]"},
+		{"unknown park", fxScenario, "single_rider_share: 0.1", "single_rider_share: 0.1\n    park_id: nowhere"},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {

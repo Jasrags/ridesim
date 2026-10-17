@@ -63,6 +63,11 @@ func FromFile(ds *config.Dataset, f *config.ScenarioFile) (CoasterRun, error) {
 	if pw := s.PostedWait; pw != nil {
 		r.PostedWait = coaster.PostedWaitOptions{Algorithm: pw.Algorithm, PaddingPct: pw.PaddingPct, LastN: pw.LastN, RefreshS: pw.RefreshS}
 	}
+	prof, err := guestProfile(ds, rf.Coaster, s.Guests)
+	if err != nil {
+		return CoasterRun{}, fmt.Errorf("scenario %s: %w", s.ID, err)
+	}
+	r.Guests = prof
 	for _, a := range s.Arrivals {
 		at, err := off(a.At)
 		if err != nil {
@@ -145,6 +150,39 @@ func (r CoasterRun) Run() (*engine.Log, error) {
 	sim.RunUntil(end)
 	sim.Emit(engine.Event{Type: engine.EvRunEnd, N: c.QueueGuests()})
 	return sim.Log, nil
+}
+
+// guestProfile resolves a scenario guests section against the park file and ride.
+func guestProfile(ds *config.Dataset, ride *config.CoasterFile, g *config.ScenarioGuests) (guest.Profile, error) {
+	if g == nil {
+		return guest.Profile{}, nil
+	}
+	var prof guest.Profile
+	sizes, patience := g.PartySize, g.PatienceMin
+	if g.ParkID != "" {
+		park := ds.Park(g.ParkID)
+		if park == nil {
+			return prof, fmt.Errorf("park %s not found", g.ParkID)
+		}
+		if len(sizes) == 0 {
+			sizes = park.Guests.PartySize
+		}
+		if patience == nil {
+			p := park.Guests.PatienceMin
+			patience = &p
+		}
+	}
+	prof.PartySizes = guest.PartySizesFrom(sizes)
+	if g.Abandonment == nil || *g.Abandonment {
+		prof.PatienceMin = patience
+	}
+	if ride.Queues.SingleRider.Enabled {
+		prof.SingleRiderShare = config.DefaultSingleRiderShare
+		if g.SingleRiderShare != nil {
+			prof.SingleRiderShare = *g.SingleRiderShare
+		}
+	}
+	return prof, nil
 }
 
 func curveString(c guest.Curve) string {

@@ -18,3 +18,7 @@ scenario:
     - { at: "03:00", action: remove_train }
   weather:
     - { from: "02:30", to: "02:45" }
+  guests:
+    party_size: { 1: 0.5, 2: 0.5 }
+    single_rider_share: 0.1
+    patience_min: { mean: 30, sd: 5 }

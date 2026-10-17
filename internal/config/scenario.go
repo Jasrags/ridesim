@@ -60,6 +60,20 @@ type Scenario struct {
 	Arrivals     []ArrivalStep       `yaml:"arrivals"`
 	Ops          []OpsEvent          `yaml:"ops"`
 	Weather      []WeatherWindow     `yaml:"weather"`
+	Guests       *ScenarioGuests     `yaml:"guests"`
+}
+
+// DefaultSingleRiderShare is used when a ride has a single-rider line and the scenario gives no share.
+const DefaultSingleRiderShare = 0.05 // [assumed]
+
+// ScenarioGuests describes who arrives. Missing party sizes and patience come from the park file named
+// by ParkID; without a guests section arrivals are single guests with unlimited patience.
+type ScenarioGuests struct {
+	ParkID           string          `yaml:"park_id"`
+	PartySize        map[int]float64 `yaml:"party_size"`
+	SingleRiderShare *float64        `yaml:"single_rider_share"`
+	PatienceMin      *Dist           `yaml:"patience_min"`
+	Abandonment      *bool           `yaml:"abandonment"` // false disables balking and reneging; default true
 }
 
 // ScenarioPostedWait overrides the ride's posted-wait settings. Zero fields keep the defaults.
@@ -112,6 +126,46 @@ var scenarioChecks = []check[*ScenarioFile]{
 	{"scenario.ops", SevError, checkScenarioOps},
 	{"scenario.weather", SevError, checkScenarioWeather},
 	{"scenario.enums", SevError, checkScenarioEnums},
+	{"scenario.guests", SevError, checkScenarioGuests},
+}
+
+func checkScenarioGuests(f *ScenarioFile) (bool, string) {
+	g := f.Scenario.Guests
+	if g == nil {
+		return true, "no guests section: single guests, unlimited patience"
+	}
+	if len(g.PartySize) > 0 {
+		sum := 0.0
+		for size, w := range g.PartySize {
+			if size < 1 || w < 0 {
+				return false, fmt.Sprintf("party_size %d: %g must be a size >= 1 with weight >= 0", size, w)
+			}
+			sum += w
+		}
+		if !approxEqual(sum, 1, shareTolerance) {
+			return false, fmt.Sprintf("party_size shares sum to %.3f, want 1", sum)
+		}
+	}
+	if s := g.SingleRiderShare; s != nil && (*s < 0 || *s > 1) {
+		return false, fmt.Sprintf("single_rider_share %g outside 0..1", *s)
+	}
+	if p := g.PatienceMin; p != nil && (p.Mean <= 0 || p.SD < 0) {
+		return false, fmt.Sprintf("patience_min mean %g must be > 0 and sd >= 0", p.Mean)
+	}
+	if g.ParkID == "" && len(g.PartySize) == 0 && g.PatienceMin == nil && g.SingleRiderShare == nil {
+		return false, "guests section is empty; give park_id or explicit values"
+	}
+	return true, fmt.Sprintf("park_id %q", g.ParkID)
+}
+
+// Park returns the loaded park file with the given id, or nil.
+func (d *Dataset) Park(id string) *ParkFile {
+	for _, f := range d.Files {
+		if f.Kind == KindPark && f.Park.Park.ID == id {
+			return f.Park
+		}
+	}
+	return nil
 }
 
 func checkScenarioBasics(f *ScenarioFile) (bool, string) {
@@ -273,6 +327,9 @@ func checkScenarioRide(ds *Dataset, f *ScenarioFile) Result {
 			(k == FailCascadeStop && c.Failures.CascadeStop == nil) {
 			return fail("failure %s enabled but not configured in %s", k, rf.Path)
 		}
+	}
+	if g := s.Guests; g != nil && g.ParkID != "" && ds.Park(g.ParkID) == nil {
+		return fail("guests.park_id %s not found", g.ParkID)
 	}
 	r.Status, r.Detail = StatusPass, fmt.Sprintf("%s (%s), %d trains", s.RideID, rf.Path, trains)
 	return r
