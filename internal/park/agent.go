@@ -145,14 +145,29 @@ func (p *Park) walkEdges(a *agent, route []*Edge, then func()) {
 		return
 	}
 	e := route[0]
-	p.setState(a, "walking")
-	d, ok := p.tt.Enter(e, a.size)
-	if !ok {
+	if len(e.wait) > 0 || !p.cross(a, route, then) {
+		// At jam density (or others already waiting): wait in line at the edge entrance, logged once.
 		p.setState(a, "edge_wait")
 		p.sim.Emit(engine.Event{Type: EvEdgeBlocked, Guest: a.id, Block: e.ID, N: a.size})
-		e.wait = append(e.wait, func() { p.walkEdges(a, route, then) })
-		return
+		e.wait = append(e.wait, waiter{a, route, then})
 	}
+}
+
+// waiter is a party waiting to enter an edge at jam density.
+type waiter struct {
+	a     *agent
+	route []*Edge
+	then  func()
+}
+
+// cross enters route[0] if it has room and schedules the far end; false when the edge is jammed.
+func (p *Park) cross(a *agent, route []*Edge, then func()) bool {
+	e := route[0]
+	d, ok := p.tt.Enter(e, a.size)
+	if !ok {
+		return false
+	}
+	p.setState(a, "walking")
 	p.sim.Emit(engine.Event{Type: EvWalk, Guest: a.id, Block: e.ID, N: a.size, D: d})
 	p.sim.After(d, func() {
 		p.tt.Leave(e, a.size)
@@ -160,17 +175,17 @@ func (p *Park) walkEdges(a *agent, route []*Edge, then func()) {
 		p.wake(e)
 		p.walkEdges(a, route[1:], then)
 	})
+	return true
 }
 
-// wake retries parties waiting to enter e, in arrival order.
+// wake admits parties waiting at e in arrival order, stopping at the first that still does not fit.
 func (p *Park) wake(e *Edge) {
-	if len(e.wait) == 0 {
-		return
-	}
-	waiting := e.wait
-	e.wait = nil
-	for _, retry := range waiting {
-		retry()
+	for len(e.wait) > 0 {
+		w := e.wait[0]
+		if !p.cross(w.a, w.route, w.then) {
+			return
+		}
+		e.wait = e.wait[1:]
 	}
 }
 

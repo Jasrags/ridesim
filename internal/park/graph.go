@@ -26,7 +26,7 @@ type Edge struct {
 
 	guests int        // guests on the edge now (both directions)
 	spill  func() int // guests of the adjoining ride's queue beyond its physical capacity; nil = none
-	wait   []func()   // parties waiting to enter while the edge is at jam density (FIFO)
+	wait   []waiter   // parties waiting to enter while the edge is at jam density (FIFO)
 }
 
 // Other is the end of e that is not n.

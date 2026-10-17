@@ -168,3 +168,40 @@ func TestChoiceAvoidsLongPostedWait(t *testing.T) {
 		t.Fatalf("coaster share: %.2f at 0 min posted, %.2f at 60 min", short, long)
 	}
 }
+
+// A jammed edge queues parties FIFO, logs each block once, and admits them as space frees.
+func TestJammedEdgeQueuesInOrderAndLogsOnce(t *testing.T) {
+	ds, pf := fixtureDataset(t)
+	sim := engine.New(1)
+	p, err := New(sim, ds, pf, Options{Attendance: 1})
+	if err != nil {
+		t.Fatal(err)
+	}
+	e := p.g.Edge("hub_dining") // 100 x 10 ft: jam at 300 guests
+	if _, ok := p.tt.Enter(e, 300); !ok {
+		t.Fatal("could not fill the edge")
+	}
+	hub := p.g.Node("hub").Idx
+	var arrived []int64
+	for i := int64(1); i <= 5; i++ {
+		a := &agent{id: i, size: 2, at: hub, count: make([]int, len(p.g.Nodes))}
+		p.walkEdges(a, []*Edge{e}, func() { arrived = append(arrived, a.id) })
+	}
+	for i := 0; i < 50; i++ { // churn: others leave and re-enter, which must not re-log the waiters
+		p.tt.Leave(e, 1)
+		p.wake(e)
+		p.tt.Enter(e, 1)
+	}
+	p.tt.Leave(e, 300)
+	p.wake(e)
+	sim.RunUntil(engine.Time(engine.Hour))
+	blocked, _ := count(sim, EvEdgeBlocked, Scope)
+	if blocked != 5 || len(arrived) != 5 {
+		t.Fatalf("blocked %d (want 5), arrived %v", blocked, arrived)
+	}
+	for i, id := range arrived {
+		if id != int64(i+1) {
+			t.Fatalf("arrival order %v, want FIFO", arrived)
+		}
+	}
+}
