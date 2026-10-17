@@ -5,30 +5,36 @@ import (
 	"github.com/jasrags/ridesim/internal/engine"
 )
 
-// Cascade scopes: which holds count toward cascade_stop.
+// Cascade scopes: which next_occupied holds count toward cascade_stop. Designed waits (hold_until_clear,
+// switch_realign, min interval, clearance) never count.
 const (
-	// CascadeBrakesAndStations counts next_occupied holds at brake and station blocks (decision
-	// 2026-10-17: unplanned holds only; designed waits never count).
-	CascadeBrakesAndStations = "brakes_and_stations"
-	// CascadeBrakesOnly also excludes stations, where waiting for the next station block is the normal pipeline.
-	CascadeBrakesOnly = "brakes_only"
+	CascadeBrakesOnly        = config.CascadeScopeBrakesOnly // default (decision 2026-10-17)
+	CascadeBrakesAndStations = config.CascadeScopeBrakesAndStations
 )
 
-// countsForCascade reports whether a hold of reason at b counts toward cascade_stop under scope.
+// countsForCascade reports whether a hold of reason at b counts toward cascade_stop under scope
+// ("" means the default, brakes only).
 func countsForCascade(b *block, reason, scope string) bool {
 	if reason != ReasonNextOccupied || !pausesAt(b) {
 		return false
 	}
-	if scope == CascadeBrakesOnly {
-		return b.cfg.Kind == config.BlockBrake
+	if scope == CascadeBrakesAndStations {
+		return true
 	}
-	return true
+	return b.cfg.Kind == config.BlockBrake
+}
+
+func (c *Coaster) cascadeScope() string {
+	if c.opts.CascadeScope != "" {
+		return c.opts.CascadeScope
+	}
+	return c.cfg.Failures.CascadeStop.Scope
 }
 
 // watchCascade arms the cascade check for a hold that just started.
 func (c *Coaster) watchCascade(t *train) {
 	cs := c.cfg.Failures.CascadeStop
-	if !c.cascadeEnabled || cs == nil || c.Stopped() || !countsForCascade(t.at, t.holdReason, c.opts.CascadeScope) {
+	if !c.cascadeEnabled || cs == nil || c.Stopped() || !countsForCascade(t.at, t.holdReason, c.cascadeScope()) {
 		return
 	}
 	tol := cs.BlockedToleranceS

@@ -94,6 +94,8 @@ func TestErrorChecksFailOnBrokenFixtures(t *testing.T) {
 		{"coaster.loop_closed", fxCoaster, "", "    next: UNLOAD\nclearance", "    next: LIFT\nclearance"},
 		{"coaster.dispatch_interval_order", fxCoaster, "", "target_dispatch_interval_s: 50", "target_dispatch_interval_s: 30"},
 		{"coaster.barn_capacity", fxCoaster, "", "storage_bays: 3", "storage_bays: 0"},
+		{"coaster.cascade_scope", fxCoaster, "", "auto_resume: false,", "auto_resume: false, scope: everywhere,"},
+		{"coaster.cascade_scope", fxCoaster, "", "blocked_tolerance_s: 5,", "blocked_tolerance_s: 0,"},
 
 		// continuous_load
 		{"continuous.route_duration", fxOmnimover, "", "{ id: scene_a, kind: scene, est_s: 60 }", "{ id: scene_a, kind: scene, est_s: 80 }"},

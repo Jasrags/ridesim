@@ -16,3 +16,7 @@ Sourced values (`[wiki] [rcdb] [fan] [map] [user]`) are never tuned.
 Result (fixed times, 5 trains, saturated): 71.0 s / 1,724 per hr -> 54.0 s / 2,264 per hr. Stochastic times: ~2,074 per hr
 (listed capacity 2,050). Sensitivity after the retune: LIFT, load_s, and MOUNTAIN_EXIT + HELIX are each within 2 s of being the
 bottleneck; see docs/m1-report.md.
+| 2026-10-17 | wdw-ak-expedition-everest.yaml | failures.cascade_stop.blocked_tolerance_s | 5 | 30 | Pre-approved calibration (M2). At 5 s cascades fire ~65/hr and availability is 16%; below ~30 s stops feed on themselves. With scope brakes_only, 30 s gives ~0.45 cascades/hr and ~2,012/hr (80 h x 3 seeds). Jason chose 30 s brakes-only. |
+
+M2 note: the listed 2,050/hr is not reachable by cascade tuning. Failures off gives ~2,067/hr with random timings, and brief_stop +
+long_downtime ([assumed]) cost 2.7% (-> ~2,011/hr). Accepted as a 1.9% miss against a Wikipedia design figure (decision 2026-10-17).

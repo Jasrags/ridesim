@@ -54,7 +54,6 @@ func TestScenarioFilesRunDeterministically(t *testing.T) {
 	ds := loadData(t)
 	for _, id := range []string{"everest_baseline_day", "everest_ops_demo"} {
 		r := scenarioRun(t, ds, id)
-		r.CascadeToleranceS = 45 // keep the run healthy whatever the file's tolerance is
 		a, _ := compute(t, r)
 		b, _ := compute(t, r)
 		if !bytes.Equal(encode(t, a), encode(t, b)) {
@@ -83,7 +82,6 @@ func TestWeatherHoldCostsItsShareOfThroughput(t *testing.T) {
 // train comes back at 05:00.
 func TestOpsDemoSwapsTrainsAndTogglesShadowHold(t *testing.T) {
 	r := scenarioRun(t, loadData(t), "everest_ops_demo")
-	r.CascadeToleranceS = 45
 	log, m := compute(t, r)
 	if m.Ops.Swaps != 2 {
 		t.Fatalf("%d barn swaps, want 2", m.Ops.Swaps)
@@ -128,5 +126,24 @@ func TestRandomFailureDerateMatchesHandMath(t *testing.T) {
 	}
 	if !within(avail, want, 0.6) {
 		t.Fatalf("availability %.4f, want %.4f", avail, want)
+	}
+}
+
+// Calibration regression (decision 2026-10-17): with every failure kind on and the file's cascade
+// settings (30 s, brakes only), Everest runs ~2,012/hr at ~97% availability with cascades rare but present.
+func TestEverestFailureCalibration(t *testing.T) {
+	var perHr, avail, casc float64
+	const seeds, hours = 3, 80.0
+	for seed := uint64(1); seed <= seeds; seed++ {
+		_, m := compute(t, CoasterRun{Ride: loadEverest(t), Trains: 5, Seed: seed, Length: engine.Seconds(hours * 3600),
+			Warmup: engine.Hour, Arrivals: guest.Curve{{RatePerHr: 2300}},
+			Failures: []string{config.FailBriefStop, config.FailLongDowntime, config.FailCascadeStop}})
+		perHr += m.RidersPerHr / seeds
+		avail += m.Ops.Availability / seeds
+		casc += float64(m.Ops.Cascades) / (hours - 1) / seeds
+	}
+	t.Logf("%.0f riders/hr, availability %.1f%%, %.2f cascades/hr", perHr, avail*100, casc)
+	if !within(perHr, 2012, 2) || avail < 0.96 || casc <= 0 || casc > 1 {
+		t.Fatalf("%.0f riders/hr, availability %.3f, %.2f cascades/hr; want ~2,012, >= 96%%, 0 < cascades <= 1/hr", perHr, avail, casc)
 	}
 }

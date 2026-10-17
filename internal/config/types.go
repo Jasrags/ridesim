@@ -72,7 +72,16 @@ type CascadeStop struct {
 	BlockedToleranceS float64 `yaml:"blocked_tolerance_s"`
 	AutoResume        bool    `yaml:"auto_resume"`
 	OperatorResetS    Dist    `yaml:"operator_reset_s"`
+	// Scope is which holds count: CascadeScopeBrakesOnly (default) or CascadeScopeBrakesAndStations.
+	Scope string `yaml:"scope"`
 }
+
+// Cascade scopes (decision 2026-10-17: brakes only; waiting at a station for the next station block is
+// the normal pipeline, not a blocked train).
+const (
+	CascadeScopeBrakesOnly        = "brakes_only"
+	CascadeScopeBrakesAndStations = "brakes_and_stations"
+)
 
 type RateStop struct {
 	RatePerHr float64 `yaml:"rate_per_hr"`

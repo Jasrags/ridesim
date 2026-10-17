@@ -18,7 +18,8 @@ func TestCountsForCascade(t *testing.T) {
 		want   bool
 	}{
 		{brake, ReasonNextOccupied, "", true},
-		{station, ReasonNextOccupied, "", true},
+		{station, ReasonNextOccupied, "", false}, // default scope is brakes only
+		{station, ReasonNextOccupied, CascadeBrakesAndStations, true},
 		{station, ReasonNextOccupied, CascadeBrakesOnly, false},
 		{course, ReasonNextOccupied, "", false},
 		{brake, ReasonHoldUntilClear, "", false},

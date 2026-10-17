@@ -20,6 +20,16 @@ var coasterChecks = []check[*CoasterFile]{
 	{"coaster.dispatch_interval_order", SevError, checkDispatchIntervalOrder},
 	{"coaster.barn_capacity", SevError, checkBarnCapacity},
 	{"coaster.dispatch_rule", SevError, checkDispatchRule},
+	{"coaster.cascade_scope", SevError, checkCascadeScope},
+}
+
+func checkCascadeScope(c *CoasterFile) (bool, string) {
+	cs := c.Failures.CascadeStop
+	if cs == nil {
+		return true, "no cascade_stop"
+	}
+	ok := cs.Scope == "" || cs.Scope == CascadeScopeBrakesOnly || cs.Scope == CascadeScopeBrakesAndStations
+	return ok && cs.BlockedToleranceS > 0, fmt.Sprintf("scope %q, blocked_tolerance_s %g", cs.Scope, cs.BlockedToleranceS)
 }
 
 func checkDispatchRule(c *CoasterFile) (bool, string) {

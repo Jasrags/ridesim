@@ -29,7 +29,7 @@ type Options struct {
 	FixedTimes bool     // use every distribution's mean (sd = 0)
 	Failures   []string // enabled failure kinds (config.Fail*); nil = failures off
 
-	CascadeScope      string  // CascadeBrakesAndStations (default) or CascadeBrakesOnly
+	CascadeScope      string  // overrides failures.cascade_stop.scope when set (analysis only)
 	CascadeToleranceS float64 // overrides failures.cascade_stop.blocked_tolerance_s when > 0 (analysis only)
 
 	DispatchRule string // overrides station.dispatch_rule when set
