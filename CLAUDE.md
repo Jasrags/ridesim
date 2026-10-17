@@ -72,6 +72,7 @@ numbers come from `data/`. Read both before changing simulation logic.
 - `go run ./cmd/ridesim run -scenario data/scenarios/everest-baseline-day.yaml`
 - `go run ./cmd/ridesim study -file data/studies/everest-operations.yaml -json out/study.json`
 - `go run ./cmd/ridesim run -scenario data/scenarios/park-medium-day.yaml -log out/park.jsonl` (park day, M7)
+- `go run ./cmd/ridesim serve -scenario data/scenarios/park-medium-day.yaml` (web control room, M8; http://127.0.0.1:8080/)
 
 ## Decisions log (M3 kickoff, 2026-10-17)
 - Rock 'n' Roller max_in_service 5 -> 4 [fan] (web summary: a 5th train stacks). The spec's "five give
