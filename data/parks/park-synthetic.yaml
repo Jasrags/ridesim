@@ -1,0 +1,93 @@
+# Synthetic composite park — crowd model config v0.1
+# Plugs the three modeled rides into one made-up layout, plus simple filler nodes. Not a real park.
+# Confidence tags: [fan] fan/aggregator, [assumed] our placeholder, tune against Queue-Times-style daily wait curves
+
+park:
+  id: synthetic_park_v0
+  open_hour: 9
+  close_hour: 22
+  walking_mode: congestion           # fixed_delay | congestion  (same TravelTime interface, swappable)
+
+nodes:
+  - { id: gate,   kind: entrance }
+  - { id: hub,    kind: plaza, comfortable_guests: 3000 }               # [assumed]
+  - { id: everest, kind: ride, ride_id: wdw.ak.expedition_everest, appeal: 0.85, thrill: 0.80 }  # appeal/thrill [assumed]
+  - { id: rnrc,    kind: ride, ride_id: wdw.dhs.rock_n_roller_coaster, appeal: 0.90, thrill: 1.00 }
+  - { id: haunted_mansion, kind: ride, ride_id: wdw.mk.haunted_mansion, appeal: 0.90, thrill: 0.30 }
+  - { id: boat_ride, kind: ride_simple, capacity_per_hr: 2400, duration_s: 540, appeal: 0.70, thrill: 0.10 }   # [assumed] filler
+  - { id: flat_ride, kind: ride_simple, capacity_per_hr: 800,  duration_s: 150, appeal: 0.40, thrill: 0.40 }   # [assumed] filler
+  - id: theater
+    kind: show
+    capacity_guests: 1000            # [assumed]
+    duration_min: 25                 # [assumed]
+    schedule: ["10:30", "12:30", "14:30", "16:30"]   # [assumed]
+    exit_edge: theater_haunted_mansion   # show lets out next to Haunted Mansion [fan: known real-world surge pattern]
+    appeal: 0.50
+  - { id: dining, kind: dining, seats: 600, service_time_min: { mean: 35, sd: 10 }, appeal: 0.60 }  # [assumed]
+  - { id: exit,   kind: exit }
+
+edges:                               # bidirectional; length in ft, width in ft [assumed]
+  - { id: gate_hub,        from: gate, to: hub,              length_ft: 600, width_ft: 60 }
+  - { id: hub_haunted,     from: hub, to: haunted_mansion,   length_ft: 500, width_ft: 40 }
+  - { id: hub_everest,     from: hub, to: everest,           length_ft: 900, width_ft: 40 }
+  - { id: hub_rnrc,        from: hub, to: rnrc,              length_ft: 800, width_ft: 40 }
+  - { id: hub_boat,        from: hub, to: boat_ride,         length_ft: 400, width_ft: 30 }
+  - { id: hub_flat,        from: hub, to: flat_ride,         length_ft: 450, width_ft: 30 }
+  - { id: hub_dining,      from: hub, to: dining,            length_ft: 300, width_ft: 30 }
+  - { id: theater_haunted_mansion, from: theater, to: haunted_mansion, length_ft: 150, width_ft: 25 }   # narrow link, spillback-prone
+  - { id: theater_hub,     from: theater, to: hub,           length_ft: 450, width_ft: 35 }
+  - { id: boat_haunted,    from: boat_ride, to: haunted_mansion, length_ft: 350, width_ft: 25 }
+  - { id: hub_exit,        from: hub, to: exit,              length_ft: 600, width_ft: 60 }
+
+congestion:                          # BPR-style link travel time: t = t0 * (1 + alpha * (n / C)^beta)
+  free_speed_fps: 4.0                # [assumed] relaxed group walking pace
+  comfortable_density_per_sqft: 0.10 # [assumed] ~10 sq ft per person; C = length x width x this
+  alpha: 1.5                         # [assumed]
+  beta: 3                            # [assumed]
+  jam_density_per_sqft: 0.30         # [assumed] hard ceiling; beyond this edge admits no one
+  spillback:                         # ride queues overflow onto the adjoining walkway
+    enabled: true
+    width_consumed_ft_per_100_guests: 1.5   # [assumed]
+    applies_to: [hub_haunted, hub_everest, hub_rnrc, hub_boat, hub_flat]
+
+guests:
+  daily_attendance: { low: 20000, medium: 40000, high: 60000 }   # [assumed] scenario input
+  arrival_curve_share_by_hour:       # [assumed] rope-drop spike then taper
+    "9": 0.22
+    "10": 0.18
+    "11": 0.14
+    "12": 0.11
+    "13": 0.09
+    "14": 0.08
+    "15": 0.06
+    "16": 0.05
+    "17": 0.04
+    "18": 0.03
+  party_size: { 1: 0.08, 2: 0.32, 3: 0.20, 4: 0.25, 5: 0.10, 6: 0.05 }   # [assumed]
+  stay_hours: { mean: 8, sd: 2 }     # [assumed]
+  patience_min: { mean: 40, sd: 15 } # [assumed] standby wait tolerance
+  thrill_tolerance: { mean: 0.55, sd: 0.25 }
+  ll_passes_per_guest: { mean: 2.0, sd: 1.0 }   # [assumed] purchased passes per day
+
+decision:
+  method: softmax_utility
+  temperature: 0.25                  # [assumed] lower = more deterministic
+  choice_set: top_k_by_utility
+  k: 5
+  utility:                           # per-activity utility terms, all weights [assumed]
+    appeal: 1.0
+    thrill_match: 0.6                # 1 - |activity thrill - guest tolerance|
+    wait_penalty_per_min: 0.03       # uses POSTED wait, not true wait
+    walk_penalty_per_min: 0.05
+    repeat_penalty: 0.8              # already ridden today
+    ll_return_window_bonus: 0.5
+  posted_wait_refresh_s: 300         # guests act on stale posted waits; drives herding
+  fatigue_per_hour: 0.06             # raises walk penalty and drives departure
+  meal_windows: ["11:30-13:30", "17:30-19:30"]  # [assumed] dining utility boosted in these windows
+
+calibration_targets:                 # [fan] Queue-Times 2026 averages, not true ground truth
+  everest_avg_standby_min: 19
+  everest_peak_standby_min: 35
+  haunted_mansion_avg_standby_min: 26
+  haunted_mansion_peak_standby_min: 42
+  expect_wait_spike_after_theater_shows: true

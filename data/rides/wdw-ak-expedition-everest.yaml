@@ -1,0 +1,155 @@
+# Expedition Everest — ride config v0.1
+# Confidence tags: [wiki] = Wikipedia infobox, [fan] = forum/fan sources, [assumed] = our placeholder, tune later
+#
+# v0.5 changes: adds block.kind=brake with a `brake` field (hold + release behavior). Replaces kind=show_hold and kind=brake_hold.
+# Everest now has the four brake zones from a 2007 Wikipedia snapshot [fan]: after pivot switch 1 (peak), after pivot switch 2 (shadow room),
+# before the final mountain entry (yeti brake), and before unload.
+
+schema_version: "0.5"
+
+ride:
+  id: wdw.ak.expedition_everest        # <resort>.<park>.<ride>, unique across all parks
+  family: expedition_everest           # groups versions of the same ride across parks
+  name: "Expedition Everest - Legend of the Forbidden Mountain"
+  location:
+    resort: walt_disney_world
+    park: animal_kingdom
+    land: asia                         # [wiki]
+  other_versions: []                   # none found
+  archetype: multi_train_coaster
+  ride_duration_s: 170            # [wiki] 2:50, station departure to station arrival
+  height_restriction_in: 44       # [wiki]
+  listed_capacity_per_hr: 2050    # [wiki] used as a validation target, not an input
+
+trains:
+  fleet_size: 6                   # [wiki]
+  max_in_service: 5               # [wiki] 6th sits in barn / maintenance
+  default_in_service: 5
+  cars_per_train: 6               # [wiki]
+  seats_per_train: 34             # [wiki] 5 cars x 6 + last car x 4; forum estimates range 30-34, so keep configurable
+  layout: "2 across, 3 rows per car, last car 2 rows"
+  restraints: individual_lap_bar  # [wiki]
+
+# Travel order. Mapping of the real track onto blocks is an interpretation of fan descriptions [fan].
+# Fan sources count 8 block zones; we split a few of them at brakes, giving 10 modeled blocks. Brake blocks are kind=brake:
+# a train stops there only if the next block is occupied (stop_if_next_occupied), otherwise it passes at transit speed.
+# Transit times of non-station blocks sum to ride_duration_s (170); a brake's transit_s is its nominal pass-through time when not held.
+blocks:
+  - id: UNLOAD
+    kind: station
+    next: LOAD
+  - id: LOAD
+    kind: station
+    next: LIFT
+  - id: LIFT
+    kind: lift
+    transit_s: { mean: 45, sd: 1 }      # [assumed] chain lift to the broken track
+    next: PEAK_BRAKE
+  - id: PEAK_BRAKE                      # brake zone 1 [fan]: after pivot switch 1, trains pause at the broken track
+    kind: brake
+    transit_s: { mean: 6, sd: 1 }       # [fan] ~6 s pause at the broken track
+    contains: [PIVOT_SWITCH_1]
+    brake: { hold_capable: true, stop_policy: stop_if_next_occupied, release_delay_s: { mean: 2, sd: 0.5 } }   # release delay [assumed]
+    next: REVERSE
+  - id: REVERSE
+    kind: course
+    transit_s: { mean: 20, sd: 1 }      # [fan] ~20 s backwards section
+    next: SHADOW_BRAKE
+  - id: SHADOW_BRAKE                    # brake zone 2 [fan]: after pivot switch 2, yeti shadow projection
+    kind: brake
+    transit_s: { mean: 12, sd: 1 }      # [assumed] yeti shadow scene
+    contains: [PIVOT_SWITCH_2]
+    brake: { hold_capable: true, stop_policy: stop_if_next_occupied, release_delay_s: { mean: 2, sd: 0.5 } }
+    hold_until_clear: true              # [fan] holds here until unload train advances to load (5-train mode); ignored with < 5 trains
+    next: MOUNTAIN_EXIT
+  - id: MOUNTAIN_EXIT
+    kind: course
+    transit_s: { mean: 45, sd: 2 }      # [assumed] big drop out of mountain
+    next: HELIX_TO_BRAKES
+  - id: HELIX_TO_BRAKES
+    kind: course
+    transit_s: { mean: 24, sd: 2 }      # [assumed] helix after the drop, split off from the brake below (was 28 s)
+    next: YETI_BRAKE
+  - id: YETI_BRAKE                      # brake zone 3 [fan]: before the final mountain entry, just before the yeti figure
+    kind: brake
+    transit_s: { mean: 4, sd: 0.5 }     # [assumed]
+    brake: { hold_capable: true, stop_policy: stop_if_next_occupied, release_delay_s: { mean: 2, sd: 0.5 } }
+    note: "[fan] trains rarely stop completely here, except with fewer than 5 trains where the shadow-room hold is ignored"
+    next: PRE_UNLOAD_HOLD
+  - id: PRE_UNLOAD_HOLD                 # brake zone 4 [fan]: before unload
+    kind: brake
+    transit_s: { mean: 14, sd: 1 }      # [assumed] yeti animatronic scene to brake before unload
+    brake: { hold_capable: true, stop_policy: stop_if_next_occupied, release_delay_s: { mean: 2, sd: 0.5 } }
+    next: UNLOAD
+  # transit sum of non-station blocks = 45 + 6 + 20 + 12 + 45 + 24 + 4 + 14 = 170 = ride_duration_s
+
+# Dispatch clearance rules [fan]: a train may leave block X only when the listed region is empty.
+clearance:
+  dispatch_from_load:         { requires_empty: [LIFT, PEAK_BRAKE], also: peak_switch_aligned_for_lift }
+  dispatch_reverse_from_peak: { requires_empty: [REVERSE, SHADOW_BRAKE] }
+  dispatch_out_of_mountain:   { requires_empty: [MOUNTAIN_EXIT, HELIX_TO_BRAKES] }
+  dispatch_from_yeti_brake:   { requires_empty: [PRE_UNLOAD_HOLD] }
+  dispatch_to_unload:         { requires_empty: [UNLOAD], and: load_clear_to_advance }
+  switch_realign_s: { mean: 8, sd: 2 }  # [assumed] time for pivot track to flip back
+
+station:
+  unload_s:        { mean: 38, sd: 8 }  # [assumed]
+  load_s:          { mean: 44, sd: 8 }  # [assumed]
+  restraint_check_s: { mean: 8, sd: 2 } # [assumed]
+  dispatch_clearance_s: { mean: 3, sd: 1 } # [assumed]
+  target_dispatch_interval_s: 54        # [fan] with 5 trains
+  min_dispatch_interval_s: 40           # [assumed] hard floor from block rules
+  staff_at_station: 6                   # [assumed]
+  dispatch_rule: hold_for_full_or_max_wait
+  max_wait_after_ready_s: 10            # [assumed]
+
+barn:
+  location: after_station               # [fan] sliding switch + transfer table
+  storage_bays: 5                       # [fan]
+  swap_time_s: { mean: 240, sd: 60 }    # [assumed] pulling or inserting a train
+
+failures:
+  cascade_stop:                         # [fan] main real-world downtime driver with 5 trains
+    trigger: train_blocked_longer_than_s   # measured while a train is held at a brake block, or at the station
+    blocked_tolerance_s: 5              # [assumed] "mere seconds" of slack at load/unload
+    auto_resume: false                  # [fan] needs operator reset
+    operator_reset_s: { mean: 45, sd: 20 }  # [assumed]
+  brief_stop:
+    rate_per_hr: 0.3                    # [assumed]
+    duration_s: { mean: 150, sd: 60 }
+  long_downtime:
+    mtbf_hr: 40                         # [assumed]
+    mttr_min: { mean: 35, sd: 15 }
+  weather_hold: scripted                # lightning closures set per scenario
+
+queues:
+  standby: { physical_capacity: 1400 }  # [assumed]
+  single_rider: { enabled: true, fill_only_empty_seats: true }
+  skip_line:
+    enabled: true                      # [wiki] Lightning Lane available; pass issuance/allocation still TBD (milestone M5)
+    merge_point: station_queue_entrance   # no preshow on Everest, so the merge feeds the load area directly
+    merge:
+      unit: guests                     # sources disagree guests vs parties; keep configurable
+      empty_lane_rule: pull_other      # [fan] if LL queue is empty, pull straight from standby
+      phase_hysteresis_guests: 20      # [assumed]
+      phases:                          # [assumed] same fan-reported placeholders as Rock 'n' Roller; no Everest-specific data
+        - { name: normal,   when_ll_queue_guests_below: 60,  ll_per_standby: 2 }
+        - { name: elevated, when_ll_queue_guests_below: 200, ll_per_standby: 4 }
+        - { name: recovery, when_ll_queue_guests_below: null, ll_per_standby: 10 }
+      # Output metric: realized LL share of capacity (fan-reported ~13% low / 26% medium / 33% high crowds), not an input.         # milestone M5
+  posted_wait: { algorithm: queue_len_over_throughput, padding_pct: 0 }
+
+validation_targets:
+  theoretical_riders_per_hr: 2267       # 3600/54 x 34
+  listed_capacity_per_hr: 2050          # ~90% of theoretical, expected after real-world derate
+  five_train_dispatch_interval_s: 54
+  expect_stacking_at_5_trains: true
+  expect_brake_holds_at_5_trains: [SHADOW_BRAKE, PRE_UNLOAD_HOLD, PEAK_BRAKE]   # [fan] load, unload, pre-unload hold, switch 2, switch 1 occupied during a load delay
+  expect_rare_holds_at_yeti_brake: true
+  expect_gap_at_4_trains: true          # fifth train slot empties, fewer pre-unload holds
+
+config_invariants:                     # same loader checks as the other coaster files
+  - "sum(block.transit_s.mean over non-station blocks) == ride.ride_duration_s (+/- 2 s)"
+  - "count(blocks) >= trains.max_in_service + 1"
+  - "every block with kind=brake defines brake.hold_capable, brake.stop_policy and brake.release_delay_s"
+  - "every id in clearance.requires_empty and every block.next refers to an existing block id"

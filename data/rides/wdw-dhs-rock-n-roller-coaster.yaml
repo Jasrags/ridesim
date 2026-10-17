@@ -1,0 +1,174 @@
+# Rock 'n' Roller Coaster (Disney's Hollywood Studios) — ride config v0.2 schema
+# Confidence tags: [wiki] = Wikipedia/infobox, [rcdb] = RCDB, [fan] = forum/fan sources, [assumed] = our placeholder, tune later
+#
+# Schema v0.2 additions vs the Everest file (all optional, so the Everest file stays valid):
+#   schema_version, ride.variant, ride.data_conflicts, block.kind=launch + block.launch,
+#   station.separate_load_unload, preshow (queue-side batch stage), barn omitted = no barn,
+#   validation_targets.implied_dispatch_interval_s, config_invariants
+#
+# v0.5 changes: adds block.kind=brake with a `brake` field (hold + release behavior), replacing kind=brake_hold.
+# Adds an explicit MID_COURSE_BRAKE block; the final brake (PRE_UNLOAD_HOLD) is also kind=brake.
+# Also from the Park Lore ride map (via Reddit, schematic, not to scale): adds `barn` (vehicle storage beside the return straight),
+# `layout` (out-and-back topology) and `guest_path` (queue to load order). This corrects the earlier "no barn" assumption.
+
+schema_version: "0.5"
+
+ride:
+  id: wdw.dhs.rock_n_roller_coaster    # <resort>.<park>.<ride>, unique across all parks
+  family: rock_n_roller_coaster        # groups versions of the same ride across parks
+  name: "Rock 'n' Roller Coaster Starring The Muppets"
+  location:
+    resort: walt_disney_world
+    park: disneys_hollywood_studios
+    land: sunset_boulevard             # [wiki]
+  other_versions:                      # informational; each would be its own file and id
+    - { resort: disneyland_paris, park: walt_disney_studios_park, status: closed_2019, note: "Aerosmith version, same track as Florida per RCDB; replaced by Avengers Assemble: Flight Force" }
+  variant: muppets_2026            # same ride system as the Aerosmith version; only preshow/theming changed [fan]
+  archetype: multi_train_coaster
+  ride_duration_s: 82              # [wiki] 1:22
+  height_restriction_in: 48        # [wiki]
+  listed_capacity_per_hr: 1800     # [wiki][rcdb]
+  data_conflicts:
+    - field: ride_duration_s
+      values: { wiki: 82, rcdb: 70 }
+      chosen: wiki
+      note: "RCDB lists 1:10, Wikipedia 1:22; likely differing start/stop of the timed segment. Time a ride to settle."
+
+trains:
+  fleet_size: 5                    # [wiki][rcdb] 5 trains
+  max_in_service: 5
+  default_in_service: 4            # [assumed] derived: ceil(cycle / dispatch interval) ~ 4, see config_invariants
+  cars_per_train: 6                # [wiki]
+  seats_per_train: 24              # [wiki] 2 across x 2 rows x 6 cars
+  layout: "2 across, 2 rows per car"
+  restraints: over_the_shoulder    # [user] confirmed
+
+# Travel order. Block mapping is an interpretation [assumed]; fan sources mention only ~4 logical blocks
+# (launch straight, mid-course, board station, exit station) and two block brakes. We need >= trains+1 blocks for 5 trains.
+blocks:
+  - id: UNLOAD
+    kind: station
+    next: LOAD
+  - id: LOAD
+    kind: station
+    next: LAUNCH_STAGING
+  - id: LAUNCH_STAGING
+    kind: launch
+    transit_s: { mean: 14, sd: 1 }     # [assumed] roll from load to launch track, then launch; [map] launch straight looks like a minority of track length, so plausible
+    launch: { accel_s: 2.8, top_speed_mph: 57 }   # [wiki] LSM launch, 0 to 57 mph in 2.8 s
+    next: COURSE_1
+  - id: COURSE_1
+    kind: course
+    transit_s: { mean: 30, sd: 1 }     # [assumed] launch to mid-course block brake (was 34 s before the brake was split out)
+    next: MID_COURSE_BRAKE
+  - id: MID_COURSE_BRAKE               # block brake 1 [fan]: coasterpedia lists two block brakes
+    kind: brake
+    transit_s: { mean: 4, sd: 0.5 }    # [assumed] nominal pass-through time when not held
+    brake: { hold_capable: true, stop_policy: stop_if_next_occupied, release_delay_s: { mean: 2, sd: 0.5 } }   # release delay [assumed]
+    next: COURSE_2
+  - id: COURSE_2
+    kind: course
+    transit_s: { mean: 28, sd: 1 }     # [assumed] mid-course brake to final brake
+    next: PRE_UNLOAD_HOLD
+  - id: PRE_UNLOAD_HOLD                # block brake 2 [fan]: final brake before the unload station
+    kind: brake
+    transit_s: { mean: 6, sd: 1 }      # [assumed]
+    brake: { hold_capable: true, stop_policy: stop_if_next_occupied, release_delay_s: { mean: 2, sd: 0.5 } }
+    next: UNLOAD
+  # transit sum = 14 + 30 + 4 + 28 + 6 = 82 = ride_duration_s
+
+clearance:
+  dispatch_from_load:            { requires_empty: [LAUNCH_STAGING, COURSE_1] }   # [assumed] launch cannot fire into an occupied block
+  dispatch_from_mid_course_brake: { requires_empty: [COURSE_2] }                  # a train holds at MID_COURSE_BRAKE until COURSE_2 is clear
+  dispatch_from_course_2:        { requires_empty: [PRE_UNLOAD_HOLD] }
+  dispatch_to_unload:     { requires_empty: [UNLOAD], and: load_clear_to_advance }
+
+station:
+  separate_load_unload: true           # [fan] separate areas for loading and unloading
+  unload_s:        { mean: 36, sd: 8 } # [assumed]
+  load_s:          { mean: 40, sd: 8 } # [assumed] includes cast stowing phones/cameras at the load gates [fan]
+  restraint_check_s: { mean: 8, sd: 2 }# [assumed]
+  dispatch_clearance_s: { mean: 3, sd: 1 }
+  target_dispatch_interval_s: 48       # derived: 3600 x 24 / 1800
+  min_dispatch_interval_s: 40          # [assumed]
+  staff_at_station: 6                  # [assumed]
+  dispatch_rule: hold_for_full_or_max_wait
+  max_wait_after_ready_s: 8            # [assumed]
+
+layout:                                # [map] Park Lore map via Reddit; schematic, not to scale
+  topology: out_and_back
+  station_side: left                   # unload and load areas sit side by side at the station end of the building
+  sequence: [unload_zone, load_zone, launch_straight, course_in_show_building, return_straight, unload_zone]
+  launch_straight: "leaves the station and runs straight into the show building"   # [map]
+  return_straight: "separate track bringing trains back to the station; vehicle storage runs alongside it"   # [map]
+  brake_positions_on_map: unknown      # the dotted path on the map looks like styling, so no brake locations are taken from it
+
+barn:                                  # [map] labeled "Vehicle Storage"; replaces the earlier "no barn" note
+  location: beside_return_straight     # [map] appears to branch off near the unload end; the exact switch is not shown
+  storage_bays: null                   # unknown; the strip looks long enough for more than one train
+  swap_time_s: { mean: 300, sd: 90 }   # [assumed] pulling or inserting a train (Everest placeholder is 240 s)
+
+guest_path: [outdoor_queue, lobby, preshow, alley, load_zone]   # [map]; "alley" assumed to be the corridor between preshow and load
+exit_path: [unload_zone, exit, retail]                           # [map]
+# [map] note: the map labels Lobby -> Preshow -> Alley; it is unclear which space the observed ~130-guest "hallway" count refers to.
+
+failures:
+  cascade_stop:
+    trigger: train_blocked_longer_than_s
+    blocked_tolerance_s: 8             # [assumed]
+    auto_resume: false                 # [assumed] copied from Everest, verify
+    operator_reset_s: { mean: 40, sd: 15 }
+  brief_stop:
+    rate_per_hr: 0.4                   # [assumed] fan reports occasional closures for technical issues
+    duration_s: { mean: 180, sd: 60 }
+  long_downtime:
+    mtbf_hr: 30                        # [assumed]
+    mttr_min: { mean: 40, sd: 15 }
+  weather_hold: scripted
+
+preshow:                               # NEW stage: batch holding room between standby queue and load station [fan]
+  enabled: true
+  rooms: 1                             # [user] one preshow room
+  batch_size: 130                      # [user] ~130 guests per show (hallway plus room), observed in queue Oct 2026
+  duration_s: { mean: 150, sd: 10 }    # [assumed] new Muppets preshow w/ Scooter animatronic; length unknown
+  turnover_s: { mean: 30, sd: 5 }      # [assumed] empty, refill, reset between shows
+  fill_rule: full_or_max_wait
+  max_fill_wait_s: 45                  # [assumed] start a partial batch after this long
+  release_rule: when_load_area_has_room   # back-pressure: room stays RELEASING until load area has space
+  party_integrity: true                # parties never split across batches
+  merge_point: true                    # [user] standby, single rider and Lightning Lane all merge in the preshow hallway
+  bypass_for_single_rider: false       # [user] corrects earlier default; singles and LL share the hallway and show
+
+queues:
+  party_split_policy: never            # decided: parties ride together; leftover seats go to single riders or stay empty
+  standby: { physical_capacity: 1200 } # [assumed]
+  single_rider: { enabled: true, fill_only_empty_seats: true }  # [wiki] single rider line available
+  skip_line:
+    enabled: true                      # [user] LL merges in the preshow hallway; pass issuance/allocation still TBD (milestone M5)
+    merge_point: preshow_hallway
+    merge:
+      unit: guests                     # sources disagree guests vs parties; keep configurable
+      empty_lane_rule: pull_other      # [fan] if LL queue is empty, pull straight from standby
+      phase_hysteresis_guests: 20      # [assumed] avoid flapping between phases
+      phases:                          # [assumed] ratios from fan reports; no ride-specific data found
+        - { name: normal,   when_ll_queue_guests_below: 60,  ll_per_standby: 2 }    # ~2:1 [fan, medium crowd example]
+        - { name: elevated, when_ll_queue_guests_below: 200, ll_per_standby: 4 }    # ~4:1 [fan, historical baseline]
+        - { name: recovery, when_ll_queue_guests_below: null, ll_per_standby: 10 }  # up to ~10:1 after downtime [fan]
+      # Output metric: realized LL share of capacity (expected ~13% low / 26% medium / 33% high crowds [fan]), not an input.
+  posted_wait: { algorithm: queue_len_over_throughput, padding_pct: 0 }
+
+validation_targets:
+  listed_capacity_per_hr: 1800
+  implied_dispatch_interval_s: 48      # 3600 / (1800 / 24)
+  theoretical_riders_per_hr_at_target: 1800
+  expect_four_trains_sufficient: true  # cycle ~ 82 ride + ~100 station ~ 180-190 s <= 4 x 48
+
+config_invariants:                     # enforced by the loader, applies to every ride
+  - "sum(block.transit_s.mean over non-station blocks) == ride.ride_duration_s (+/- 2 s)"
+  - "count(blocks) >= trains.max_in_service + 1"
+  - "trains.default_in_service <= trains.max_in_service <= trains.fleet_size"
+  - "if barn is present, fleet_size - default_in_service trains sit in the barn and can be swapped in (barn.storage_bays null = assume enough); if barn is absent they are treated as unavailable"
+  - "station.target_dispatch_interval_s >= station.min_dispatch_interval_s"
+  - "every block with kind=brake defines brake.hold_capable, brake.stop_policy and brake.release_delay_s"
+  - "every id in clearance.requires_empty and every block.next refers to an existing block id"
+  - "if preshow.enabled: preshow.rooms * preshow.batch_size * 3600 / (preshow.duration_s.mean + preshow.turnover_s.mean) >= ride.listed_capacity_per_hr"

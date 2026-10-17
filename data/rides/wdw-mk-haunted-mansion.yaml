@@ -1,0 +1,150 @@
+# Haunted Mansion (Magic Kingdom) — ride config, schema v0.3 (first continuous-load / omnimover archetype)
+# Confidence tags: [wiki] Wikipedia, [fan] fan/aggregator sources, [assumed] our placeholder, tune later
+#
+# v0.3 changes vs v0.2: archetype continuous_load replaces trains/blocks/dispatch with conveyor + vehicles + loading_zone.
+# Capacity is driven by vehicle spacing x occupancy, not dispatch interval. Preshow, queues, skip_line, failures sections are reused.
+#
+# v0.4 changes (from the Park Lore ride map): adds `route` (ordered scenes with map-scaled timings), splits loading_zone into
+# load_zone and unload_zone, and marks the chain as a closed loop with a return run from Unload back to Load.
+
+schema_version: "0.4"
+
+ride:
+  id: wdw.mk.haunted_mansion           # <resort>.<park>.<ride>, unique across all parks
+  family: haunted_mansion              # groups versions of the same ride across parks
+  name: "Haunted Mansion"
+  location:
+    resort: walt_disney_world
+    park: magic_kingdom
+    land: liberty_square               # [fan]
+  other_versions:                      # informational; each would be its own file and id, layouts and capacity differ
+    - { resort: disneyland_resort, park: disneyland, status: operating, note: "131 Doom Buggies per Coasterpedia vs 160 at Florida; stretching room is an elevator under the railroad berm" }
+    - { resort: tokyo_disney_resort, park: tokyo_disneyland, status: operating }
+  archetype: continuous_load
+  ride_duration_s: 435               # [fan] ~7:15 on-ride after the stretching room
+  total_experience_s: 555            # [fan] ~9:15 including stretching room
+  height_restriction_in: 0           # none
+  listed_capacity_per_hr: 2400       # [fan] DisneyBlog; other sources say 2,500-2,800, one says 3,000+
+  data_conflicts:
+    - field: listed_capacity_per_hr
+      values: { disneyblog: 2400, citizendailypost: [2400, 2500, 2800], orlandovillas: 3000 }
+      chosen: 2400
+    - field: ride_duration_s
+      values: { wikipedia_range: [350, 500], video: 435, allears: 600 }
+      chosen: 435
+    - field: track_length_ft
+      values: { coasterpedia: 1400, orlandovillas: 960 }
+      chosen: null                   # not needed; loop_time_s is derived from vehicles x spacing
+    - field: seats_per_vehicle
+      values: { coasterpedia: 2, wikipedia: "2-3", resortsgal: "2 adults + 1 small child" }
+      chosen: "2 nominal, 3 max"
+
+conveyor:
+  speed_fps: 1.47                    # [fan] ~1 mph (coasterpedia), 1.4 ft/s (another source); speed varies by scene
+  continuous: true                   # vehicles never stop except during stops/holds below
+  topology: closed_loop              # [map] Unload feeds a return run back to Load on the lower level
+
+# Ordered route from the Park Lore map (schematic, not to scale). Path lengths were eyeballed from the dotted ride path in
+# pixels (+/-30%), then scaled so load + scenes + unload = ride_duration_s (435 s, ~0.17 s per px). Treat every est_s as [assumed].
+# Scene sequence itself is [map]. Use for show-event timing, per-scene stops and scene-level failures, not for capacity.
+route:
+  - { id: load_zone,        kind: load,   map_px: 120, est_s: 20 }
+  - { id: ascent,           kind: scene,  map_px: 210, est_s: 36 }
+  - { id: endless_hallway,  kind: scene,  map_px: 60,  est_s: 10 }
+  - { id: conservatory,     kind: scene,  map_px: 100, est_s: 17 }
+  - { id: hall_of_doors,    kind: scene,  map_px: 110, est_s: 19 }
+  - { id: clock,            kind: scene,  map_px: 50,  est_s: 9 }
+  - { id: seance_parlor,    kind: scene,  map_px: 380, est_s: 65 }   # Madame Leota loop; longest scene by path length
+  - { id: balcony_ballroom, kind: scene,  map_px: 220, est_s: 37 }
+  - { id: attic,            kind: scene,  map_px: 110, est_s: 19 }
+  - { id: bride,            kind: scene,  map_px: 110, est_s: 19 }
+  - { id: hatbox_ghost,     kind: scene,  map_px: 60,  est_s: 10 }
+  - { id: descent,          kind: scene,  map_px: 180, est_s: 31 }
+  - { id: gravedigger,      kind: scene,  map_px: 190, est_s: 32 }
+  - { id: graveyard_singing_busts, kind: scene, map_px: 190, est_s: 32 }
+  - { id: crypt_choir,      kind: scene,  map_px: 80,  est_s: 14 }
+  - { id: hitchhiking_ghosts, kind: scene, map_px: 160, est_s: 27 }
+  - { id: unload_zone,      kind: unload, map_px: 230, est_s: 39 }   # long strip beside the exit ramp
+  - { id: return_run,       kind: return, map_px: 220, est_s: 37 }   # Unload back to Load; not part of the 435 s ride time
+
+vehicles:
+  count: 160                         # [fan] coasterpedia, orlandovillas
+  seats_nominal: 2
+  seats_max: 3                       # 2 adults + small child [fan]
+  spacing_s: 3.6                     # [assumed] chosen so capacity ~2,400 at ~2.4 riders per buggy; real spacing unverified
+                                     # NOTE map cross-check: (435 s ride + ~37 s return) / 160 buggies ~ 3.0 s spacing, which would mean
+                                     # ~2.0 riders per buggy at 2,400/hr. Low confidence (eyeballed lengths); revisit when spacing is observed.
+  occupancy_target: { mean: 2.4, sd: 0.4 }   # [assumed] average riders per buggy under load
+
+load_zone:                           # split from the old single loading_zone (map shows separate Load and Unload areas)
+  type: moving_walkway_synced        # [wiki] carpet synced to the buggies
+  load_window_s: { mean: 20, sd: 4 } # [assumed] map-scaled; was 9 s before the map suggested a longer platform
+  loaders: 4                         # [assumed] cast members at load
+  board_fail_rate: 0.02              # [assumed] guest misses the buggy or needs help
+
+unload_zone:
+  type: moving_walkway_synced        # [wiki]
+  unload_window_s: { mean: 39, sd: 6 }  # [assumed] map-scaled; long strip beside the exit ramp
+  unloaders: 3                       # [assumed]
+
+loading_shared:                      # behavior that applies to both zones
+  accessibility_freeze_zones: [load_zone, unload_zone]   # [wiki] carpet and buggies freeze for wheelchair guests
+  accessibility_hold:                # [wiki] carpet and buggies freeze to load/unload wheelchair guests
+    rate_per_hr: 8                   # [assumed]
+    duration_s: { mean: 75, sd: 25 } # [assumed] whole chain stops during this; capacity drops
+  party_vehicle_policy: contiguous_vehicles   # parties of 4+ occupy consecutive buggies, never split by other parties
+
+failures:
+  chain_stop:                        # ride-wide stop; no cascade stacking in continuous systems, everything just halts
+    rate_per_hr: 0.3                 # [assumed]
+    duration_s: { mean: 240, sd: 120 }
+  long_downtime:
+    mtbf_hr: 60                      # [assumed]
+    mttr_min: { mean: 45, sd: 20 }
+  weather_hold: scripted             # queue is partly outdoors
+
+preshow:                             # the stretching room: batch stage before the portrait corridor and load area
+  enabled: true
+  rooms: 2                           # [assumed] unverified; one room would need ~110+ guests to keep up
+  batch_size: 60                     # [assumed] unverified
+  duration_s: { mean: 120, sd: 10 }  # [fan] ~2:00 (9:15 total minus 7:15 ride)
+  turnover_s: { mean: 45, sd: 8 }    # [assumed]
+  fill_rule: full_or_max_wait
+  max_fill_wait_s: 30                # [assumed]
+  release_rule: when_load_area_has_room
+  party_integrity: true
+  merge_point: true                  # [assumed] standby and Lightning Lane merge before the stretching room
+  bypass_for_single_rider: false
+
+queues:
+  party_split_policy: contiguous_vehicles
+  standby: { physical_capacity: 1500 }   # [assumed]
+  single_rider: { enabled: false }       # [assumed] none found
+  skip_line:
+    enabled: true                    # [fan] included in Lightning Lane Multi Pass, not Single Pass
+    merge_point: preshow_entrance    # [assumed]
+    merge:
+      unit: guests
+      empty_lane_rule: pull_other
+      phase_hysteresis_guests: 20
+      phases:                        # [assumed] same fan-reported placeholders as the other rides
+        - { name: normal,   when_ll_queue_guests_below: 60,  ll_per_standby: 2 }
+        - { name: elevated, when_ll_queue_guests_below: 200, ll_per_standby: 4 }
+        - { name: recovery, when_ll_queue_guests_below: null, ll_per_standby: 10 }
+  posted_wait: { algorithm: queue_len_over_throughput, padding_pct: 0 }
+
+validation_targets:
+  listed_capacity_per_hr: 2400
+  theoretical_riders_per_hr_at_target: 2400    # 3600 / spacing_s(3.6) x occupancy(2.4)
+  hard_ceiling_per_hr: 3000                    # 3600 / 3.6 x 3.0 seats if every buggy carried 3
+  expect_no_stacking: true                     # continuous system: stops halt everything, queues absorb it
+  expect_capacity_loss_from_accessibility_holds: true
+  avg_standby_wait_min_2026: 26                # [fan] Queue-Times average, peaks near 42; calibration target
+
+config_invariants:
+  - "sum(route.est_s for kinds load, scene, unload) == ride.ride_duration_s (+/- 5 s); route.est_s of kind return is extra loop time"
+  - "vehicles.count * vehicles.spacing_s ~= sum(route.est_s) (+/- 15%); a larger gap means spacing, speed or route timings need review (currently ~576 vs ~473)"
+  - "vehicles.count * vehicles.spacing_s ~= loop_time_s (derived); loop_time_s should land near total_experience_s + load/unload dwell"
+  - "ride.listed_capacity_per_hr <= 3600 / vehicles.spacing_s * vehicles.seats_max"
+  - "if preshow.enabled: preshow.rooms * preshow.batch_size * 3600 / (preshow.duration_s.mean + preshow.turnover_s.mean) >= ride.listed_capacity_per_hr"
+  - "party sizes > seats_max must map to contiguous vehicles (party_vehicle_policy)"
