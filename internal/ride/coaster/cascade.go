@@ -8,20 +8,25 @@ import (
 // Cascade scopes: which next_occupied holds count toward cascade_stop. Designed waits (hold_until_clear,
 // switch_realign, min interval, clearance) never count.
 const (
-	CascadeBrakesOnly        = config.CascadeScopeBrakesOnly // default (decision 2026-10-17)
+	CascadeCourseBrakes      = config.CascadeScopeCourseBrakes // default (decision 2026-10-17)
+	CascadeBrakesOnly        = config.CascadeScopeBrakesOnly
 	CascadeBrakesAndStations = config.CascadeScopeBrakesAndStations
 )
 
-// countsForCascade reports whether a hold of reason at b counts toward cascade_stop under scope
-// ("" means the default, brakes only).
+// countsForCascade reports whether a hold of reason at b counts toward cascade_stop under scope ("" is
+// the default, course brakes: every brake except the one feeding the station, where trains normally
+// queue for the platform).
 func countsForCascade(b *block, reason, scope string) bool {
 	if reason != ReasonNextOccupied || !pausesAt(b) {
 		return false
 	}
-	if scope == CascadeBrakesAndStations {
+	switch scope {
+	case CascadeBrakesAndStations:
 		return true
+	case CascadeBrakesOnly:
+		return b.cfg.Kind == config.BlockBrake
 	}
-	return b.cfg.Kind == config.BlockBrake
+	return b.cfg.Kind == config.BlockBrake && b.next.cfg.Kind != config.BlockStation
 }
 
 func (c *Coaster) cascadeScope() string {

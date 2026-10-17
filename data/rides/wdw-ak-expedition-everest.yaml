@@ -119,8 +119,8 @@ barn:
 failures:
   cascade_stop:                         # [fan] main real-world downtime driver with 5 trains
     trigger: train_blocked_longer_than_s   # measured while a train is held at a brake block, or at the station
-    blocked_tolerance_s: 30             # [assumed] was 5 ("mere seconds" of slack); calibrated 2026-10-17, see docs/tuning-log.md
-    scope: brakes_only                  # [user] decision 2026-10-17: only next_occupied holds at brakes count; station waits are the normal pipeline
+    blocked_tolerance_s: 5              # [assumed] "mere seconds" of slack; restored 2026-10-17 after the scope change (was 30), see docs/tuning-log.md
+    scope: course_brakes                # [user] decision 2026-10-17: next_occupied holds at brakes count, except the brake feeding the station (normal platform queue)
     auto_resume: false                  # [fan] needs operator reset
     operator_reset_s: { mean: 45, sd: 20 }  # [assumed]
   brief_stop:

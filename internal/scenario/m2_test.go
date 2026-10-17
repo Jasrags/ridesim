@@ -130,7 +130,7 @@ func TestRandomFailureDerateMatchesHandMath(t *testing.T) {
 }
 
 // Calibration regression (decision 2026-10-17): with every failure kind on and the file's cascade
-// settings (30 s, brakes only), Everest runs ~2,012/hr at ~97% availability with cascades rare but present.
+// settings (5 s, course brakes), Everest runs ~2,012/hr at ~97% availability with cascades rare but present.
 func TestEverestFailureCalibration(t *testing.T) {
 	var perHr, avail, casc float64
 	const seeds, hours = 3, 80.0

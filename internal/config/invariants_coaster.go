@@ -38,7 +38,7 @@ func checkCascadeScope(c *CoasterFile) (bool, string) {
 	if cs == nil {
 		return true, "no cascade_stop"
 	}
-	ok := cs.Scope == "" || cs.Scope == CascadeScopeBrakesOnly || cs.Scope == CascadeScopeBrakesAndStations
+	ok := cs.Scope == "" || cs.Scope == CascadeScopeBrakesOnly || cs.Scope == CascadeScopeBrakesAndStations || cs.Scope == CascadeScopeCourseBrakes
 	return ok && cs.BlockedToleranceS > 0, fmt.Sprintf("scope %q, blocked_tolerance_s %g", cs.Scope, cs.BlockedToleranceS)
 }
 

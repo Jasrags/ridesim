@@ -121,6 +121,7 @@ failures:
   cascade_stop:
     trigger: train_blocked_longer_than_s
     blocked_tolerance_s: 8             # [assumed]
+    scope: course_brakes               # [user] decision 2026-10-17: only MID_COURSE_BRAKE counts; PRE_UNLOAD_HOLD is the normal platform queue
     auto_resume: false                 # [assumed] copied from Everest, verify
     operator_reset_s: { mean: 40, sd: 15 }
   brief_stop:

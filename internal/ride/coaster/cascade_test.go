@@ -8,9 +8,11 @@ import (
 )
 
 func TestCountsForCascade(t *testing.T) {
-	brake := &block{cfg: &config.Block{Kind: config.BlockBrake}, role: roleTrack}
 	station := &block{cfg: &config.Block{Kind: config.BlockStation}, role: roleUnload}
 	course := &block{cfg: &config.Block{Kind: config.BlockCourse}, role: roleTrack}
+	brake := &block{cfg: &config.Block{Kind: config.BlockBrake}, role: roleTrack, next: course}
+	approach := &block{cfg: &config.Block{Kind: config.BlockBrake}, role: roleTrack, next: station}
+	station.next, course.next = course, brake
 	cases := []struct {
 		b      *block
 		reason string
@@ -18,7 +20,9 @@ func TestCountsForCascade(t *testing.T) {
 		want   bool
 	}{
 		{brake, ReasonNextOccupied, "", true},
-		{station, ReasonNextOccupied, "", false}, // default scope is brakes only
+		{approach, ReasonNextOccupied, "", false}, // default: the brake feeding the station is the platform queue
+		{approach, ReasonNextOccupied, CascadeBrakesOnly, true},
+		{station, ReasonNextOccupied, "", false},
 		{station, ReasonNextOccupied, CascadeBrakesAndStations, true},
 		{station, ReasonNextOccupied, CascadeBrakesOnly, false},
 		{course, ReasonNextOccupied, "", false},
@@ -38,7 +42,8 @@ func TestCountsForCascade(t *testing.T) {
 // With 3 trains on the fixture, trains wait at BRAKE for UNLOAD. A 0.5 s tolerance turns those holds
 // into cascade stops, each lasting the 30 s operator reset (fixed times).
 func TestCascadeStopTriggersAndResets(t *testing.T) {
-	opts := Options{Trains: 3, FixedTimes: true, Failures: []string{config.FailCascadeStop}, CascadeToleranceS: 0.5}
+	// The fixture's only brake feeds the station, so count it explicitly.
+	opts := Options{Trains: 3, FixedTimes: true, Failures: []string{config.FailCascadeStop}, CascadeToleranceS: 0.5, CascadeScope: CascadeBrakesOnly}
 	h := newHarness(t, fixture(t), opts, 20000, 30*engine.Minute)
 	h.sim.RunUntil(engine.Time(30 * engine.Minute))
 	evs := h.sim.Log.Events()
@@ -67,7 +72,8 @@ func TestCascadeStopTriggersAndResets(t *testing.T) {
 func TestCascadeOffOrTolerantMeansNoStops(t *testing.T) {
 	for name, opts := range map[string]Options{
 		"disabled":  {Trains: 3, FixedTimes: true, CascadeToleranceS: 0.5},
-		"tolerant":  {Trains: 3, FixedTimes: true, Failures: []string{config.FailCascadeStop}, CascadeToleranceS: 3600},
+		"tolerant":  {Trains: 3, FixedTimes: true, Failures: []string{config.FailCascadeStop}, CascadeToleranceS: 3600, CascadeScope: CascadeBrakesOnly},
+		"approach":  {Trains: 3, FixedTimes: true, Failures: []string{config.FailCascadeStop}, CascadeToleranceS: 0.5}, // default scope skips it
 		"brakeonly": {Trains: 1, FixedTimes: true, Failures: []string{config.FailCascadeStop}, CascadeToleranceS: 0.5, CascadeScope: CascadeBrakesOnly},
 	} {
 		h := newHarness(t, fixture(t), opts, 20000, 30*engine.Minute)
