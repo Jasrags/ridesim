@@ -25,8 +25,9 @@ const holdUntilClearMinTrains = 5
 
 // Options are run-level settings that are not part of the ride file.
 type Options struct {
-	Trains     int  // trains in service; 0 means trains.default_in_service
-	FixedTimes bool // use every distribution's mean (sd = 0)
+	Trains     int      // trains in service; 0 means trains.default_in_service
+	FixedTimes bool     // use every distribution's mean (sd = 0)
+	Failures   []string // enabled failure kinds (config.Fail*); nil = failures off
 }
 
 // Hold reasons recorded in hold_start events.
@@ -36,6 +37,7 @@ const (
 	ReasonSwitchRealign  = "switch_realign"
 	ReasonHoldUntilClear = "hold_until_clear"
 	ReasonMinInterval    = "min_dispatch_interval"
+	ReasonRideStopped    = "ride_stopped"
 )
 
 type role int
@@ -89,8 +91,8 @@ type train struct {
 	holdReason string
 	releasing  bool // brake release delay running
 
-	phase       stationPhase
-	fillTimeout engine.Handle
+	phase stationPhase
+	work  work // the one pending timer for this train's current block (transit, station phase, release)
 
 	// hold_until_clear bookkeeping, set on entry to such a block.
 	shadowSnapshot int
@@ -116,6 +118,11 @@ type Coaster struct {
 	unloadAdvances int
 	kicking        bool
 	rekick         bool
+
+	stopCount int            // active stop causes; the ride runs only at 0
+	stopDepth map[string]int // per cause, lookups only
+
+	cascadeEnabled bool
 }
 
 var _ ride.Ride = (*Coaster)(nil)
@@ -128,7 +135,7 @@ func New(sim *engine.Sim, cfg *config.CoasterFile, opts Options) (*Coaster, erro
 	if opts.Trains < 1 || opts.Trains > cfg.Trains.MaxInService || opts.Trains > len(cfg.Blocks)-1 {
 		return nil, fmt.Errorf("coaster %s: %d trains in service, allowed 1..%d", cfg.Ride.ID, opts.Trains, min(cfg.Trains.MaxInService, len(cfg.Blocks)-1))
 	}
-	c := &Coaster{sim: sim, cfg: cfg, opts: opts, byID: map[string]*block{}, switches: map[string]*switchState{}, standby: &queue.FIFO{}}
+	c := &Coaster{sim: sim, cfg: cfg, opts: opts, byID: map[string]*block{}, switches: map[string]*switchState{}, standby: &queue.FIFO{}, stopDepth: map[string]int{}}
 	for i := range cfg.Blocks {
 		b := &block{cfg: &cfg.Blocks[i]}
 		for _, sid := range b.cfg.Contains {
@@ -218,6 +225,7 @@ func (c *Coaster) Start() {
 		c.trains = append(c.trains, t)
 		c.enter(t, pb)
 	}
+	c.startFailures()
 	c.kick()
 }
 
@@ -229,10 +237,10 @@ func (c *Coaster) Arrive(p *guest.Party, lane guest.Lane) {
 	p.JoinedAt = c.sim.Now()
 	c.sim.Emit(engine.Event{Type: engine.EvQueueJoin, Guest: p.ID, N: p.Size, Info: lane.String()})
 	c.standby.Push(p)
-	if t := c.load.occupant; t != nil && (t.phase == phaseBoarding || t.phase == phaseFillWait) {
+	if t := c.load.occupant; t != nil && !c.Stopped() && (t.phase == phaseBoarding || t.phase == phaseFillWait) {
 		c.board(t)
 		if t.phase == phaseFillWait && t.riders == t.seats {
-			t.fillTimeout.Cancel()
+			c.cancelWork(t)
 			c.startCheck(t)
 		}
 	}
@@ -260,7 +268,7 @@ func (c *Coaster) enter(t *train, b *block) {
 
 	switch b.role {
 	case roleTrack:
-		c.after(c.sampleTrack(*b.cfg.TransitS), func() { c.workComplete(t) })
+		c.startWork(t, c.sampleTrack(*b.cfg.TransitS), func() { c.workComplete(t) })
 	case roleUnload:
 		c.startUnload(t, func() { c.workComplete(t) })
 	case roleLoad:
@@ -276,7 +284,7 @@ func (c *Coaster) startUnload(t *train, then func()) {
 		c.sim.Emit(engine.Event{Type: engine.EvUnload, Train: t.id, Block: t.at.cfg.ID, N: t.riders})
 		t.riders = 0
 	}
-	c.after(c.sampleStation(c.cfg.Station.UnloadS), func() {
+	c.startWork(t, c.sampleStation(c.cfg.Station.UnloadS), func() {
 		t.phase = phaseNone
 		then()
 	})
@@ -284,22 +292,24 @@ func (c *Coaster) startUnload(t *train, then func()) {
 
 func (c *Coaster) startLoad(t *train) {
 	t.phase = phaseBoarding
-	c.board(t)
-	c.after(c.sampleStation(c.cfg.Station.LoadS), func() {
+	if !c.Stopped() {
+		c.board(t)
+	}
+	c.startWork(t, c.sampleStation(c.cfg.Station.LoadS), func() {
 		c.sim.Emit(engine.Event{Type: engine.EvLoadDone, Train: t.id, Block: t.at.cfg.ID, N: t.riders})
 		if t.riders == t.seats || c.cfg.Station.DispatchRule != config.DispatchHoldForFullOrMaxWait || c.cfg.Station.MaxWaitAfterReadyS <= 0 {
 			c.startCheck(t)
 			return
 		}
 		t.phase = phaseFillWait
-		t.fillTimeout = c.after(engine.Seconds(c.cfg.Station.MaxWaitAfterReadyS), func() { c.startCheck(t) })
+		c.startWork(t, engine.Seconds(c.cfg.Station.MaxWaitAfterReadyS), func() { c.startCheck(t) })
 	})
 }
 
 func (c *Coaster) startCheck(t *train) {
 	t.phase = phaseChecking
 	d := c.sampleStation(c.cfg.Station.RestraintCheckS) + c.sampleStation(c.cfg.Station.DispatchClearanceS)
-	c.after(d, func() {
+	c.startWork(t, d, func() {
 		t.phase = phaseNone
 		c.workComplete(t)
 	})
@@ -368,7 +378,7 @@ func (c *Coaster) tryExit(t *train) {
 	}
 	if t.held && t.at.cfg.Kind == config.BlockBrake && t.at.cfg.Brake != nil && t.at.cfg.Brake.ReleaseDelayS != nil {
 		t.releasing = true
-		c.after(c.sampleTrack(*t.at.cfg.Brake.ReleaseDelayS), func() {
+		c.startWork(t, c.sampleTrack(*t.at.cfg.Brake.ReleaseDelayS), func() {
 			t.releasing = false
 			if ok, _, _ := c.canExit(t); ok {
 				c.depart(t)
@@ -386,6 +396,9 @@ func (c *Coaster) tryExit(t *train) {
 func (c *Coaster) canExit(t *train) (ok bool, reason string, retryAt engine.Time) {
 	b := t.at
 	now := c.sim.Now()
+	if c.Stopped() && pausesAt(b) {
+		return false, ReasonRideStopped, 0
+	}
 	if b.next.occupant != nil {
 		return false, ReasonNextOccupied, 0
 	}
@@ -483,8 +496,6 @@ func (c *Coaster) unloadOccupant() *train {
 
 // ---------------------------------------------------------------------------------------------------
 // Timing
-
-func (c *Coaster) after(d engine.Duration, fn func()) engine.Handle { return c.sim.After(d, fn) }
 
 func (c *Coaster) sampleStation(d config.Dist) engine.Duration {
 	return c.sample(d, engine.StreamStationTimes)

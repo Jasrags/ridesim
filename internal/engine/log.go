@@ -19,6 +19,8 @@ const (
 	EvLoadDone   = "load_done"   // Train, N=riders aboard
 	EvDispatch   = "dispatch"    // Train, Block (the station block left), N=riders
 	EvUnload     = "unload"      // Train, N=riders off
+	EvRideStop   = "ride_stop"   // Info=cause
+	EvRideResume = "ride_resume" // Info=cause
 	EvRunEnd     = "run_end"
 )
 
