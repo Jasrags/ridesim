@@ -1,0 +1,35 @@
+# Minimal valid continuous_load fixture. Broken variants are produced by one-line patches in invariants_test.go.
+schema_version: "1.0"
+ride:
+  id: test.fx.omnimover
+  family: fixture_omnimover
+  name: "Fixture Omnimover"
+  location: { resort: test, park: fx, land: none }
+  archetype: continuous_load
+  ride_duration_s: 100
+  total_experience_s: 100
+  listed_capacity_per_hr: 2000
+conveyor: { speed_fps: 1.5, continuous: true, topology: closed_loop }
+route:
+  - { id: load_zone, kind: load, est_s: 20 }
+  - { id: scene_a, kind: scene, est_s: 60 }
+  - { id: unload_zone, kind: unload, est_s: 20 }
+  - { id: return_run, kind: return, est_s: 20 }
+vehicles: { count: 40, seats_nominal: 2, seats_max: 3, spacing_s: 3.0, occupancy_target: { mean: 2.0, sd: 0.4 } }
+load_zone: { type: moving_walkway_synced, load_window_s: { mean: 10, sd: 1 }, loaders: 2, board_fail_rate: 0.01 }
+unload_zone: { type: moving_walkway_synced, unload_window_s: { mean: 10, sd: 1 }, unloaders: 2 }
+loading_shared:
+  accessibility_freeze_zones: [load_zone, unload_zone]
+  accessibility_hold: { rate_per_hr: 1, duration_s: { mean: 60, sd: 10 } }
+  party_vehicle_policy: contiguous_vehicles
+failures:
+  chain_stop: { rate_per_hr: 0.1, duration_s: { mean: 100, sd: 10 } }
+preshow:
+  enabled: true
+  rooms: 1
+  batch_size: 100
+  duration_s: { mean: 100, sd: 5 }
+  turnover_s: { mean: 20, sd: 2 }
+queues:
+  party_split_policy: contiguous_vehicles
+  standby: { physical_capacity: 500 }

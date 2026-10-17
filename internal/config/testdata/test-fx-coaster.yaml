@@ -1,0 +1,70 @@
+# Minimal valid multi_train_coaster fixture. Broken variants are produced by one-line patches in invariants_test.go.
+schema_version: "1.0"
+ride:
+  id: test.fx.coaster
+  family: fixture_coaster
+  name: "Fixture Coaster"
+  location: { resort: test, park: fx, land: none }
+  archetype: multi_train_coaster
+  ride_duration_s: 100
+  listed_capacity_per_hr: 1000
+  data_conflicts:
+    - field: ride_duration_s
+      values: { a: 100, b: 90 }
+      chosen: a
+      note: "fixture conflict"
+trains:
+  fleet_size: 3
+  max_in_service: 3
+  default_in_service: 2
+  cars_per_train: 4
+  seats_per_train: 20
+blocks:
+  - { id: UNLOAD, kind: station, next: LOAD }
+  - { id: LOAD, kind: station, next: LIFT }
+  - { id: LIFT, kind: lift, transit_s: { mean: 30, sd: 1 }, next: COURSE }
+  - id: COURSE
+    kind: course
+    transit_s: { mean: 40, sd: 1 }
+    contains: [SW1]
+    next: BRAKE
+  - id: BRAKE
+    kind: brake
+    transit_s: { mean: 30, sd: 1 }
+    brake: { hold_capable: true, stop_policy: stop_if_next_occupied, release_delay_s: { mean: 2, sd: 0.5 } }
+    next: UNLOAD
+clearance:
+  switch_realign_s: { mean: 5, sd: 1 }
+  rules:
+    - { id: dispatch_from_load, from: LOAD, requires_empty: [LIFT], conditions: [{ kind: switch_aligned, switch: SW1 }] }
+    - { id: dispatch_to_unload, from: BRAKE, requires_empty: [UNLOAD], conditions: [{ kind: load_clear_to_advance }] }
+station:
+  unload_s: { mean: 20, sd: 2 }
+  load_s: { mean: 25, sd: 2 }
+  restraint_check_s: { mean: 5, sd: 1 }
+  dispatch_clearance_s: { mean: 2, sd: 1 }
+  target_dispatch_interval_s: 50
+  min_dispatch_interval_s: 40
+  staff_at_station: 2
+  dispatch_rule: hold_for_full_or_max_wait
+  max_wait_after_ready_s: 10
+barn: { location: after_station, storage_bays: 3, swap_time_s: { mean: 100, sd: 10 } }
+failures:
+  cascade_stop: { trigger: train_blocked_longer_than_s, blocked_tolerance_s: 5, auto_resume: false, operator_reset_s: { mean: 30, sd: 5 } }
+  weather_hold: scripted
+preshow:
+  enabled: true
+  rooms: 1
+  batch_size: 100
+  duration_s: { mean: 100, sd: 5 }
+  turnover_s: { mean: 20, sd: 2 }
+queues:
+  party_split_policy: never
+  standby: { physical_capacity: 500 }
+  skip_line:
+    enabled: true
+    merge:
+      phases:
+        - { name: normal, when_ll_queue_guests_below: 60, ll_per_standby: 2 }
+        - { name: recovery, when_ll_queue_guests_below: null, ll_per_standby: 10 }
+  posted_wait: { algorithm: queue_len_over_throughput, padding_pct: 0 }
