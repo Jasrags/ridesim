@@ -71,6 +71,23 @@ func (s *Sim) RunUntil(end Time) {
 	}
 }
 
+// RunBefore runs every action scheduled strictly before t, then sets the clock to t. Something done next
+// happens at t ahead of every action already scheduled at t (live levers and scripted ops both use it, so a
+// played session and its exported rerun interleave identically).
+func (s *Sim) RunBefore(t Time) {
+	for s.queue.Len() > 0 && s.queue[0].at < t {
+		it := heap.Pop(&s.queue).(*item)
+		if it.cancelled {
+			continue
+		}
+		s.now = it.at
+		it.fn()
+	}
+	if t > s.now {
+		s.now = t
+	}
+}
+
 // Stream returns the named RNG stream.
 func (s *Sim) Stream(name string) *rand.Rand {
 	if s.src != "" {

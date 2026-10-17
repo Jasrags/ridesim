@@ -88,3 +88,41 @@ func TestCrowdScaleThinsWithoutShiftingEarlierEvents(t *testing.T) {
 		t.Fatal("raising the scale at 1 h admitted no extra guests")
 	}
 }
+
+// The view reports what levers did, and building it leaves the run unchanged.
+func TestViewReflectsLeversAndChangesNothing(t *testing.T) {
+	p, sim := newFixturePark(t, 3, Options{Attendance: 400})
+	ref, rsim := newFixturePark(t, 3, Options{Attendance: 400})
+	sim.RunUntil(engine.Time(engine.Hour))
+	rsim.RunUntil(engine.Time(engine.Hour))
+	for i := 0; i < 20; i++ {
+		_ = p.View()
+	}
+	if err := p.Apply(config.OpsEvent{Action: config.OpCloseRide, Node: "coaster", Minutes: 10}); err != nil {
+		t.Fatal(err)
+	}
+	if err := ref.Apply(config.OpsEvent{Action: config.OpCloseRide, Node: "coaster", Minutes: 10}); err != nil {
+		t.Fatal(err)
+	}
+	v := p.View()
+	var coaster *RideView
+	for i := range v.Rides {
+		if v.Rides[i].Node == "coaster" {
+			coaster = &v.Rides[i]
+		}
+	}
+	if coaster == nil || coaster.Status != "closed" || coaster.Trains < 1 || len(v.Edges) != len(p.g.Edges) || !v.Nodes[0].HasPos {
+		t.Fatalf("view %+v", coaster)
+	}
+	sim.RunUntil(p.CloseAt())
+	rsim.RunUntil(ref.CloseAt())
+	a, b := sim.Log.Events(), rsim.Log.Events()
+	if len(a) != len(b) {
+		t.Fatalf("viewing changed the run: %d vs %d events", len(a), len(b))
+	}
+	for i := range a {
+		if a[i] != b[i] {
+			t.Fatalf("event %d differs", i)
+		}
+	}
+}

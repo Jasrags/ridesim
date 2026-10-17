@@ -288,5 +288,8 @@ func (r *Ride) sample(d config.Dist, stream string) engine.Duration {
 	return engine.Seconds(max(0, d.Mean+d.SD*r.sim.Stream(stream).NormFloat64()))
 }
 
+// SingleRiderOpen reports whether the single-rider line takes new guests.
+func (r *Ride) SingleRiderOpen() bool { return r.lines.SingleRiderOpen() }
+
 // SetSingleRiderOpen opens or closes the single-rider line (an operations lever).
 func (r *Ride) SetSingleRiderOpen(open bool) { r.lines.SetSingleRiderOpen(open) }

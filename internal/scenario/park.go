@@ -60,19 +60,14 @@ func (r ParkRun) Run() (*engine.Log, error) {
 	if err != nil {
 		return nil, err
 	}
-	var opErr error
 	for _, o := range r.Ops {
-		o := o
-		sim.At(engine.Time(o.At), func() {
-			if err := p.Apply(o.Op); err != nil && opErr == nil {
-				opErr = fmt.Errorf("ops at %v: %w", o.At, err)
-			}
-		})
+		// Each op runs at its time ahead of every event already scheduled then (see engine.RunBefore).
+		sim.RunBefore(engine.Time(o.At))
+		if err := p.Apply(o.Op); err != nil {
+			return nil, fmt.Errorf("ops at %v: %w", o.At, err)
+		}
 	}
 	sim.RunUntil(engine.Time(r.Length))
-	if opErr != nil {
-		return nil, opErr
-	}
 	sim.Emit(engine.Event{Type: engine.EvRunEnd, N: p.InPark()})
 	return sim.Log, nil
 }

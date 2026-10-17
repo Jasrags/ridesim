@@ -30,3 +30,21 @@ func TestScopeStreamsAreSeparate(t *testing.T) {
 		t.Fatalf("nested scope src = %q", s.Scope("a").Scope("c").Src())
 	}
 }
+
+// RunBefore runs everything strictly before t and leaves the clock at t, so an action applied then precedes
+// every event already scheduled at t.
+func TestRunBeforeStopsShortOfEventsAtT(t *testing.T) {
+	s := New(1)
+	var order []string
+	s.At(Time(Second), func() { order = append(order, "a") })
+	s.At(Time(2*Second), func() { order = append(order, "b") })
+	s.RunBefore(Time(2 * Second))
+	if s.Now() != Time(2*Second) || len(order) != 1 {
+		t.Fatalf("now %v order %v", s.Now(), order)
+	}
+	order = append(order, "op")
+	s.RunUntil(Time(3 * Second))
+	if len(order) != 3 || order[1] != "op" || order[2] != "b" {
+		t.Fatalf("order %v, want a, op, b", order)
+	}
+}
