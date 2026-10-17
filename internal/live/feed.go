@@ -7,6 +7,9 @@ import (
 	"github.com/jasrags/ridesim/internal/park"
 )
 
+// accessibilityHold is the continuous_load hold cause (kept out of the feed).
+const accessibilityHold = "accessibility_hold"
+
 // feedLen is how many recent notable events a snapshot carries.
 const feedLen = 40
 
@@ -49,6 +52,8 @@ func (f *feed) scan(evs []engine.Event) {
 			if f.blocked[e.Block]++; f.blocked[e.Block] == 1 {
 				f.push(FeedItem{e.T, park.Scope, e.Type, "walkway " + e.Block + " at jam density"})
 			}
+		case (e.Type == engine.EvRideStop || e.Type == engine.EvRideResume) && e.Info == accessibilityHold:
+			// several an hour on the Haunted Mansion; they would drown the feed
 		case notable[e.Type]:
 			f.push(FeedItem{e.T, e.Src, e.Type, describe(e)})
 		}

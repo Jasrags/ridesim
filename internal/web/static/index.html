@@ -1,0 +1,344 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ridesim control room</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+/* Control room: map left, ride cards right, feed and levers below. Park-signage palette (navy ink, ticket amber). */
+:root {
+  --bg: #eef1f4; --panel: #ffffff; --ink: #17233a; --muted: #5b6678; --line: #d3d9e2;
+  --accent: #c9781c; --ok: #2f8a57; --warn: #c99312; --bad: #c2412d; --closed: #7a6f8f;
+  --f-display: "Barlow Condensed", "Arial Narrow", sans-serif;
+  --f-body: "IBM Plex Sans", system-ui, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #121821; --panel: #1a2230; --ink: #e3e9f2; --muted: #93a0b4; --line: #2c3748;
+          --accent: #e39a45; --ok: #57b47c; --warn: #d9ae3c; --bad: #e0634d; --closed: #a497c0; color-scheme: dark; }
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--ink); font: 14px/1.45 var(--f-body); }
+.num { font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
+h3 { margin: 0 0 8px; font: 600 .95rem var(--f-display); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+button { font: 500 .8rem var(--f-mono); color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 5px 10px; cursor: pointer; }
+button:hover { border-color: var(--accent); }
+button:focus-visible, input:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button[aria-pressed="true"] { background: var(--ink); color: var(--panel); border-color: var(--ink); }
+button:disabled { opacity: .45; cursor: default; }
+
+.bar { position: sticky; top: 0; z-index: 2; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 18px; padding: 10px 18px; background: var(--panel); border-bottom: 1px solid var(--line); }
+.brand { font: 700 1.35rem var(--f-display); }
+.brand small { font: 400 .72rem var(--f-mono); color: var(--muted); margin-left: 6px; }
+.clock { font: 600 1.7rem var(--f-display); font-variant-numeric: tabular-nums; min-width: 4.2ch; }
+.speeds { display: inline-flex; gap: 4px; flex-wrap: wrap; }
+.kpis { display: flex; flex-wrap: wrap; gap: 4px 16px; margin-left: auto; color: var(--muted); font-size: .85rem; }
+.kpis b { color: var(--ink); font-family: var(--f-mono); font-weight: 600; }
+.timeline { display: flex; align-items: center; gap: 10px; padding: 6px 18px 10px; background: var(--panel); border-bottom: 1px solid var(--line); font-size: .8rem; color: var(--muted); }
+.timeline input { flex: 1; min-width: 0; accent-color: var(--accent); }
+
+main { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 0; max-width: 1400px; margin: 0 auto; }
+.pane { padding: 14px 18px; border-right: 1px solid var(--line); min-width: 0; }
+.pane:last-child { border-right: 0; }
+#map svg { width: 100%; height: auto; display: block; }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: .76rem; color: var(--muted); margin-top: 6px; }
+.legend i { display: inline-block; width: 20px; height: 5px; border-radius: 3px; vertical-align: middle; margin-right: 4px; }
+
+.ride { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.ride:last-child { border-bottom: 0; }
+.ride h4 { margin: 0; font: 600 1.1rem var(--f-display); display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.pill { font: 600 .66rem var(--f-mono); text-transform: uppercase; letter-spacing: .05em; padding: 2px 7px; border-radius: 999px; color: #fff; }
+.pill.open { background: var(--ok); } .pill.stopped { background: var(--bad); } .pill.closed { background: var(--closed); }
+.big { font: 700 1.9rem/1 var(--f-display); font-variant-numeric: tabular-nums; text-align: right; }
+.big small { font-size: .9rem; color: var(--muted); }
+.meta { font-size: .8rem; color: var(--muted); display: flex; flex-wrap: wrap; gap: 2px 12px; }
+.meta b { color: var(--ink); font-family: var(--f-mono); font-weight: 500; }
+.levers { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; font-size: .8rem; }
+.stepper { display: inline-flex; align-items: center; gap: 6px; }
+.spark { grid-column: 1 / -1; height: 30px; }
+.spark svg { width: 100%; height: 100%; display: block; }
+
+.lower { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); max-width: 1400px; margin: 0 auto; border-top: 1px solid var(--line); }
+#feed { list-style: none; margin: 0; padding: 0; display: grid; gap: 3px; font: .78rem var(--f-mono); max-height: 260px; overflow-y: auto; }
+#feed li { display: grid; grid-template-columns: 5.2em 9.5em minmax(0, 1fr); gap: 8px; }
+#feed .t { color: var(--muted); } #feed .s { color: var(--accent); overflow: hidden; text-overflow: ellipsis; }
+.row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 0; }
+#crowd { accent-color: var(--accent); }
+#ops { list-style: none; padding: 0; margin: 6px 0 0; font: .76rem var(--f-mono); color: var(--muted); display: grid; gap: 2px; max-height: 120px; overflow-y: auto; }
+#ops .live { color: var(--ink); }
+.toast { position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); background: var(--bad); color: #fff; padding: 8px 14px; border-radius: 6px; font-size: .85rem; max-width: 90vw; }
+.status { font-size: .78rem; color: var(--muted); }
+a.btn { font: 500 .8rem var(--f-mono); color: var(--ink); border: 1px solid var(--line); border-radius: 6px; padding: 5px 10px; text-decoration: none; background: var(--bg); }
+
+@media (max-width: 900px) {
+  main, .lower { grid-template-columns: 1fr; }
+  .pane { border-right: 0; border-bottom: 1px solid var(--line); }
+  .kpis { margin-left: 0; }
+}
+</style>
+</head>
+<body>
+<header class="bar">
+  <span class="brand">ridesim <small id="scn">connecting…</small></span>
+  <span class="clock" id="clock">--:--</span>
+  <span class="speeds" id="speeds" role="group" aria-label="Simulation speed"></span>
+  <span class="kpis">
+    <span>in park <b id="inpark">0</b></span>
+    <span>crowd <b id="crowdv">100%</b></span>
+    <span>walking <b id="walking">0</b></span>
+    <span class="status" id="conn">offline</span>
+  </span>
+</header>
+<div class="timeline">
+  <label for="scrub">Day</label>
+  <input type="range" id="scrub" min="0" max="1" value="0" step="60">
+  <span class="num" id="scrubv">09:00</span>
+  <span>drag back to replay from an earlier time (levers after it are dropped)</span>
+</div>
+
+<main>
+  <section class="pane" aria-labelledby="map-h">
+    <h3 id="map-h">Park map · walkway load</h3>
+    <div id="map"></div>
+    <div class="legend">
+      <span><i style="background:var(--ok)"></i>under half of comfortable</span>
+      <span><i style="background:var(--warn)"></i>half to full</span>
+      <span><i style="background:var(--bad)"></i>over comfortable</span>
+      <span>red halo: queue spilling onto the path</span>
+    </div>
+  </section>
+  <section class="pane" aria-labelledby="rides-h">
+    <h3 id="rides-h">Rides · posted wait</h3>
+    <div id="rides"></div>
+  </section>
+</main>
+
+<div class="lower">
+  <section class="pane" aria-labelledby="feed-h">
+    <h3 id="feed-h">Event feed</h3>
+    <ol id="feed"></ol>
+  </section>
+  <section class="pane" aria-labelledby="park-h">
+    <h3 id="park-h">Park levers</h3>
+    <div class="row"><label for="crowd">Crowd (share of the scenario's attendance, from now on)</label>
+      <span><input type="range" id="crowd" min="0" max="200" step="10" value="100"> <b class="num" id="crowdset">100%</b></span></div>
+    <div class="row"><span>Played session</span><a class="btn" id="export" href="/api/export" download>Export as scenario</a></div>
+    <h3 style="margin-top:10px">Levers this session</h3>
+    <ul id="ops"></ul>
+  </section>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+(function () {
+  "use strict";
+  const $ = id => document.getElementById(id);
+  const NS = "http://www.w3.org/2000/svg";
+  let state = null;
+  let scrubbing = false;
+
+  const pad2 = n => String(n).padStart(2, "0");
+  function clock(ms, openHour) {
+    const total = Math.floor(ms / 60000) + openHour * 60;
+    return pad2(Math.floor(total / 60) % 24) + ":" + pad2(total % 60);
+  }
+  function el(tag, attrs, text) {
+    const e = document.createElement(tag);
+    for (const k in attrs || {}) e.setAttribute(k, attrs[k]);
+    if (text != null) e.textContent = text;
+    return e;
+  }
+  function svg(tag, attrs) {
+    const e = document.createElementNS(NS, tag);
+    for (const k in attrs) e.setAttribute(k, attrs[k]);
+    return e;
+  }
+  function toast(msg) {
+    const t = $("toast");
+    t.textContent = msg; t.hidden = false;
+    clearTimeout(toast.h); toast.h = setTimeout(() => { t.hidden = true; }, 4000);
+  }
+  async function post(path, body) {
+    try {
+      const r = await fetch(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+      const j = await r.json();
+      if (!r.ok) { toast(j.error || ("request failed: " + r.status)); return; }
+      render(j);
+    } catch (e) { toast("server unreachable: " + e.message); }
+  }
+  const lever = op => post("/api/lever", op);
+
+  function loadColor(ratio) { return ratio > 1 ? "var(--bad)" : ratio > 0.5 ? "var(--warn)" : "var(--ok)"; }
+  function statusColor(s) { return s === "open" ? "var(--ok)" : s === "closed" ? "var(--closed)" : "var(--bad)"; }
+
+  function renderSpeeds(s) {
+    const box = $("speeds");
+    if (box.childElementCount !== s.speeds.length) {
+      box.replaceChildren(...s.speeds.map(sp => {
+        const b = el("button", { type: "button", "data-speed": sp }, sp === 0 ? "❚❚" : sp >= 3600 ? (sp / 3600) + " h/s" : sp + "×");
+        b.title = sp === 0 ? "Pause" : sp + " sim seconds per second";
+        b.addEventListener("click", () => post("/api/speed", { speed: sp }));
+        return b;
+      }));
+    }
+    for (const b of box.children) b.setAttribute("aria-pressed", String(Number(b.dataset.speed) === s.speed));
+  }
+
+  function renderMap(s) {
+    const nodes = s.nodes, byId = {};
+    nodes.forEach(n => byId[n.id] = n);
+    const xs = nodes.map(n => n.x), ys = nodes.map(n => n.y);
+    // Room for labels: they extend outward from each node by up to ~24 characters.
+    const minX = Math.min(...xs) - 190, maxX = Math.max(...xs) + 190, minY = Math.min(...ys) - 50, maxY = Math.max(...ys) + 50;
+    const root = svg("svg", { viewBox: `${minX} ${minY} ${maxX - minX} ${maxY - minY}`, role: "img", "aria-label": "Park map" });
+    const rides = {};
+    s.rides.forEach(r => rides[r.node] = r);
+    const maxC = Math.max(...s.edges.map(e => e.comfortable));
+    const hub = nodes.find(n => n.kind === "plaza");
+    const cx = hub ? hub.x : (minX + maxX) / 2;
+    for (const e of s.edges) {
+      const a = byId[e.from], b = byId[e.to];
+      const ratio = e.comfortable ? e.guests / e.comfortable : 0;
+      const line = svg("line", { x1: a.x, y1: a.y, x2: b.x, y2: b.y, stroke: loadColor(ratio),
+        "stroke-width": 3 + 9 * Math.sqrt(e.comfortable / maxC), "stroke-linecap": "round", opacity: e.guests ? 1 : 0.45 });
+      const title = svg("title", {}); title.textContent = `${e.id}: ${e.guests} guests, comfortable ${e.comfortable}` + (e.spill ? `, queue spill ${e.spill}` : "");
+      line.appendChild(title);
+      root.appendChild(line);
+      if (e.spill > 0) {
+        const ride = rides[e.from] ? a : b;
+        root.appendChild(svg("circle", { cx: ride.x, cy: ride.y, r: 16 + Math.min(40, Math.sqrt(e.spill)), fill: "var(--bad)", opacity: 0.16 }));
+      }
+    }
+    for (const n of nodes) {
+      const r = rides[n.id];
+      const g = svg("g", {});
+      if (n.kind === "plaza") g.appendChild(svg("circle", { cx: n.x, cy: n.y, r: 9, fill: "var(--ink)" }));
+      else if (n.kind === "entrance" || n.kind === "exit") g.appendChild(svg("rect", { x: n.x - 11, y: n.y - 8, width: 22, height: 16, rx: 3, fill: "var(--muted)" }));
+      else if (n.kind === "show") g.appendChild(svg("rect", { x: n.x - 13, y: n.y - 13, width: 26, height: 26, rx: 4, fill: "var(--accent)" }));
+      else if (n.kind === "elsewhere") g.appendChild(svg("rect", { x: n.x - 15, y: n.y - 12, width: 30, height: 24, rx: 4, fill: "var(--panel)", stroke: "var(--muted)", "stroke-width": 2, "stroke-dasharray": "4 3" }));
+      else g.appendChild(svg("circle", { cx: n.x, cy: n.y, r: n.kind === "ride" ? 14 : 11, fill: "var(--panel)", stroke: r ? statusColor(r.status) : "var(--muted)", "stroke-width": 3 }));
+      // Labels sit on the side away from the hub so they do not cross the spokes.
+      const left = n.x < cx;
+      const t = svg("text", { x: n.x + (left ? -18 : 18), y: n.y - 16, "text-anchor": left ? "end" : "start",
+        "font-family": "IBM Plex Mono, monospace", "font-size": 12, fill: "var(--ink)" });
+      const short = shortName(n.label);
+      t.textContent = r ? `${short} ${r.status === "closed" ? "closed" : Math.round(r.posted_min) + "m"}` : short;
+      g.appendChild(t);
+      root.appendChild(g);
+    }
+    $("map").replaceChildren(root);
+  }
+
+  // shortName keeps whole words until the name is recognisable: "Expedition Everest", "Rock 'n' Roller".
+  function shortName(label) {
+    const words = label.split(" - ")[0].split(" ");
+    let out = "";
+    for (const w of words) {
+      out = out ? out + " " + w : w;
+      if (out.length >= 12) break;
+    }
+    return out;
+  }
+
+  function spark(hist, end, color) {
+    const s = svg("svg", { viewBox: "0 0 200 30", preserveAspectRatio: "none", "aria-hidden": "true" });
+    if (!hist.length) return s;
+    const top = Math.max(60, ...hist.map(p => p.min));
+    const pts = hist.map(p => `${(p.t / end * 200).toFixed(1)},${(28 - p.min / top * 26).toFixed(1)}`).join(" ");
+    s.appendChild(svg("polyline", { points: pts, fill: "none", stroke: color, "stroke-width": 1.8 }));
+    const last = hist[hist.length - 1];
+    s.appendChild(svg("circle", { cx: last.t / end * 200, cy: 28 - last.min / top * 26, r: 2.6, fill: color }));
+    return s;
+  }
+
+  function renderRides(s) {
+    const box = $("rides");
+    box.replaceChildren(...s.rides.map(r => {
+      const card = el("article", { class: "ride" });
+      const left = el("div");
+      const h = el("h4", {}, r.label);
+      h.appendChild(el("span", { class: "pill " + r.status }, r.status));
+      left.appendChild(h);
+      const meta = el("div", { class: "meta" });
+      meta.append(el("span", {}, "waiting "), el("b", {}, r.waiting.toLocaleString()));
+      if (r.trains) meta.append(el("span", {}, " trains "), el("b", {}, String(r.trains)));
+      if (r.lightning_lane) meta.append(el("span", {}, " Lightning Lane"));
+      left.appendChild(meta);
+      card.appendChild(left);
+      // A closed ride posts "closed", not a wait (as the real sign does).
+      const big = el("div", { class: "big" }, r.status === "closed" ? "—" : String(Math.round(r.posted_min)));
+      if (r.status !== "closed") big.appendChild(el("small", {}, "m"));
+      card.appendChild(big);
+      const lv = el("div", { class: "levers" });
+      if (r.trains) {
+        const st = el("span", { class: "stepper" });
+        const dn = el("button", { type: "button", "aria-label": "Remove a train from " + r.label }, "− train");
+        const up = el("button", { type: "button", "aria-label": "Add a train to " + r.label }, "+ train");
+        dn.addEventListener("click", () => lever({ action: "remove_train", node: r.node }));
+        up.addEventListener("click", () => lever({ action: "add_train", node: r.node }));
+        st.append(dn, up); lv.appendChild(st);
+      }
+      if (r.single_rider !== undefined) {
+        const b = el("button", { type: "button", "aria-pressed": String(r.single_rider) }, r.single_rider ? "Single rider: open" : "Single rider: closed");
+        b.addEventListener("click", () => lever({ action: r.single_rider ? "single_rider_close" : "single_rider_open", node: r.node }));
+        lv.appendChild(b);
+      }
+      if (r.kind === "ride") {
+        const b = el("button", { type: "button" }, "Close 30 min");
+        b.disabled = r.status === "closed";
+        b.addEventListener("click", () => lever({ action: "close_ride", node: r.node, minutes: 30 }));
+        lv.appendChild(b);
+      }
+      if (lv.childElementCount) card.appendChild(lv);
+      const sp = el("div", { class: "spark" });
+      sp.appendChild(spark(r.history || [], s.end, r.status === "open" ? "var(--accent)" : statusColor(r.status)));
+      card.appendChild(sp);
+      return card;
+    }));
+  }
+
+  function renderFeed(s) {
+    $("feed").replaceChildren(...s.feed.slice().reverse().map(f => {
+      const li = el("li");
+      li.append(el("span", { class: "t" }, clock(f.t, s.open_hour)), el("span", { class: "s" }, f.src || "park"), el("span", {}, f.text));
+      return li;
+    }));
+    $("ops").replaceChildren(...(s.ops || []).map(o => el("li", { class: o.live ? "live" : "" },
+      `${clock(o.at, s.open_hour)}  ${o.action}${o.node ? " " + o.node : ""}${o.live ? "" : "  (scenario)"}`)));
+  }
+
+  function render(s) {
+    state = s;
+    $("scn").textContent = s.done ? "day over" : "live";
+    $("clock").textContent = clock(s.t, s.open_hour);
+    $("inpark").textContent = s.in_park.toLocaleString();
+    $("crowdv").textContent = Math.round(s.crowd * 100) + "%";
+    $("walking").textContent = ((s.states.walking || 0) + (s.states.edge_wait || 0)).toLocaleString();
+    const sc = $("scrub");
+    sc.max = s.end / 1000;
+    if (!scrubbing) { sc.value = s.t / 1000; $("scrubv").textContent = clock(s.t, s.open_hour); }
+    if (document.activeElement !== $("crowd")) { $("crowd").value = Math.round(s.crowd * 100); $("crowdset").textContent = Math.round(s.crowd * 100) + "%"; }
+    renderSpeeds(s); renderMap(s); renderRides(s); renderFeed(s);
+  }
+
+  const sc = $("scrub");
+  sc.addEventListener("input", () => { scrubbing = true; if (state) $("scrubv").textContent = clock(sc.value * 1000, state.open_hour); });
+  sc.addEventListener("change", () => { scrubbing = false; post("/api/jump", { t_s: Number(sc.value) }); });
+  const cr = $("crowd");
+  cr.addEventListener("input", () => { $("crowdset").textContent = cr.value + "%"; });
+  cr.addEventListener("change", () => lever({ action: "crowd_scale", value: Number(cr.value) / 100 }));
+
+  function connect() {
+    const es = new EventSource("/api/events");
+    es.onopen = () => { $("conn").textContent = "connected"; };
+    es.onmessage = ev => render(JSON.parse(ev.data));
+    es.onerror = () => { $("conn").textContent = "reconnecting…"; };
+  }
+  connect();
+})();
+</script>
+</body>
+</html>

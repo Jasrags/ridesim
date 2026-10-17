@@ -61,14 +61,14 @@ type OpJSON struct {
 func (s *Session) Snapshot() Snapshot {
 	v := s.park.View()
 	out := Snapshot{T: v.Now, End: s.End(), Open: s.run.Park.Park.OpenHour, Done: s.done, InPark: v.InPark,
-		Crowd: v.Crowd, States: v.States, Feed: append([]FeedItem(nil), s.feed.items...)}
+		Crowd: v.Crowd, States: v.States, Feed: append([]FeedItem{}, s.feed.items...), Ops: []OpJSON{}}
 	for _, n := range v.Nodes {
 		out.Nodes = append(out.Nodes, NodeJSON{n.ID, n.Kind, n.Label, n.X, n.Y})
 	}
 	for _, r := range v.Rides {
 		out.Rides = append(out.Rides, RideJSON{Node: r.Node, Label: r.Label, Kind: r.Kind, Status: r.Status,
 			PostedMin: r.Posted.Seconds() / 60, Waiting: r.Waiting, Trains: r.Trains, SingleRider: r.SingleRider,
-			LL: r.LightningLane, History: append([]Point(nil), s.feed.posted[r.Node]...)})
+			LL: r.LightningLane, History: append([]Point{}, s.feed.posted[r.Node]...)})
 	}
 	for _, e := range v.Edges {
 		out.Edges = append(out.Edges, EdgeJSON{e.ID, e.From, e.To, e.Guests, e.Comfortable, e.Spill})
