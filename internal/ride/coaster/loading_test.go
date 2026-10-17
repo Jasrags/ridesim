@@ -195,7 +195,7 @@ func TestSingleRiderLineClosure(t *testing.T) {
 	if before.Lane != guest.SingleRider || during.Lane != guest.Standby || after.Lane != guest.SingleRider {
 		t.Fatalf("lanes %v %v %v, want single_rider, standby, single_rider", before.Lane, during.Lane, after.Lane)
 	}
-	if h.c.single.Guests() != 2 {
-		t.Fatalf("%d guests in the single-rider line, want 2 (closing keeps those already in it)", h.c.single.Guests())
+	if h.c.lines.OutdoorSingle() != 2 {
+		t.Fatalf("%d guests in the single-rider line, want 2 (closing keeps those already in it)", h.c.lines.OutdoorSingle())
 	}
 }

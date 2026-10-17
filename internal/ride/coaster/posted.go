@@ -66,34 +66,12 @@ func (c *Coaster) PostedWait() engine.Duration {
 // merge gives standby only part of capacity). It falls back to the theoretical rate (seats x 3600 /
 // target interval) before 15 minutes of history or when nothing boarded recently (downtime).
 func (c *Coaster) queueLenOverThroughput() engine.Duration {
-	from := c.sim.Now().Add(-throughputWindow)
-	riders := 0
-	for _, d := range c.recentStandby {
-		if d.at > from {
-			riders += d.riders
-		}
-	}
+	riders := c.lines.StandbyBoardedSince(c.sim.Now().Add(-throughputWindow))
 	perS := float64(riders) / throughputWindow.Seconds()
 	if riders == 0 || c.sim.Now() < engine.Time(throughputWindow) {
 		perS = float64(c.cfg.Trains.SeatsPerTrain) / c.cfg.Station.TargetDispatchIntervalS
 	}
-	waiting := c.WaitingGuests()
-	if c.ll != nil {
-		waiting -= c.ll.Guests() + c.llInside
-	}
-	return engine.Seconds(float64(waiting) / perS)
-}
-
-func (c *Coaster) recordStandbyBoard(n int) {
-	now := c.sim.Now()
-	if k := len(c.recentStandby); k > 0 && c.recentStandby[k-1].at == now {
-		c.recentStandby[k-1].riders += n
-		return
-	}
-	c.recentStandby = append(c.recentStandby, dispatchRecord{now, n})
-	if len(c.recentStandby) > 4*maxRecentDispatches {
-		c.recentStandby = append([]dispatchRecord(nil), c.recentStandby[len(c.recentStandby)/2:]...)
-	}
+	return engine.Seconds(float64(c.lines.StandbyWaiting()) / perS)
 }
 
 func (c *Coaster) recordDispatch(riders int) {

@@ -15,8 +15,8 @@ import (
 
 	"github.com/jasrags/ridesim/internal/config"
 	"github.com/jasrags/ridesim/internal/engine"
-	"github.com/jasrags/ridesim/internal/queue"
 	"github.com/jasrags/ridesim/internal/ride"
+	"github.com/jasrags/ridesim/internal/ride/lines"
 )
 
 // holdUntilClearMinTrains: the shadow-room hold is ignored with fewer trains (spec §6).
@@ -121,20 +121,7 @@ type Coaster struct {
 	trains   []*train
 	load     *block
 
-	standby *queue.FIFO // outdoor standby line (reneging allowed)
-	single  *queue.FIFO // outdoor single-rider line
-	// Load-area lines. Without a preshow they are the outdoor lines themselves.
-	loadStandby *queue.FIFO
-	loadSingle  *queue.FIFO
-	preshow     *queue.Preshow
-	releaseSeq  int64 // release order into the combined post-preshow line
-
-	ll       *queue.FIFO  // Lightning Lane line up to the merge point (nil without skip_line)
-	merge    *queue.Merge // LL / standby merge (spec §8)
-	llInside int          // LL guests past the merge (preshow / load area) not yet boarded
-
-	recentStandby []dispatchRecord // non-LL guests boarded, for the standby posted wait
-	srClosed      bool             // single-rider line closed by operations
+	lines *lines.Lines // front of house: lines, merge, preshow (shared with continuous_load)
 
 	lastDispatch   engine.Time
 	dispatched     bool
@@ -166,7 +153,7 @@ func New(sim *engine.Sim, cfg *config.CoasterFile, opts Options) (*Coaster, erro
 	if opts.Trains < 1 || opts.Trains > cfg.Trains.MaxInService || opts.Trains > len(cfg.Blocks)-1 {
 		return nil, fmt.Errorf("coaster %s: %d trains in service, allowed 1..%d", cfg.Ride.ID, opts.Trains, min(cfg.Trains.MaxInService, len(cfg.Blocks)-1))
 	}
-	c := &Coaster{sim: sim, cfg: cfg, opts: opts, byID: map[string]*block{}, switches: map[string]*switchState{}, standby: &queue.FIFO{}, single: &queue.FIFO{}, stopDepth: map[string]int{}}
+	c := &Coaster{sim: sim, cfg: cfg, opts: opts, byID: map[string]*block{}, switches: map[string]*switchState{}, stopDepth: map[string]int{}}
 	c.initQueues()
 	for i := range cfg.Blocks {
 		b := &block{cfg: &cfg.Blocks[i]}
@@ -259,9 +246,7 @@ func (c *Coaster) Start() {
 	}
 	c.startFailures()
 	c.startPosting()
-	if c.preshow != nil {
-		c.preshow.Start()
-	}
+	c.lines.Start()
 	c.kick()
 }
 
