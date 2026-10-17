@@ -84,8 +84,7 @@ func (c *Coaster) tryAdd() {
 		return
 	}
 	c.pendingAdd--
-	c.nextTrainID++
-	t := &train{id: c.nextTrainID, seats: c.cfg.Trains.SeatsPerTrain}
+	t := c.newTrain()
 	ub.occupant = t // reserve the station so nothing else enters during the swap
 	t.at = ub
 	c.swap(t, "add_train", func() {

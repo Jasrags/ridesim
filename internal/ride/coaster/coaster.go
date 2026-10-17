@@ -15,7 +15,6 @@ import (
 
 	"github.com/jasrags/ridesim/internal/config"
 	"github.com/jasrags/ridesim/internal/engine"
-	"github.com/jasrags/ridesim/internal/guest"
 	"github.com/jasrags/ridesim/internal/queue"
 	"github.com/jasrags/ridesim/internal/ride"
 )
@@ -89,6 +88,10 @@ type train struct {
 	id    int
 	at    *block
 	seats int
+	rows  int
+
+	rowsFree int // whole rows still empty this load
+	gaps     int // empty seats in partly filled rows (single riders only)
 
 	riders   int
 	workDone bool // finished this block's work and wants to exit
@@ -118,7 +121,12 @@ type Coaster struct {
 	trains   []*train
 	load     *block
 
-	standby *queue.FIFO
+	standby *queue.FIFO // outdoor standby line (reneging allowed)
+	single  *queue.FIFO // outdoor single-rider line
+	// Load-area lines. Without a preshow they are the outdoor lines themselves.
+	loadStandby *queue.FIFO
+	loadSingle  *queue.FIFO
+	preshow     *queue.Preshow
 
 	lastDispatch   engine.Time
 	dispatched     bool
@@ -150,7 +158,8 @@ func New(sim *engine.Sim, cfg *config.CoasterFile, opts Options) (*Coaster, erro
 	if opts.Trains < 1 || opts.Trains > cfg.Trains.MaxInService || opts.Trains > len(cfg.Blocks)-1 {
 		return nil, fmt.Errorf("coaster %s: %d trains in service, allowed 1..%d", cfg.Ride.ID, opts.Trains, min(cfg.Trains.MaxInService, len(cfg.Blocks)-1))
 	}
-	c := &Coaster{sim: sim, cfg: cfg, opts: opts, byID: map[string]*block{}, switches: map[string]*switchState{}, standby: &queue.FIFO{}, stopDepth: map[string]int{}}
+	c := &Coaster{sim: sim, cfg: cfg, opts: opts, byID: map[string]*block{}, switches: map[string]*switchState{}, standby: &queue.FIFO{}, single: &queue.FIFO{}, stopDepth: map[string]int{}}
+	c.initQueues()
 	for i := range cfg.Blocks {
 		b := &block{cfg: &cfg.Blocks[i]}
 		for _, sid := range b.cfg.Contains {
@@ -236,38 +245,20 @@ func (c *Coaster) Start() {
 		b = prev[b]
 	}
 	for _, pb := range placed {
-		c.nextTrainID++
-		t := &train{id: c.nextTrainID, seats: c.cfg.Trains.SeatsPerTrain}
+		t := c.newTrain()
 		c.trains = append(c.trains, t)
 		c.enter(t, pb)
 	}
 	c.startFailures()
 	c.startPosting()
+	if c.preshow != nil {
+		c.preshow.Start()
+	}
 	c.kick()
-}
-
-// Arrive implements ride.Ride. Only standby exists in M1.
-func (c *Coaster) Arrive(p *guest.Party, lane guest.Lane) {
-	if lane != guest.Standby {
-		panic(fmt.Sprintf("coaster %s: lane %v not modeled until M3/M4", c.ID(), lane))
-	}
-	p.JoinedAt = c.sim.Now()
-	c.sim.Emit(engine.Event{Type: engine.EvQueueJoin, Guest: p.ID, N: p.Size, Info: lane.String()})
-	c.standby.Push(p)
-	if t := c.load.occupant; t != nil && !c.Stopped() && (t.phase == phaseBoarding || t.phase == phaseFillWait) {
-		c.board(t)
-		if t.phase == phaseFillWait && t.riders == t.seats {
-			c.cancelWork(t)
-			c.startCheck(t)
-		}
-	}
 }
 
 // LoadBlock is the id of the block trains are dispatched from.
 func (c *Coaster) LoadBlock() string { return c.load.cfg.ID }
-
-// QueueGuests is the number of guests in standby.
-func (c *Coaster) QueueGuests() int { return c.standby.Guests() }
 
 // ---------------------------------------------------------------------------------------------------
 // Block entry and work
@@ -309,20 +300,25 @@ func (c *Coaster) startUnload(t *train, then func()) {
 
 func (c *Coaster) startLoad(t *train) {
 	t.phase = phaseBoarding
+	t.rowsFree, t.gaps = t.rows, 0
 	if !c.Stopped() {
-		c.board(t)
+		c.board(t, false)
 	}
 	c.startWork(t, c.sampleStation(c.cfg.Station.LoadS), func() {
+		if !c.Stopped() {
+			c.board(t, true) // single riders may now take whole empty rows
+		}
 		c.sim.Emit(engine.Event{Type: engine.EvLoadDone, Train: t.id, Block: t.at.cfg.ID, N: t.riders})
 		rule := c.dispatchRule()
-		if t.riders == t.seats || rule == config.DispatchWhenReady ||
+		if t.full() || rule == config.DispatchWhenReady ||
 			(rule == config.DispatchHoldForFullOrMaxWait && c.cfg.Station.MaxWaitAfterReadyS <= 0) {
 			c.startCheck(t)
 			return
 		}
 		t.phase = phaseFillWait
 		if rule == config.DispatchHoldForFull {
-			t.work = work{gen: t.work.gen + 1} // no timeout: Arrive starts the check once the train is full
+			t.work = work{gen: t.work.gen + 1} // no timeout: boarding starts the check once the train is full
+			c.checkFillWait(t)
 			return
 		}
 		c.startWork(t, engine.Seconds(c.cfg.Station.MaxWaitAfterReadyS), func() { c.startCheck(t) })
@@ -336,21 +332,6 @@ func (c *Coaster) startCheck(t *train) {
 		t.phase = phaseNone
 		c.workComplete(t)
 	})
-}
-
-// board fills t from the front of standby. Parties are never split; boarding stops at the first
-// party that does not fit (no seat-filling around it until single rider exists, M3).
-func (c *Coaster) board(t *train) {
-	for {
-		p := c.standby.Peek()
-		if p == nil || p.Size > t.seats-t.riders {
-			return
-		}
-		c.standby.Pop()
-		c.recordWait(c.sim.Now().Sub(p.JoinedAt))
-		t.riders += p.Size
-		c.sim.Emit(engine.Event{Type: engine.EvBoard, Train: t.id, Block: t.at.cfg.ID, Guest: p.ID, N: p.Size})
-	}
 }
 
 func (c *Coaster) workComplete(t *train) {
@@ -495,7 +476,8 @@ func (c *Coaster) depart(t *train) {
 		t.held, t.holdReason = false, ""
 	}
 	if from == c.load {
-		c.sim.Emit(engine.Event{Type: engine.EvDispatch, Train: t.id, Block: from.cfg.ID, N: t.riders})
+		c.sim.Emit(engine.Event{Type: engine.EvDispatch, Train: t.id, Block: from.cfg.ID, N: t.riders,
+			Info: fmt.Sprintf("gaps=%d rows=%d", t.gaps, t.rowsFree)})
 		c.lastDispatch, c.dispatched = c.sim.Now(), true
 		c.recordDispatch(t.riders)
 	}

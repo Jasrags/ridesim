@@ -38,6 +38,8 @@ type CoasterRun struct {
 	Ops          []OpsAt
 	Weather      []Window
 
+	Guests guest.Profile // zero = single guests, unlimited patience
+
 	CascadeScope      string  // analysis override
 	CascadeToleranceS float64 // analysis override
 }
@@ -114,14 +116,18 @@ func (r CoasterRun) Run() (*engine.Log, error) {
 	if id == "" {
 		id = "adhoc"
 	}
+	batch := 0
+	if p := r.Ride.Preshow; p != nil && p.Enabled {
+		batch = p.BatchSize
+	}
 	sim.Emit(engine.Event{Type: engine.EvRunStart, Info: fmt.Sprintf(
-		"scenario=%s ride=%s trains=%d seats=%d seed=%d fixed_times=%t length_s=%.0f warmup_s=%.0f arrivals=%s failures=%s load=%s brakes=%s",
+		"scenario=%s ride=%s trains=%d seats=%d seed=%d fixed_times=%t length_s=%.0f warmup_s=%.0f arrivals=%s failures=%s load=%s brakes=%s preshow_batch=%d",
 		id, r.Ride.Ride.ID, trains, r.Ride.Trains.SeatsPerTrain, r.Seed, r.FixedTimes, r.Length.Seconds(), r.Warmup.Seconds(),
-		curveString(r.Arrivals), failures, c.LoadBlock(), strings.Join(brakes, ","))})
+		curveString(r.Arrivals), failures, c.LoadBlock(), strings.Join(brakes, ","), batch)})
 
 	end := engine.Time(0).Add(r.Length)
 	c.Start()
-	guest.StartArrivals(sim, r.Arrivals, c, end)
+	guest.StartArrivalsWith(sim, r.Arrivals, r.Guests, c, end)
 	for _, w := range r.Weather {
 		sim.At(engine.Time(w.From), func() { c.Stop(coaster.CauseWeatherHold) })
 		sim.At(engine.Time(w.To), func() { c.Resume(coaster.CauseWeatherHold) })

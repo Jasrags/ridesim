@@ -76,7 +76,7 @@ func (c *Coaster) queueLenOverThroughput() engine.Duration {
 	if riders == 0 || c.sim.Now() < engine.Time(throughputWindow) {
 		perS = float64(c.cfg.Trains.SeatsPerTrain) / c.cfg.Station.TargetDispatchIntervalS
 	}
-	return engine.Seconds(float64(c.standby.Guests()) / perS)
+	return engine.Seconds(float64(c.WaitingGuests()) / perS)
 }
 
 func (c *Coaster) recordDispatch(riders int) {

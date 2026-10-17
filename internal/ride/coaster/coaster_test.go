@@ -14,6 +14,7 @@ func fixture(t *testing.T) *config.CoasterFile {
 	if err != nil {
 		t.Fatal(err)
 	}
+	f.Coaster.Preshow = nil // model tests exercise track and station timing; preshow has its own tests
 	return f.Coaster
 }
 

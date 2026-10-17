@@ -26,7 +26,16 @@ type PostedError struct {
 	Algorithm string
 }
 
-// Ops covers M2: downtime, cascades, barn swaps, seat use, stacking, posted-wait accuracy.
+// PreshowStats summarizes the batch stage (spec §10).
+type PreshowStats struct {
+	Shows    int
+	MeanFill float64 // guests per show
+	FillPct  float64 // of preshow_batch
+	Partial  int     // shows below the batch size
+	BlockedS float64 // time rooms sat in RELEASING blocked by a full load area
+}
+
+// Ops covers M2/M3: downtime, cascades, barn swaps, seat use, stacking, posted-wait accuracy, preshow.
 type Ops struct {
 	Downtime      []CauseDowntime // sorted by cause
 	StoppedS      float64
@@ -37,6 +46,7 @@ type Ops struct {
 	EmptySeats    Stats // per dispatch
 	StackingS     float64
 	Posted        PostedError
+	Preshow       PreshowStats
 }
 
 func computeOps(events []engine.Event, r *Report) {
@@ -60,6 +70,9 @@ func computeOps(events []engine.Event, r *Report) {
 	var empty, abs, bias []float64
 	posted, postedAt := -1.0, map[int64]float64{}
 	openHold := map[int]engine.Event{}
+	batch, _ := strconv.Atoi(r.Run["preshow_batch"])
+	blockedSince := map[string]engine.Time{}
+	fill := 0
 
 	for _, e := range events {
 		switch e.Type {
@@ -116,6 +129,21 @@ func computeOps(events []engine.Event, r *Report) {
 				abs, bias = append(abs, math.Abs(d)), append(bias, d)
 				delete(postedAt, e.Guest)
 			}
+		case "preshow_show":
+			if in(e.T) {
+				o.Preshow.Shows++
+				fill += e.N
+				if batch > 0 && e.N < batch {
+					o.Preshow.Partial++
+				}
+			}
+		case "preshow_blocked":
+			blockedSince[e.Info] = e.T
+		case "preshow_empty":
+			if t0, ok := blockedSince[e.Info]; ok {
+				o.Preshow.BlockedS += clip(t0, e.T)
+				delete(blockedSince, e.Info)
+			}
 		case engine.EvHoldStart:
 			openHold[e.Train] = e
 		case engine.EvHoldEnd:
@@ -139,6 +167,15 @@ func computeOps(events []engine.Event, r *Report) {
 		o.Downtime = append(o.Downtime, *cd)
 	}
 	sort.Slice(o.Downtime, func(i, j int) bool { return o.Downtime[i].Cause < o.Downtime[j].Cause })
+	for _, t0 := range blockedSince {
+		o.Preshow.BlockedS += clip(t0, we)
+	}
+	if o.Preshow.Shows > 0 {
+		o.Preshow.MeanFill = float64(fill) / float64(o.Preshow.Shows)
+		if batch > 0 {
+			o.Preshow.FillPct = o.Preshow.MeanFill / float64(batch) * 100
+		}
+	}
 	o.Availability = 1 - o.StoppedS/we.Sub(ws).Seconds()
 	o.EmptySeats = summarize(empty)
 	if len(abs) > 0 {
@@ -166,6 +203,9 @@ func (o *Ops) write(b *strings.Builder, ridersPerHr float64) {
 	fmt.Fprintf(b, "barn swaps        %d\n", o.Swaps)
 	fmt.Fprintf(b, "empty seats       mean %.2f per dispatch (max %.0f)\n", o.EmptySeats.Mean, o.EmptySeats.Max)
 	fmt.Fprintf(b, "stacking          %.0f s held at brakes\n", o.StackingS)
+	if p := o.Preshow; p.Shows > 0 {
+		fmt.Fprintf(b, "preshow           %d shows, mean fill %.0f guests (%.0f%%), %d partial, release blocked %.0f s\n", p.Shows, p.MeanFill, p.FillPct, p.Partial, p.BlockedS)
+	}
 	if o.Posted.N > 0 {
 		fmt.Fprintf(b, "posted vs true    %s: mean |error| %.1f min, bias %+.1f min (n=%d)\n", o.Posted.Algorithm, o.Posted.MeanAbsS/60, o.Posted.BiasS/60, o.Posted.N)
 	}

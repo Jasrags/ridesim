@@ -26,6 +26,8 @@ const (
 	EvTrainToBarn   = "train_to_barn"   // Train, N=trains in service after
 	EvTrainFromBarn = "train_from_barn" // Train, N=trains in service after
 	EvOpsRejected   = "ops_rejected"    // Info=reason
+	EvBalk          = "balk"            // Guest, N, Info=lane: left on arrival, posted wait over patience
+	EvRenege        = "renege"          // Guest, N, Info=lane: left the outdoor line, wait over patience
 	EvPostedWait    = "posted_wait"     // N=posted seconds, Info=algorithm
 	EvRunEnd        = "run_end"
 )

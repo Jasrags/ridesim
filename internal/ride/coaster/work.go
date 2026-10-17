@@ -17,10 +17,11 @@ type work struct {
 	paused    bool
 }
 
-// pausesAt reports whether a train in b stops while the ride is stopped. Stations and brakes hold
-// trains; lifts, launches and course blocks run the train on to the next brake or station.
+// pausesAt reports whether a train in b stops while the ride is stopped. Stations, brakes and launch
+// tracks (the train is staged, not yet launched) hold trains; lifts and course blocks run the train on
+// to the next brake or station.
 func pausesAt(b *block) bool {
-	return b.role != roleTrack || b.cfg.Kind == config.BlockBrake
+	return b.role != roleTrack || b.cfg.Kind == config.BlockBrake || b.cfg.Kind == config.BlockLaunch
 }
 
 // startWork replaces t's pending work with fn after d. If the ride is stopped and t is somewhere that

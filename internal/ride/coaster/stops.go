@@ -51,9 +51,7 @@ func (c *Coaster) Resume(cause string) {
 	for _, t := range c.trains {
 		c.resumeWork(t)
 	}
-	if t := c.load.occupant; t != nil && (t.phase == phaseBoarding || t.phase == phaseFillWait) {
-		c.board(t)
-	}
+	c.flow()
 	c.kick()
 }
 

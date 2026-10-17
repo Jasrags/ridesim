@@ -71,7 +71,10 @@ type Report struct {
 	Wait          Stats // standby wait of guests who joined in the window and boarded
 	Unserved      int   // joined in the window, still waiting at the end
 	QueueMax      int
-	Holds         []BlockHolds // every block with a pass in the window, in first-seen order
+	Balks         int            // guests who left on arrival
+	Reneges       int            // guests who left the outdoor line
+	Lanes         map[string]int // boarded guests by lane
+	Holds         []BlockHolds   // every block with a pass in the window, in first-seen order
 	Little        Little
 	LoadIdleS     float64 // time the load station sat empty during the window
 	StationBlocks []string
@@ -98,7 +101,9 @@ func Compute(events []engine.Event, warmup engine.Duration) (*Report, error) {
 	for _, b := range strings.Split(r.Run["brakes"], ",") {
 		brakes[b] = true
 	}
-	r.brakes, r.joinTimes = brakes, map[int64]engine.Time{}
+	r.brakes, r.joinTimes, r.Lanes = brakes, map[int64]engine.Time{}, map[string]int{}
+	var littleSum float64
+	var littleN int
 	loadBlock := r.Run["load"]
 	in := func(t engine.Time) bool { return t >= r.WindowStart && t <= r.WindowEnd }
 
@@ -146,13 +151,27 @@ func Compute(events []engine.Event, warmup engine.Duration) (*Report, error) {
 			if in(e.T) {
 				joins += e.N
 			}
-		case engine.EvBoard:
+		case engine.EvBoard, engine.EvRenege:
 			q -= e.N
 			if j, ok := joinedAt[e.Guest]; ok {
 				if in(j) {
-					waits = append(waits, e.T.Sub(j).Seconds())
+					w := e.T.Sub(j).Seconds()
+					littleSum += w * float64(e.N)
+					littleN += e.N
+					if e.Type == engine.EvBoard {
+						for range e.N { // guest-weighted
+							waits = append(waits, w)
+						}
+						r.Lanes[e.Info] += e.N
+					} else {
+						r.Reneges += e.N
+					}
 				}
 				delete(joinedAt, e.Guest)
+			}
+		case engine.EvBalk:
+			if in(e.T) {
+				r.Balks += e.N
 			}
 		case engine.EvDispatch:
 			if in(e.T) {
@@ -223,7 +242,9 @@ func Compute(events []engine.Event, warmup engine.Duration) (*Report, error) {
 
 	r.Little.L = area / window
 	r.Little.Lambda = float64(joins) / window
-	r.Little.W = r.Wait.Mean
+	if littleN > 0 {
+		r.Little.W = littleSum / float64(littleN) // boarded and reneged guests
+	}
 	r.Little.LambdaW = r.Little.Lambda * r.Little.W
 	if r.Little.L > 0 {
 		r.Little.ErrPct = math.Abs(r.Little.L-r.Little.LambdaW) / r.Little.L * 100
@@ -279,6 +300,12 @@ func (r *Report) Write(w io.Writer) error {
 		sort.Strings(reasons)
 		fmt.Fprintf(&b, "%-18s %-5s %7d %6d %9.0f %7.1f %7.1f %6d  %s\n", h.Block, brake, h.Passes, h.Holds, h.TotalS, h.MeanS, h.MaxS, h.Yields, strings.Join(reasons, " "))
 	}
+	lanes := make([]string, 0, len(r.Lanes))
+	for k, v := range r.Lanes {
+		lanes = append(lanes, fmt.Sprintf("%s=%d", k, v))
+	}
+	sort.Strings(lanes)
+	fmt.Fprintf(&b, "\nriders by lane    %s\nabandonment       %d balked, %d reneged\n", strings.Join(lanes, " "), r.Balks, r.Reneges)
 	r.Ops.write(&b, r.RidersPerHr)
 	_, err := io.WriteString(w, b.String())
 	return err

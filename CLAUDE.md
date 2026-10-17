@@ -74,7 +74,8 @@ numbers come from `data/`. Read both before changing simulation logic.
   slack" target is dropped; check that 4 trains suffice instead.
 - Rock 'n' Roller load_s 40 -> 37 [assumed] is pre-approved once the sim reproduces the 51 s / ~1,694/hr
   hand math (log it in tuning-log.md).
-- Seats are rows (`trains.seats_per_row`): a party takes whole rows; leftover seats go to single riders.
+- Seats are rows (`trains.seats_per_row`): a party takes whole rows; leftover seats go to a solo party at
+  the head of the standby line (no skipping) or to single riders, who may also take empty rows after load_done.
 - Preshow back-pressure uses `preshow.load_area_capacity` [assumed]: 48 on Rock 'n' Roller (two trains).
 - Guest parameters (party sizes, single-rider share, patience) are scenario fields that default to the
   park file's guests section. Ad hoc runs without them keep single guests and no abandonment.
