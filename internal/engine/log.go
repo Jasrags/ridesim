@@ -15,6 +15,7 @@ const (
 	EvTrainEnter = "train_enter" // Train, Block
 	EvHoldStart  = "hold_start"  // Train, Block, Info=reason
 	EvHoldEnd    = "hold_end"    // Train, Block
+	EvHoldYield  = "hold_yield"  // Train, Block, Info=rule that yielded to avoid a circular wait
 	EvLoadDone   = "load_done"   // Train, N=riders aboard
 	EvDispatch   = "dispatch"    // Train, Block (the station block left), N=riders
 	EvUnload     = "unload"      // Train, N=riders off
