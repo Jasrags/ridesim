@@ -15,6 +15,7 @@ import (
 
 	"github.com/jasrags/ridesim/internal/config"
 	"github.com/jasrags/ridesim/internal/engine"
+	"github.com/jasrags/ridesim/internal/guest"
 	"github.com/jasrags/ridesim/internal/ride"
 	"github.com/jasrags/ridesim/internal/ride/lines"
 )
@@ -94,7 +95,8 @@ type train struct {
 	gaps     int // empty seats in partly filled rows (single riders only)
 
 	riders   int
-	workDone bool // finished this block's work and wants to exit
+	parties  []*guest.Party // aboard; told they rode once unloading finishes
+	workDone bool           // finished this block's work and wants to exit
 
 	held       bool
 	holdReason string
@@ -285,8 +287,13 @@ func (c *Coaster) startUnload(t *train, then func()) {
 		c.sim.Emit(engine.Event{Type: engine.EvUnload, Train: t.id, Block: t.at.cfg.ID, N: t.riders})
 		t.riders = 0
 	}
+	off := t.parties
+	t.parties = nil
 	c.startWork(t, c.sampleStation(c.cfg.Station.UnloadS), func() {
 		t.phase = phaseNone
+		for _, p := range off {
+			p.Exited(guest.Rode)
+		}
 		then()
 	})
 }

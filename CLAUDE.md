@@ -104,3 +104,17 @@ numbers come from `data/`. Read both before changing simulation logic.
   with 95% t intervals. Output: text table plus JSON (`ridesim study -file ... -json out.json`).
 - Replications run in parallel goroutines, one single-threaded sim each; results are ordered by seed, so
   output never depends on scheduling (tested). Simulation logic itself stays goroutine-free.
+
+## Decisions log (M7 kickoff, 2026-10-17)
+- The synthetic park's modeled attractions hold only ~25% of a medium-day crowd at realistic waits. An
+  `elsewhere` park node stands for the rest of the park (unlimited capacity, duration distribution, appeal);
+  attendance stays park-wide and guests come and go from it.
+- Lightning Lane in park runs ([user]): purchasing parties book up to `advance_bookings` passes before the day
+  (random booking order, earliest window with inventory at or after their arrival), then book one more each time
+  a pass is used or a window lapses. Hourly inventory is a share of ride capacity. The "2 hours after park open"
+  rebooking rule is not modeled. Park runs replace the scripted LL curves; ride-only scenarios keep them.
+- Calibration toward the Queue-Times targets may tune park-file [assumed] values only (utility weights,
+  temperature, elsewhere, LL inventory, congestion), logged in tuning-log.md and reported before applying.
+  Ride files are not touched.
+- One simulation hosts many rides: `Sim.Scope(src)` stamps events with `src` (the park node id) and gives each
+  scope its own RNG streams (`src/name`), so a ride's randomness does not depend on its neighbours.

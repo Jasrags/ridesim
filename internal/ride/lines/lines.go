@@ -100,6 +100,7 @@ func (l *Lines) Arrive(p *guest.Party, lane guest.Lane) {
 	p.Lane = lane
 	if p.Patience > 0 && l.ride.PostedWait() > p.Patience {
 		l.sim.Emit(engine.Event{Type: engine.EvBalk, Guest: p.ID, N: p.Size, Info: lane.String()})
+		p.Exited(guest.Balked)
 		return
 	}
 	p.JoinedAt = l.sim.Now()
@@ -116,6 +117,7 @@ func (l *Lines) Arrive(p *guest.Party, lane guest.Lane) {
 			}
 			line.Remove(p)
 			l.sim.Emit(engine.Event{Type: engine.EvRenege, Guest: p.ID, N: p.Size, Info: lane.String()})
+			p.Exited(guest.Reneged)
 		})
 	}
 	l.Flow()

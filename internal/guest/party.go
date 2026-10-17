@@ -39,4 +39,37 @@ type Party struct {
 	Gone bool
 	// LineSeq orders parties in a combined line kept as separate per-lane queues (release order).
 	LineSeq int64
+
+	// OnExit, if set, is called when the party leaves a ride: off the vehicle after unloading, or on
+	// balking or reneging. It runs inside the ride's event handler, so it must not call back into the
+	// ride synchronously (the park model defers to a new event).
+	OnExit func(Exit)
+}
+
+// Exit is how a party left a ride.
+type Exit int
+
+const (
+	Rode Exit = iota + 1
+	Balked
+	Reneged
+)
+
+func (e Exit) String() string {
+	switch e {
+	case Rode:
+		return "rode"
+	case Balked:
+		return "balked"
+	case Reneged:
+		return "reneged"
+	}
+	return "unknown"
+}
+
+// Exited reports the party's exit to OnExit, if set.
+func (p *Party) Exited(e Exit) {
+	if p.OnExit != nil {
+		p.OnExit(e)
+	}
 }

@@ -169,11 +169,11 @@ func (r *Ride) loadBuggy(id int) {
 	if r.boarding == nil {
 		p, line := r.lines.Head()
 		if p == nil {
-			r.dispatch(id, 0)
+			r.dispatch(id, 0, nil)
 			return
 		}
 		if f := r.cfg.LoadZone.BoardFailRate; f > 0 && r.sim.Stream(engine.StreamStationTimes).Float64() < f {
-			r.dispatch(id, 0)
+			r.dispatch(id, 0, nil)
 			return
 		}
 		r.lines.Pop(line)
@@ -186,18 +186,23 @@ func (r *Ride) loadBuggy(id int) {
 	buggiesLeft := (r.remaining + seats - 1) / seats
 	n := (r.remaining + buggiesLeft - 1) / buggiesLeft
 	r.remaining -= n
+	var last *guest.Party // the party is off the ride when its last buggy unloads
 	if r.remaining == 0 {
-		r.boarding = nil
+		last, r.boarding = r.boarding, nil
 	}
-	r.dispatch(id, n)
+	r.dispatch(id, n, last)
 }
 
-// dispatch logs the buggy leaving the load zone with n riders and schedules its unload.
-func (r *Ride) dispatch(id, n int) {
+// dispatch logs the buggy leaving the load zone with n riders and schedules its unload; done, if set,
+// is told it rode then.
+func (r *Ride) dispatch(id, n int, done *guest.Party) {
 	r.sim.Emit(engine.Event{Type: engine.EvDispatch, Train: id, Block: LoadZone, N: n})
 	if n > 0 {
 		r.belt.after(r.rideTime, func() {
 			r.sim.Emit(engine.Event{Type: engine.EvUnload, Train: id, Block: "unload_zone", N: n})
+			if done != nil {
+				done.Exited(guest.Rode)
+			}
 		})
 	}
 }

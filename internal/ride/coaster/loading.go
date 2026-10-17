@@ -108,6 +108,7 @@ func (c *Coaster) seat(t *train, p *guest.Party) {
 	c.lines.Seated(p)
 	c.recordWait(c.sim.Now().Sub(p.JoinedAt))
 	t.riders += p.Size
+	t.parties = append(t.parties, p)
 	c.sim.Emit(engine.Event{Type: engine.EvBoard, Train: t.id, Block: t.at.cfg.ID, Guest: p.ID, N: p.Size, Info: p.Lane.String()})
 }
 

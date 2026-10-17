@@ -7,7 +7,14 @@ import (
 )
 
 // Sim owns the clock, scheduler, RNG streams and event log for one run. It is single-threaded.
+// A Sim may be a scope of another (Scope): scopes share everything but stamp their events with a source
+// and draw from their own streams, so several rides can share one run.
 type Sim struct {
+	*core
+	src string
+}
+
+type core struct {
 	now   Time
 	seq   uint64
 	queue queue
@@ -17,8 +24,20 @@ type Sim struct {
 
 // New returns a simulation at t=0 with RNG streams derived from seed.
 func New(seed uint64) *Sim {
-	return &Sim{rng: rngSet{seed: seed, streams: map[string]*rand.Rand{}}, Log: &Log{}}
+	return &Sim{core: &core{rng: rngSet{seed: seed, streams: map[string]*rand.Rand{}}, Log: &Log{}}}
 }
+
+// Scope returns a view of s whose events carry Src = src (nested as "parent/src") and whose streams are
+// named "src/name".
+func (s *Sim) Scope(src string) *Sim {
+	if s.src != "" {
+		src = s.src + "/" + src
+	}
+	return &Sim{core: s.core, src: src}
+}
+
+// Src is the scope's source name ("" for the root).
+func (s *Sim) Src() string { return s.src }
 
 // Now is the current simulated time.
 func (s *Sim) Now() Time { return s.now }
@@ -53,10 +72,18 @@ func (s *Sim) RunUntil(end Time) {
 }
 
 // Stream returns the named RNG stream.
-func (s *Sim) Stream(name string) *rand.Rand { return s.rng.stream(name) }
+func (s *Sim) Stream(name string) *rand.Rand {
+	if s.src != "" {
+		name = s.src + "/" + name
+	}
+	return s.rng.stream(name)
+}
 
 // Emit appends e to the log, stamped with the current time.
 func (s *Sim) Emit(e Event) {
 	e.T = s.now
+	if e.Src == "" {
+		e.Src = s.src
+	}
 	s.Log.append(e)
 }

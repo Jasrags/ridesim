@@ -37,6 +37,7 @@ const (
 type Event struct {
 	T     Time   `json:"t"`
 	Type  string `json:"type"`
+	Src   string `json:"src,omitempty"`   // emitting scope (park node id); "" for single-ride runs
 	Train int    `json:"train,omitempty"` // 1-based; 0 means none
 	Block string `json:"block,omitempty"`
 	Guest int64  `json:"guest,omitempty"` // 1-based; 0 means none
