@@ -26,7 +26,7 @@ nodes:
     exit_edge: theater_haunted_mansion   # show lets out next to Haunted Mansion [fan: known real-world surge pattern]
     appeal: 0.50
   - { id: dining, kind: dining, seats: 600, service_time_min: { mean: 35, sd: 10 }, appeal: 0.60 }  # [assumed]
-  - { id: elsewhere, kind: elsewhere, visit_min: { mean: 45, sd: 20 }, appeal: 0.60, thrill: 0.40 }   # [assumed] the rest of the park (decision 2026-10-17)
+  - { id: elsewhere, kind: elsewhere, visit_min: { mean: 30, sd: 15 }, appeal: 0.60, thrill: 0.40 }   # [assumed] the rest of the park (decision 2026-10-17)
   - { id: exit,   kind: exit }
 
 edges:                               # bidirectional; length in ft, width in ft [assumed]
@@ -91,12 +91,12 @@ decision:
   meal_window_bonus: 0.8             # [assumed] added to dining utility inside a meal window, until the party has eaten
 
 lightning_lane:                      # pass issuance in park runs (decision 2026-10-17)
-  purchase_share: 0.35               # [assumed] share of parties that buy Lightning Lane
+  purchase_share: 0.30               # [assumed] share of parties that buy Lightning Lane
   advance_bookings: 3                # [user] booked before the day (count [assumed]); then one more after each use or lapse
   window_min: 60                     # [assumed] return window length
   grace_min: 15                      # [assumed] redeemable this long after the window ends
-  inventory_share: 0.30              # [assumed] share of listed hourly capacity sold per window, per ride
-  elsewhere_share: 0.70              # [assumed] share of bookings for attractions outside the modeled rides
+  inventory_share: 0.40              # [assumed] share of listed hourly capacity sold per window, per ride
+  elsewhere_share: 0.20              # [assumed] share of bookings for attractions outside the modeled rides
 
 calibration_targets:                 # [fan] Queue-Times 2026 averages, not true ground truth
   everest_avg_standby_min: 19

@@ -29,3 +29,11 @@ long_downtime ([assumed]) cost 2.7% (-> ~2,011/hr). Accepted as a 1.9% miss agai
 | 2026-10-17 | park-synthetic.yaml | boat_ride / flat_ride queue_capacity | (new) | 800 / 300 | New [assumed] field: physical queue before spillback onto hub_boat / hub_flat. Approved diff. |
 | 2026-10-17 | park-synthetic.yaml | decision.meal_window_bonus | (new) | 0.8 | New [assumed] field: dining utility boost inside a meal window until the party has eaten. Approved diff. |
 | 2026-10-17 | park-synthetic.yaml | lightning_lane (purchase 0.35, advance 3, window 60 min, grace 15 min, inventory 0.30, elsewhere 0.70) | (new) | as listed | New [assumed] section for park-run pass issuance; advance booking then rebook-after-use is [user]. Approved diff. |
+| 2026-10-17 | park-synthetic.yaml | nodes.elsewhere.visit_min | mean 45, sd 20 | mean 30, sd 15 | M7 calibration (approved). Long elsewhere visits made 26% of LL bookings lapse (now ~17-20%) and kept guests off the modeled rides. |
+| 2026-10-17 | park-synthetic.yaml | lightning_lane.elsewhere_share | 0.70 | 0.20 | M7 calibration (approved). Realized LL share was 8-12% at medium; too few bookings landed on the modeled rides. |
+| 2026-10-17 | park-synthetic.yaml | lightning_lane.inventory_share | 0.30 | 0.40 | M7 calibration (approved). Lets high crowds reach the 33% band. |
+| 2026-10-17 | park-synthetic.yaml | lightning_lane.purchase_share | 0.35 | 0.30 | M7 calibration (approved). Brings low crowds near the 13% band. |
+
+M7 calibration result (medium, 10 seeds, failures on, congestion walking): realized LL share Everest / RnR / HM 23 / 30 / 26% (low 13 / 17 / 14%,
+high 31 / 35 / 37%). Posted averages outside long downtime: Everest ~21.8 min (target 19), HM ~28.5 min (target 26). Including downtime the
+Everest average is dominated by queue_len_over_throughput exploding while the ride is down (see docs/m7-report.md).
