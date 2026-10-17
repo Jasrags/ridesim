@@ -20,3 +20,5 @@ bottleneck; see docs/m1-report.md.
 
 M2 note: the listed 2,050/hr is not reachable by cascade tuning. Failures off gives ~2,067/hr with random timings, and brief_stop +
 long_downtime ([assumed]) cost 2.7% (-> ~2,011/hr). Accepted as a 1.9% miss against a Wikipedia design figure (decision 2026-10-17).
+| 2026-10-17 | wdw-dhs-rock-n-roller-coaster.yaml | station.load_s.mean | 40 | 37 | Pre-approved (M3). Sim reproduced the hand math as authored: 40 + 8 + 3 = 51 s, 1,694/hr (4 trains, fixed times). Now 48 s, 1,800/hr = listed theoretical. |
+| 2026-10-17 | wdw-dhs-rock-n-roller-coaster.yaml | preshow.load_area_capacity | 48 | 130 | New [assumed] field. At 48 the 180 s show cycle starved the station (preshow became the bottleneck, ~1,492/hr), which spec §11 rules out; >= 72 lets the station set the pace. Jason chose one show's release (130). |

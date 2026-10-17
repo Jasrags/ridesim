@@ -144,3 +144,40 @@ func TestRenegeLeavesOutdoorLineAfterPatience(t *testing.T) {
 		t.Fatal("reneged party boarded")
 	}
 }
+
+// After a preshow the line is combined: a single rider at the front boards in order (here into a row
+// during the load window), and the grouper pulls the earliest single rider to fill a gap.
+func TestCombinedPostPreshowLine(t *testing.T) {
+	cfg := fixture(t)
+	cfg.Queues.SingleRider.Enabled = true
+	cfg.Preshow = &config.Preshow{Enabled: true, Rooms: 1, BatchSize: 100, DurationS: config.Dist{Mean: 10}, TurnoverS: config.Dist{Mean: 5}, MaxFillWaitS: 1}
+	h := newHarness(t, cfg, Options{Trains: 1, FixedTimes: true}, 0, engine.Hour)
+	sr1 := arriveAt(h, 0, 1, guest.SingleRider, 0) // released first: front of the combined line
+	p3 := arriveAt(h, 0, 3, guest.Standby, 0)
+	sr2 := arriveAt(h, 0, 1, guest.SingleRider, 0) // next in line; takes a gap
+	p2 := arriveAt(h, 0, 2, guest.Standby, 0)      // a whole row
+	h.sim.RunUntil(sec(12))                        // fill wait 1 s + show 10 s, still inside load_s
+	tr := loadTrain(h)
+	if !boarded(h, sr1) || !boarded(h, p3) || !boarded(h, sr2) || !boarded(h, p2) {
+		t.Fatalf("boarded sr1=%v p3=%v sr2=%v, want all", boarded(h, sr1), boarded(h, p3), boarded(h, sr2))
+	}
+	// sr1 opens a row (1 gap), the party of 3 takes 2 rows (1 more gap), sr2 fills a gap, the party of 2
+	// takes a row: 7 riders in 4 rows, 1 gap left
+	if tr.riders != 7 || tr.rowsFree != 6 || tr.gaps != 1 {
+		t.Fatalf("riders %d rowsFree %d gaps %d, want 7/6/1", tr.riders, tr.rowsFree, tr.gaps)
+	}
+}
+
+// hold_for_full_or_max_wait stops waiting when the next party cannot fit and no single rider waits:
+// dispatch right after load_done (25 s) + check 7 s = 32 s, not after the 10 s max wait.
+func TestMaxWaitEndsEarlyWhenNobodyCanFill(t *testing.T) {
+	h := loadingHarness(t, Options{})
+	for i := 0; i < 9; i++ {
+		arriveAt(h, 1, 2, guest.Standby, 0)
+	}
+	arriveAt(h, 2, 3, guest.Standby, 0)
+	h.sim.RunUntil(sec(120))
+	if got := firstAt(h.sim.Log.Events(), engine.EvDispatch, "", 0); got != sec(32) {
+		t.Fatalf("dispatch at %v, want 32 s", got)
+	}
+}

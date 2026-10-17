@@ -11,7 +11,8 @@ import (
 	"github.com/jasrags/ridesim/internal/engine"
 )
 
-// Segment is a constant arrival rate starting at Start (offset from t=0).
+// Segment is a constant arrival rate in guests per hour starting at Start (offset from t=0). Parties
+// arrive at RatePerHr / (expected guests per arrival), so the guest rate holds for any party mix.
 type Segment struct {
 	Start     engine.Duration
 	RatePerHr float64
@@ -113,7 +114,7 @@ func (a *Arrivals) scheduleFrom(t engine.Time) {
 		if i+1 < len(a.curve) && engine.Time(a.curve[i+1].Start) < boundary {
 			boundary = engine.Time(a.curve[i+1].Start)
 		}
-		rate := a.curve[i].RatePerHr
+		rate := a.curve[i].RatePerHr / a.profile.meanGuests()
 		if rate <= 0 {
 			t = boundary
 			continue
@@ -135,6 +136,20 @@ func (a *Arrivals) arrive(t engine.Time) {
 	p.ID = a.nextID
 	a.to.Arrive(p, p.Lane)
 	a.scheduleFrom(t)
+}
+
+// meanGuests is the expected party size of one arrival.
+func (pr Profile) meanGuests() float64 {
+	sizes, total := 0.0, 0.0
+	for _, sw := range pr.PartySizes {
+		sizes += float64(sw.Size) * sw.Weight
+		total += sw.Weight
+	}
+	mean := 1.0
+	if total > 0 {
+		mean = sizes / total
+	}
+	return pr.SingleRiderShare + (1-pr.SingleRiderShare)*mean
 }
 
 func (a *Arrivals) draw() *Party {

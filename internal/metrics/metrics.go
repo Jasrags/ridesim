@@ -73,7 +73,7 @@ type Report struct {
 	QueueMax      int
 	Balks         int            // guests who left on arrival
 	Reneges       int            // guests who left the outdoor line
-	Lanes         map[string]int // boarded guests by lane
+	Lanes         map[string]int // guests boarded in the window, by lane
 	Holds         []BlockHolds   // every block with a pass in the window, in first-seen order
 	Little        Little
 	LoadIdleS     float64 // time the load station sat empty during the window
@@ -153,6 +153,9 @@ func Compute(events []engine.Event, warmup engine.Duration) (*Report, error) {
 			}
 		case engine.EvBoard, engine.EvRenege:
 			q -= e.N
+			if e.Type == engine.EvBoard && in(e.T) {
+				r.Lanes[e.Info] += e.N // riders by lane: what was dispatched in the window
+			}
 			if j, ok := joinedAt[e.Guest]; ok {
 				if in(j) {
 					w := e.T.Sub(j).Seconds()
@@ -162,7 +165,6 @@ func Compute(events []engine.Event, warmup engine.Duration) (*Report, error) {
 						for range e.N { // guest-weighted
 							waits = append(waits, w)
 						}
-						r.Lanes[e.Info] += e.N
 					} else {
 						r.Reneges += e.N
 					}

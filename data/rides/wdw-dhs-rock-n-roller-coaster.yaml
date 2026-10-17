@@ -91,7 +91,7 @@ clearance:
 station:
   separate_load_unload: true           # [fan] separate areas for loading and unloading
   unload_s:        { mean: 36, sd: 8 } # [assumed]
-  load_s:          { mean: 40, sd: 8 } # [assumed] includes cast stowing phones/cameras at the load gates [fan]
+  load_s:          { mean: 37, sd: 8 } # [assumed] includes cast stowing phones/cameras at the load gates [fan]; was 40, tuned 2026-10-17 (37 + 8 + 3 = 48 s), see docs/tuning-log.md
   restraint_check_s: { mean: 8, sd: 2 }# [assumed]
   dispatch_clearance_s: { mean: 3, sd: 1 }
   target_dispatch_interval_s: 48       # derived: 3600 x 24 / 1800
@@ -140,10 +140,11 @@ preshow:                               # NEW stage: batch holding room between s
   fill_rule: full_or_max_wait
   max_fill_wait_s: 45                  # [assumed] start a partial batch after this long
   release_rule: when_load_area_has_room   # back-pressure: room stays RELEASING until load area has space
-  load_area_capacity: 48               # [assumed] guests between preshow and trains: two trains' worth (one boarding, one at the gates); decision 2026-10-17
+  load_area_capacity: 130              # [assumed] guests between preshow and trains: one full show's release (was 48: starved the station); decision 2026-10-17
   party_integrity: true                # parties never split across batches
   merge_point: true                    # [user] standby, single rider and Lightning Lane all merge in the preshow hallway
   bypass_for_single_rider: false       # [user] corrects earlier default; singles and LL share the hallway and show
+  # [user] the post-show line is one combined line; cast pull single riders from it to fill seats (no separate single-rider line after the show)
 
 queues:
   party_split_policy: never            # decided: parties ride together; leftover seats go to single riders or stay empty

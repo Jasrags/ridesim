@@ -60,6 +60,11 @@ type Preshow struct {
 	cfg   *config.Preshow
 	host  PreshowHost
 	rooms []*room
+
+	// Drain and Pull may be re-entered through host callbacks (Release -> board -> Drain). Nested calls
+	// set a flag and the outer call loops, so a room is never released or emptied twice.
+	draining, redrain bool
+	pulling, repull   bool
 }
 
 // NewPreshow builds the stage. Call Start once the host is ready.
@@ -120,6 +125,22 @@ func (p *Preshow) openNextRoom() {
 
 // Pull moves waiting parties into the filling room. The host calls it when a party arrives.
 func (p *Preshow) Pull() {
+	if p.pulling {
+		p.repull = true
+		return
+	}
+	p.pulling = true
+	for {
+		p.repull = false
+		p.pullOnce()
+		if !p.repull {
+			break
+		}
+	}
+	p.pulling = false
+}
+
+func (p *Preshow) pullOnce() {
 	r := p.filling()
 	if r == nil {
 		return
@@ -167,6 +188,22 @@ func (p *Preshow) show(r *room) {
 // Drain releases parties from RELEASING rooms while the load area has room. The host calls it when
 // load-area space frees up.
 func (p *Preshow) Drain() {
+	if p.draining {
+		p.redrain = true
+		return
+	}
+	p.draining = true
+	for {
+		p.redrain = false
+		p.drainOnce()
+		if !p.redrain {
+			break
+		}
+	}
+	p.draining = false
+}
+
+func (p *Preshow) drainOnce() {
 	for _, r := range p.rooms {
 		if r.state != roomReleasing {
 			continue

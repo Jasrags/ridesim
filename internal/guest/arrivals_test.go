@@ -80,7 +80,8 @@ func TestProfileDrawsSizesLanesPatience(t *testing.T) {
 	}
 }
 
-// Arrival times come from the arrivals stream only, so a guest profile must not shift them.
+// Arrival times come from the arrivals stream only: profiles with the same expected party size (and so
+// the same party rate) give identical arrival times, however sizes, lanes and patience are drawn.
 func TestProfileDoesNotShiftArrivalTimes(t *testing.T) {
 	times := func(p Profile) []engine.Time {
 		sim := engine.New(4)
@@ -89,8 +90,8 @@ func TestProfileDoesNotShiftArrivalTimes(t *testing.T) {
 		sim.RunUntil(engine.Time(engine.Hour))
 		return out
 	}
-	a := times(Profile{})
-	b := times(Profile{PartySizes: PartySizesFrom(map[int]float64{1: 0.5, 3: 0.5}), SingleRiderShare: 0.2})
+	a := times(Profile{PartySizes: PartySizesFrom(map[int]float64{2: 1})})
+	b := times(Profile{PartySizes: PartySizesFrom(map[int]float64{1: 0.5, 3: 0.5}), PatienceMin: &config.Dist{Mean: 30}})
 	if len(a) != len(b) {
 		t.Fatalf("%d vs %d arrivals", len(a), len(b))
 	}
@@ -98,5 +99,17 @@ func TestProfileDoesNotShiftArrivalTimes(t *testing.T) {
 		if a[i] != b[i] {
 			t.Fatalf("arrival %d at %v vs %v", i, a[i], b[i])
 		}
+	}
+}
+
+// Curve rates are guests per hour whatever the party mix.
+func TestCurveRateIsGuestsPerHour(t *testing.T) {
+	sim := engine.New(5)
+	guests := 0
+	prof := Profile{PartySizes: PartySizesFrom(map[int]float64{2: 0.5, 4: 0.5}), SingleRiderShare: 0.1}
+	StartArrivalsWith(sim, Curve{{0, 3000}}, prof, arriverFunc(func(p *Party, _ Lane) { guests += p.Size }), engine.Time(20*engine.Hour))
+	sim.RunUntil(engine.Time(20 * engine.Hour))
+	if perHr := float64(guests) / 20; math.Abs(perHr-3000) > 60 {
+		t.Fatalf("%.0f guests/hr, want ~3,000", perHr)
 	}
 }

@@ -10,6 +10,7 @@ import (
 
 type fakeHost struct {
 	sim      *engine.Sim
+	reenter  *Preshow // when set, Release calls back into Drain and Pull like the coaster does
 	outdoor  FIFO
 	loadArea int
 	capacity int
@@ -23,6 +24,10 @@ func (h *fakeHost) Sample(d config.Dist) engine.Duration { return engine.Seconds
 func (h *fakeHost) Release(p *guest.Party) {
 	h.loadArea += p.Size
 	h.released = append(h.released, p)
+	if h.reenter != nil {
+		h.reenter.Pull()
+		h.reenter.Drain()
+	}
 }
 
 // 1 room x 10 guests, show 100 s, turnover 20 s, max fill wait 30 s.
@@ -115,5 +120,24 @@ func TestPreshowReleaseBlocksOnFullLoadArea(t *testing.T) {
 	}
 	if len(h.released) != 4 {
 		t.Fatalf("released %d parties, want 4 after one drain", len(h.released))
+	}
+}
+
+// Regression: the coaster's Release boards guests and calls Drain again. A room must still empty once,
+// giving one show per 100 s show + 20 s turnover cycle with saturated demand.
+func TestPreshowReentrantHostEmptiesRoomOnce(t *testing.T) {
+	sim, h, p := newPreshow(1 << 30)
+	h.reenter = p
+	p.Start()
+	for i := 0; i < 2000; i++ {
+		arrive(sim, h, p, 0, int64(i+1), 1)
+	}
+	sim.RunUntil(engine.Time(1200 * engine.Second))
+	// shows at 0, 120, ..., 1200 s: 11
+	if n := len(eventsOf(sim, EvPreshowShow)); n != 11 {
+		t.Fatalf("%d shows in 1200 s, want 11", n)
+	}
+	if n := len(eventsOf(sim, EvPreshowEmpty)); n != 10 {
+		t.Fatalf("%d room empties, want 10", n)
 	}
 }

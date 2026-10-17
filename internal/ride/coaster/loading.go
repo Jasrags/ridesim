@@ -16,6 +16,12 @@ import (
 // spare seats parties leave (gaps) go to a solo party at the head of the standby line (the grouper
 // pairs odd parties; no skipping) or to single riders; from load_done on, single riders may also take
 // whole empty rows (decision 2026-10-17).
+//
+// After a preshow the load-area line is one combined line ([user] observed on Rock 'n' Roller): parties
+// and single riders keep their release order, a single rider who reaches the front boards like a solo
+// party, and the grouper pulls the earliest single rider from anywhere in the line to fill a gap. It is
+// kept as two queues ordered by LineSeq so the grouper's pull stays O(1). Rides without a preshow keep
+// a separate outdoor single-rider line.
 
 func (c *Coaster) initQueues() {
 	c.loadStandby, c.loadSingle = c.standby, c.single
@@ -89,16 +95,29 @@ func (c *Coaster) flow() {
 
 // board seats standby parties in whole rows (stopping at the first that does not fit), then single
 // riders in the gaps, and in whole empty rows when fullRows is set (after load_done).
+// lineHead returns the next party in line to board and the queue it is in. With a combined line it is
+// whichever lane's head was released first; otherwise only standby boards in order.
+func (c *Coaster) lineHead() (*guest.Party, *queue.FIFO) {
+	s := c.loadStandby.Peek()
+	if c.preshow == nil {
+		return s, c.loadStandby
+	}
+	if sr := c.loadSingle.Peek(); sr != nil && (s == nil || sr.LineSeq < s.LineSeq) {
+		return sr, c.loadSingle
+	}
+	return s, c.loadStandby
+}
+
 func (c *Coaster) board(t *train, fullRows bool) {
 	spr := max(1, c.cfg.Trains.SeatsPerRow)
 	boarded := false
 	for {
-		p := c.loadStandby.Peek()
+		p, line := c.lineHead()
 		if p == nil {
 			break
 		}
 		if p.Size == 1 && t.gaps > 0 {
-			c.loadStandby.Pop()
+			line.Pop()
 			t.gaps--
 			c.seat(t, p)
 			boarded = true
@@ -108,7 +127,7 @@ func (c *Coaster) board(t *train, fullRows bool) {
 		if need > t.rowsFree {
 			break
 		}
-		c.loadStandby.Pop()
+		line.Pop()
 		t.rowsFree -= need
 		t.gaps += need*spr - p.Size
 		c.seat(t, p)
@@ -140,18 +159,17 @@ func (c *Coaster) seat(t *train, p *guest.Party) {
 	c.sim.Emit(engine.Event{Type: engine.EvBoard, Train: t.id, Block: t.at.cfg.ID, Guest: p.ID, N: p.Size, Info: p.Lane.String()})
 }
 
-// checkFillWait ends the fill wait once the train is full or, under hold_for_full, once nothing in
-// line can ever fill it (the next standby party needs more rows than remain and no single rider waits).
+// checkFillWait ends the fill wait once the train is full or once nobody in line can fill a free seat:
+// the next party needs more rows than remain and no single rider is waiting. Both hold rules stop
+// waiting then (decision 2026-10-17: cast do not hold a train for guests who cannot board it). An empty
+// line keeps waiting: a newcomer could still fill the train.
 func (c *Coaster) checkFillWait(t *train) {
 	if t.phase != phaseFillWait {
 		return
 	}
-	stuck := false
-	if c.dispatchRule() == config.DispatchHoldForFull {
-		head := c.loadStandby.Peek()
-		fits := head != nil && (c.rowsFor(head.Size) <= t.rowsFree || (head.Size == 1 && t.gaps > 0))
-		stuck = head != nil && !fits && c.loadSingle.Peek() == nil
-	}
+	head, _ := c.lineHead()
+	fits := head != nil && (c.rowsFor(head.Size) <= t.rowsFree || (head.Size == 1 && t.gaps > 0))
+	stuck := head != nil && !fits && c.loadSingle.Peek() == nil
 	if t.full() || stuck {
 		c.cancelWork(t)
 		c.startCheck(t)
@@ -206,6 +224,8 @@ func (h preshowHost) LoadAreaFree() int {
 }
 
 func (h preshowHost) Release(p *guest.Party) {
+	h.c.releaseSeq++
+	p.LineSeq = h.c.releaseSeq
 	if p.Lane == guest.SingleRider {
 		h.c.loadSingle.Push(p)
 	} else {

@@ -127,6 +127,7 @@ type Coaster struct {
 	loadStandby *queue.FIFO
 	loadSingle  *queue.FIFO
 	preshow     *queue.Preshow
+	releaseSeq  int64 // release order into the combined post-preshow line
 
 	lastDispatch   engine.Time
 	dispatched     bool
@@ -322,6 +323,7 @@ func (c *Coaster) startLoad(t *train) {
 			return
 		}
 		c.startWork(t, engine.Seconds(c.cfg.Station.MaxWaitAfterReadyS), func() { c.startCheck(t) })
+		c.checkFillWait(t)
 	})
 }
 

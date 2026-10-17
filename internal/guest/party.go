@@ -37,4 +37,6 @@ type Party struct {
 	Committed bool
 	// Gone parties reneged; queues skip them (lazy deletion).
 	Gone bool
+	// LineSeq orders parties in a combined line kept as separate per-lane queues (release order).
+	LineSeq int64
 }
