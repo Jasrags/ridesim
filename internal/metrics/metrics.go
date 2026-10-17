@@ -71,10 +71,13 @@ type Report struct {
 	Wait          Stats // standby wait of guests who joined in the window and boarded
 	Unserved      int   // joined in the window, still waiting at the end
 	QueueMax      int
-	Balks         int            // guests who left on arrival
-	Reneges       int            // guests who left the outdoor line
-	Lanes         map[string]int // guests boarded in the window, by lane
-	Holds         []BlockHolds   // every block with a pass in the window, in first-seen order
+	Balks         int                // guests who left on arrival
+	Reneges       int                // guests who left the outdoor line
+	Lanes         map[string]int     // guests boarded in the window, by lane
+	LaneWait      map[string]Stats   // wait by lane, guests who joined in the window and boarded
+	LLShare       float64            // realized Lightning Lane share of riders (spec §8: an output)
+	PhaseS        map[string]float64 // time in each merge phase during the window
+	Holds         []BlockHolds       // every block with a pass in the window, in first-seen order
 	Little        Little
 	LoadIdleS     float64 // time the load station sat empty during the window
 	StationBlocks []string
@@ -102,6 +105,9 @@ func Compute(events []engine.Event, warmup engine.Duration) (*Report, error) {
 		brakes[b] = true
 	}
 	r.brakes, r.joinTimes, r.Lanes = brakes, map[int64]engine.Time{}, map[string]int{}
+	r.LaneWait, r.PhaseS = map[string]Stats{}, map[string]float64{}
+	laneWaits := map[string][]float64{}
+	phase, phaseSince := r.Run["ll_phase"], r.WindowStart
 	var littleSum float64
 	var littleN int
 	loadBlock := r.Run["load"]
@@ -164,6 +170,7 @@ func Compute(events []engine.Event, warmup engine.Duration) (*Report, error) {
 					if e.Type == engine.EvBoard {
 						for range e.N { // guest-weighted
 							waits = append(waits, w)
+							laneWaits[e.Info] = append(laneWaits[e.Info], w)
 						}
 					} else {
 						r.Reneges += e.N
@@ -171,6 +178,11 @@ func Compute(events []engine.Event, warmup engine.Duration) (*Report, error) {
 				}
 				delete(joinedAt, e.Guest)
 			}
+		case "merge_phase":
+			if phase != "" && e.T > r.WindowStart {
+				r.PhaseS[phase] += e.T.Sub(max(phaseSince, r.WindowStart)).Seconds()
+			}
+			phase, phaseSince = e.Info, e.T
 		case engine.EvBalk:
 			if in(e.T) {
 				r.Balks += e.N
@@ -235,6 +247,15 @@ func Compute(events []engine.Event, warmup engine.Duration) (*Report, error) {
 	window := r.WindowEnd.Sub(r.WindowStart).Seconds()
 	r.RidersPerHr = float64(r.Riders) / window * 3600
 	r.Wait = summarize(waits)
+	for lane, ws := range laneWaits {
+		r.LaneWait[lane] = summarize(ws)
+	}
+	if phase != "" {
+		r.PhaseS[phase] += r.WindowEnd.Sub(max(phaseSince, r.WindowStart)).Seconds()
+	}
+	if r.Riders > 0 {
+		r.LLShare = float64(r.Lanes["lightning_lane"]) / float64(r.Riders)
+	}
 	for _, j := range joinedAt {
 		if in(j) {
 			r.Unserved++
@@ -308,6 +329,17 @@ func (r *Report) Write(w io.Writer) error {
 	}
 	sort.Strings(lanes)
 	fmt.Fprintf(&b, "\nriders by lane    %s\nabandonment       %d balked, %d reneged\n", strings.Join(lanes, " "), r.Balks, r.Reneges)
+	if r.Lanes["lightning_lane"] > 0 || len(r.PhaseS) > 1 {
+		ll, sb := r.LaneWait["lightning_lane"], r.LaneWait["standby"]
+		fmt.Fprintf(&b, "lightning lane    share %.1f%% of riders; wait LL %.1f min (p95 %.1f), standby %.1f min (p95 %.1f)\n",
+			r.LLShare*100, ll.Mean/60, ll.P95/60, sb.Mean/60, sb.P95/60)
+		phases := make([]string, 0, len(r.PhaseS))
+		for k, v := range r.PhaseS {
+			phases = append(phases, fmt.Sprintf("%s=%.0f%%", k, v/r.WindowEnd.Sub(r.WindowStart).Seconds()*100))
+		}
+		sort.Strings(phases)
+		fmt.Fprintf(&b, "merge phases      %s\n", strings.Join(phases, " "))
+	}
 	r.Ops.write(&b, r.RidersPerHr)
 	_, err := io.WriteString(w, b.String())
 	return err

@@ -14,6 +14,8 @@ const (
 	StreamStationTimes = "station_times"
 	StreamTrackTimes   = "track_times"
 	StreamOps          = "ops"
+	StreamLLArrivals   = "ll_arrivals"
+	StreamLLChoice     = "ll_choice"
 )
 
 type rngSet struct {

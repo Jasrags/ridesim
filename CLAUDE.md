@@ -84,3 +84,12 @@ numbers come from `data/`. Read both before changing simulation logic.
   the previous group watches the ~2-3 min show (150 s), then walks in when the room frees.
 - Guest parameters (party sizes, single-rider share, patience) are scenario fields that default to the
   park file's guests section. Ad hoc runs without them keep single guests and no abandonment.
+
+## Decisions log (M4 kickoff, 2026-10-17)
+- Lightning Lane demand is a scenario arrival curve (guests/hr, [assumed]); smooth Poisson for now, return-window
+  clustering arrives with the park model (M7). LL guests never balk or renege.
+- The merge is a credit counter in the configured unit with phase hysteresis; credit accrues only while LL guests
+  wait. Merge points: Rock 'n' Roller preshow hallway, Everest the load line (station queue entrance).
+- The standby posted wait is standby-side guests / standby riders per second (15 min window).
+- The LL share bands (13/26/33%) are calibrated by LL demand per crowd level (pre-approved; tuning log).
+- Single-rider lines are not always open ([user]; criteria unknown): scenarios script closure windows.

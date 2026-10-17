@@ -25,6 +25,10 @@ import (
 
 func (c *Coaster) initQueues() {
 	c.loadStandby, c.loadSingle = c.standby, c.single
+	if sl := c.cfg.Queues.SkipLine; sl.Enabled && len(sl.Merge.Phases) > 0 {
+		c.ll = &queue.FIFO{}
+		c.merge = queue.NewMerge(c.sim, sl.Merge)
+	}
 	if p := c.cfg.Preshow; p != nil && p.Enabled && p.Rooms > 0 {
 		c.loadStandby, c.loadSingle = &queue.FIFO{}, &queue.FIFO{}
 		c.preshow = queue.NewPreshow(c.sim, p, preshowHost{c})
@@ -48,7 +52,16 @@ func (c *Coaster) rowsFor(size int) int {
 func (c *Coaster) Arrive(p *guest.Party, lane guest.Lane) {
 	switch lane {
 	case guest.LightningLane:
-		panic(fmt.Sprintf("coaster %s: Lightning Lane is M4", c.ID()))
+		if c.merge == nil {
+			panic(fmt.Sprintf("coaster %s: Lightning Lane arrival but skip_line is not enabled", c.ID()))
+		}
+		// LL guests hold a return time: no balking or reneging.
+		p.Lane, p.JoinedAt = lane, c.sim.Now()
+		c.sim.Emit(engine.Event{Type: engine.EvQueueJoin, Guest: p.ID, N: p.Size, Info: lane.String()})
+		c.ll.Push(p)
+		c.merge.Update(c.ll.Guests())
+		c.flow()
+		return
 	case guest.SingleRider:
 		if !c.cfg.Queues.SingleRider.Enabled {
 			lane = guest.Standby // no single-rider line: they queue standby as a party of 1
@@ -96,10 +109,14 @@ func (c *Coaster) flow() {
 // board seats standby parties in whole rows (stopping at the first that does not fit), then single
 // riders in the gaps, and in whole empty rows when fullRows is set (after load_done).
 // lineHead returns the next party in line to board and the queue it is in. With a combined line it is
-// whichever lane's head was released first; otherwise only standby boards in order.
+// whichever lane's head was released first. Without a preshow the merge point is the load line itself
+// (Everest: station queue entrance), so the merge picks between the LL and standby heads.
 func (c *Coaster) lineHead() (*guest.Party, *queue.FIFO) {
 	s := c.loadStandby.Peek()
 	if c.preshow == nil {
+		if c.merge != nil && c.merge.Choose(c.ll.Peek(), s) {
+			return c.ll.Peek(), c.ll
+		}
 		return s, c.loadStandby
 	}
 	if sr := c.loadSingle.Peek(); sr != nil && (s == nil || sr.LineSeq < s.LineSeq) {
@@ -117,7 +134,7 @@ func (c *Coaster) board(t *train, fullRows bool) {
 			break
 		}
 		if p.Size == 1 && t.gaps > 0 {
-			line.Pop()
+			c.popLine(line)
 			t.gaps--
 			c.seat(t, p)
 			boarded = true
@@ -127,7 +144,7 @@ func (c *Coaster) board(t *train, fullRows bool) {
 		if need > t.rowsFree {
 			break
 		}
-		line.Pop()
+		c.popLine(line)
 		t.rowsFree -= need
 		t.gaps += need*spr - p.Size
 		c.seat(t, p)
@@ -152,8 +169,25 @@ func (c *Coaster) board(t *train, fullRows bool) {
 	}
 }
 
+// popLine removes the head of line; at a load-line merge (no preshow) it also feeds the merge.
+func (c *Coaster) popLine(line *queue.FIFO) *guest.Party {
+	llWaiting := c.ll != nil && c.ll.Peek() != nil
+	p := line.Pop()
+	if p != nil && c.merge != nil && c.preshow == nil && line != c.loadSingle {
+		c.merge.Took(p, llWaiting)
+		c.merge.Update(c.ll.Guests())
+	}
+	return p
+}
+
 func (c *Coaster) seat(t *train, p *guest.Party) {
 	p.Committed = true
+	if p.Lane == guest.LightningLane && c.preshow != nil {
+		c.llInside -= p.Size
+	}
+	if p.Lane != guest.LightningLane {
+		c.recordStandbyBoard(p.Size)
+	}
 	c.recordWait(c.sim.Now().Sub(p.JoinedAt))
 	t.riders += p.Size
 	c.sim.Emit(engine.Event{Type: engine.EvBoard, Train: t.id, Block: t.at.cfg.ID, Guest: p.ID, N: p.Size, Info: p.Lane.String()})
@@ -179,6 +213,9 @@ func (c *Coaster) checkFillWait(t *train) {
 // WaitingGuests is every guest who has joined and not yet boarded or reneged.
 func (c *Coaster) WaitingGuests() int {
 	n := c.standby.Guests() + c.single.Guests()
+	if c.ll != nil {
+		n += c.ll.Guests()
+	}
 	if c.preshow != nil {
 		n += c.preshow.Guests() + c.loadStandby.Guests() + c.loadSingle.Guests()
 	}
@@ -191,7 +228,9 @@ func (c *Coaster) QueueGuests() int { return c.WaitingGuests() }
 // preshowHost adapts the coaster to queue.PreshowHost without widening the Coaster API.
 type preshowHost struct{ c *Coaster }
 
-func (h preshowHost) NextParty() *guest.Party {
+// standbySide is the earliest-joined head of the standby and single-rider lines (they share the
+// hallway on Rock 'n' Roller).
+func (h preshowHost) standbySide() *guest.Party {
 	a, b := h.c.standby.Peek(), h.c.single.Peek()
 	switch {
 	case a == nil:
@@ -204,15 +243,36 @@ func (h preshowHost) NextParty() *guest.Party {
 	return a
 }
 
+// NextParty is the party the merge point admits next (preshow hallway on Rock 'n' Roller).
+func (h preshowHost) NextParty() *guest.Party {
+	s := h.standbySide()
+	if h.c.merge != nil && h.c.merge.Choose(h.c.ll.Peek(), s) {
+		return h.c.ll.Peek()
+	}
+	return s
+}
+
 func (h preshowHost) TakeParty() *guest.Party {
 	next := h.NextParty()
 	if next == nil {
 		return nil
 	}
-	if next.Lane == guest.SingleRider {
-		return h.c.single.Pop()
+	llWaiting := h.c.ll != nil && h.c.ll.Peek() != nil
+	var p *guest.Party
+	switch next.Lane {
+	case guest.LightningLane:
+		p = h.c.ll.Pop()
+		h.c.llInside += p.Size
+	case guest.SingleRider:
+		p = h.c.single.Pop()
+	default:
+		p = h.c.standby.Pop()
 	}
-	return h.c.standby.Pop()
+	if h.c.merge != nil {
+		h.c.merge.Took(p, llWaiting)
+		h.c.merge.Update(h.c.ll.Guests())
+	}
+	return p
 }
 
 func (h preshowHost) LoadAreaFree() int {

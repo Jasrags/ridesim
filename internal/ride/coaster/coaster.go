@@ -129,6 +129,12 @@ type Coaster struct {
 	preshow     *queue.Preshow
 	releaseSeq  int64 // release order into the combined post-preshow line
 
+	ll       *queue.FIFO  // Lightning Lane line up to the merge point (nil without skip_line)
+	merge    *queue.Merge // LL / standby merge (spec §8)
+	llInside int          // LL guests past the merge (preshow / load area) not yet boarded
+
+	recentStandby []dispatchRecord // non-LL guests boarded, for the standby posted wait
+
 	lastDispatch   engine.Time
 	dispatched     bool
 	unloadAdvances int

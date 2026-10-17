@@ -61,6 +61,14 @@ type Scenario struct {
 	Ops          []OpsEvent          `yaml:"ops"`
 	Weather      []WeatherWindow     `yaml:"weather"`
 	Guests       *ScenarioGuests     `yaml:"guests"`
+	// LightningLane holds Lightning Lane return arrivals (guests/hr). Party sizes follow guests.
+	LightningLane *ScenarioLL `yaml:"lightning_lane"`
+}
+
+// ScenarioLL is Lightning Lane demand at the merge point. Smooth Poisson within each step for now;
+// return-window clustering comes with the park model (M7, decision 2026-10-17).
+type ScenarioLL struct {
+	Arrivals []ArrivalStep `yaml:"arrivals"`
 }
 
 // DefaultSingleRiderShare is used when a ride has a single-rider line and the scenario gives no share.
@@ -193,9 +201,21 @@ func checkScenarioBasics(f *ScenarioFile) (bool, string) {
 }
 
 func checkScenarioArrivals(f *ScenarioFile) (bool, string) {
-	steps := f.Scenario.Arrivals
+	if ok, detail := checkArrivalSteps("arrivals", f.Scenario.Arrivals); !ok {
+		return false, detail
+	}
+	if ll := f.Scenario.LightningLane; ll != nil {
+		if ok, detail := checkArrivalSteps("lightning_lane.arrivals", ll.Arrivals); !ok {
+			return false, detail
+		}
+		return true, fmt.Sprintf("%d standby and %d Lightning Lane step(s)", len(f.Scenario.Arrivals), len(ll.Arrivals))
+	}
+	return true, fmt.Sprintf("%d arrival step(s)", len(f.Scenario.Arrivals))
+}
+
+func checkArrivalSteps(name string, steps []ArrivalStep) (bool, string) {
 	if len(steps) == 0 {
-		return false, "no arrivals"
+		return false, "no " + name
 	}
 	prev := -1.0
 	for i, a := range steps {
@@ -212,7 +232,7 @@ func checkScenarioArrivals(f *ScenarioFile) (bool, string) {
 		}
 		prev = at
 	}
-	return true, fmt.Sprintf("%d arrival step(s)", len(steps))
+	return true, ""
 }
 
 func checkScenarioOps(f *ScenarioFile) (bool, string) {
@@ -327,6 +347,9 @@ func checkScenarioRide(ds *Dataset, f *ScenarioFile) Result {
 			(k == FailCascadeStop && c.Failures.CascadeStop == nil) {
 			return fail("failure %s enabled but not configured in %s", k, rf.Path)
 		}
+	}
+	if s.LightningLane != nil && !c.Queues.SkipLine.Enabled {
+		return fail("lightning_lane arrivals but %s has no skip_line", s.RideID)
 	}
 	if g := s.Guests; g != nil && g.ParkID != "" && ds.Park(g.ParkID) == nil {
 		return fail("guests.park_id %s not found", g.ParkID)

@@ -18,6 +18,8 @@ scenario:
     - { at: "03:00", action: remove_train }
   weather:
     - { from: "02:30", to: "02:45" }
+  lightning_lane:
+    arrivals: [{ at: "00:00", rate_per_hr: 100 }]
   guests:
     party_size: { 1: 0.5, 2: 0.5 }
     single_rider_share: 0.1

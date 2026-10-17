@@ -38,7 +38,8 @@ type CoasterRun struct {
 	Ops          []OpsAt
 	Weather      []Window
 
-	Guests guest.Profile // zero = single guests, unlimited patience
+	Guests     guest.Profile // zero = single guests, unlimited patience
+	LLArrivals guest.Curve   // Lightning Lane returns, guests/hr; nil = none
 
 	CascadeScope      string  // analysis override
 	CascadeToleranceS float64 // analysis override
@@ -74,6 +75,15 @@ func FromFile(ds *config.Dataset, f *config.ScenarioFile) (CoasterRun, error) {
 			return CoasterRun{}, err
 		}
 		r.Arrivals = append(r.Arrivals, guest.Segment{Start: at, RatePerHr: a.RatePerHr})
+	}
+	if ll := s.LightningLane; ll != nil {
+		for _, a := range ll.Arrivals {
+			at, err := off(a.At)
+			if err != nil {
+				return CoasterRun{}, err
+			}
+			r.LLArrivals = append(r.LLArrivals, guest.Segment{Start: at, RatePerHr: a.RatePerHr})
+		}
 	}
 	for _, o := range s.Ops {
 		at, err := off(o.At)
@@ -125,14 +135,23 @@ func (r CoasterRun) Run() (*engine.Log, error) {
 	if p := r.Ride.Preshow; p != nil && p.Enabled {
 		batch = p.BatchSize
 	}
+	llPhase := "none"
+	if sl := r.Ride.Queues.SkipLine; sl.Enabled && len(sl.Merge.Phases) > 0 {
+		llPhase = sl.Merge.Phases[0].Name
+	}
 	sim.Emit(engine.Event{Type: engine.EvRunStart, Info: fmt.Sprintf(
-		"scenario=%s ride=%s trains=%d seats=%d seed=%d fixed_times=%t length_s=%.0f warmup_s=%.0f arrivals=%s failures=%s load=%s brakes=%s preshow_batch=%d",
+		"scenario=%s ride=%s trains=%d seats=%d seed=%d fixed_times=%t length_s=%.0f warmup_s=%.0f arrivals=%s failures=%s load=%s brakes=%s preshow_batch=%d ll_phase=%s",
 		id, r.Ride.Ride.ID, trains, r.Ride.Trains.SeatsPerTrain, r.Seed, r.FixedTimes, r.Length.Seconds(), r.Warmup.Seconds(),
-		curveString(r.Arrivals), failures, c.LoadBlock(), strings.Join(brakes, ","), batch)})
+		curveString(r.Arrivals), failures, c.LoadBlock(), strings.Join(brakes, ","), batch, llPhase)})
 
 	end := engine.Time(0).Add(r.Length)
 	c.Start()
 	guest.StartArrivalsWith(sim, r.Arrivals, r.Guests, c, end)
+	if len(r.LLArrivals) > 0 {
+		ll := guest.Profile{Lane: guest.LightningLane, TimeStream: engine.StreamLLArrivals, ChoiceStream: engine.StreamLLChoice,
+			IDBase: 1 << 40, PartySizes: r.Guests.PartySizes}
+		guest.StartArrivalsWith(sim, r.LLArrivals, ll, c, end)
+	}
 	for _, w := range r.Weather {
 		sim.At(engine.Time(w.From), func() { c.Stop(coaster.CauseWeatherHold) })
 		sim.At(engine.Time(w.To), func() { c.Resume(coaster.CauseWeatherHold) })

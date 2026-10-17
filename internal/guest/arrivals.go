@@ -61,6 +61,14 @@ type SizeWeight struct {
 // Profile describes who arrives. The zero Profile is single-guest standby parties with unlimited
 // patience (the M1 behavior).
 type Profile struct {
+	// Lane forces every arrival into one lane (LightningLane for LL return arrivals); 0 = standby with
+	// SingleRiderShare single riders.
+	Lane Lane
+	// Streams name the RNG streams for timing and for who arrives; empty = arrivals / guest_choice.
+	TimeStream, ChoiceStream string
+
+	IDBase int64 // party ids start after this, so several generators never collide
+
 	PartySizes       []SizeWeight // sorted by size; empty = always 1
 	SingleRiderShare float64      // probability an arrival is a single rider (size 1, single-rider lane)
 	PatienceMin      *config.Dist // nil = unlimited (no balking or reneging)
@@ -95,7 +103,7 @@ func StartArrivals(sim *engine.Sim, curve Curve, to Arriver, end engine.Time) *A
 
 // StartArrivalsWith is StartArrivals with a guest profile.
 func StartArrivalsWith(sim *engine.Sim, curve Curve, profile Profile, to Arriver, end engine.Time) *Arrivals {
-	a := &Arrivals{sim: sim, curve: curve, profile: profile, to: to, end: end}
+	a := &Arrivals{sim: sim, curve: curve, profile: profile, to: to, end: end, nextID: profile.IDBase}
 	a.scheduleFrom(sim.Now())
 	return a
 }
@@ -119,7 +127,7 @@ func (a *Arrivals) scheduleFrom(t engine.Time) {
 			t = boundary
 			continue
 		}
-		gap := a.sim.Stream(engine.StreamArrivals).ExpFloat64() * 3600 / rate
+		gap := a.sim.Stream(a.timeStream()).ExpFloat64() * 3600 / rate
 		next := t.Add(engine.Duration(math.Max(1, math.Round(gap*1000))))
 		if next >= boundary {
 			t = boundary
@@ -152,14 +160,28 @@ func (pr Profile) meanGuests() float64 {
 	return pr.SingleRiderShare + (1-pr.SingleRiderShare)*mean
 }
 
+func (a *Arrivals) timeStream() string {
+	if a.profile.TimeStream != "" {
+		return a.profile.TimeStream
+	}
+	return engine.StreamArrivals
+}
+
 func (a *Arrivals) draw() *Party {
 	pr := a.profile
 	p := &Party{Size: 1, Lane: Standby}
+	if pr.Lane != 0 {
+		p.Lane = pr.Lane
+	}
 	if len(pr.PartySizes) == 0 && pr.SingleRiderShare == 0 && pr.PatienceMin == nil {
 		return p // M1 behavior; consumes no guest_choice draws
 	}
-	r := a.sim.Stream(engine.StreamGuestChoice)
-	if pr.SingleRiderShare > 0 && r.Float64() < pr.SingleRiderShare {
+	choice := pr.ChoiceStream
+	if choice == "" {
+		choice = engine.StreamGuestChoice
+	}
+	r := a.sim.Stream(choice)
+	if pr.Lane == 0 && pr.SingleRiderShare > 0 && r.Float64() < pr.SingleRiderShare {
 		p.Lane = SingleRider
 	} else if len(pr.PartySizes) > 0 {
 		total := 0.0
