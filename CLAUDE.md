@@ -47,6 +47,11 @@ numbers come from `data/`. Read both before changing simulation logic.
 - Everest `hold_until_clear`: a train held in the shadow room is released once an UNLOAD->LOAD advance
   happens after it arrived, or immediately if UNLOAD was empty when it arrived. Applies only with >= 5 trains.
 - Station block handoff (UNLOAD -> LOAD) takes 0 s of move time (no data); revisit if data appears.
+- `hold_until_clear` also yields when another held train needs that block empty (avoids the 5-train circular
+  wait the [fan] rules create; the real ride runs 5 trains). Yields are logged as `hold_yield`.
+- The Everest [assumed] retune in `docs/m1-report.md` is a proposal only: it lives in test code
+  (`proposedTuning`) until Jason approves it. Then it goes in the YAML plus `docs/tuning-log.md`.
+- Data files are read-only on disk; unlock, edit, relock (`chmod u+w` / `chmod a-w`) only with approval.
 
 ## Commands
 - `go test ./...`
