@@ -120,9 +120,14 @@ Approved `[assumed]` park-file changes are in `docs/tuning-log.md`:
     30-47 times in the first hour.
   - Warmup hides it from metrics, but in park runs rope-drop guests see Everest at about half capacity until it
     clears.
-  - **Recommended follow-up** (also fixes the mid-day storms above): treat holds while a stacked ride recovers
-    from a stop, or from opening, as planned and not cascades. For example, arm cascade detection again only after
-    each train has completed one lap since the last resume. It changes coaster behaviour, so it needs Jason's call.
+  - **Decision (Jason, 2026-10-17): no change to the coaster model.** The only Everest source, the [fan] WDWMagic
+    post our cascade rule comes from, says the control room is "*constantly* resetting these auto ride stops, as the
+    ride control system is not capable of auto-resuming ride motion". Repeated cascades after a stop are therefore
+    plausible, and suppressing them would remove a sourced behaviour. The size of a storm depends on two [assumed]
+    values, the 5 s blocked tolerance and the 45 s operator reset. The 556 min posted wait is a
+    queue_len_over_throughput artifact, not something a real sign would show.
+  - **Data to collect [user]:** cascade stops per hour on Everest, how long a reset takes, whether operators pull a
+    train after repeated stops, and whether the 2022 refurbishment changed any of this.
 
 ## Decisions (CLAUDE.md, M7)
 - `elsewhere` sink for the rest of the park.

@@ -125,3 +125,5 @@ numbers come from `data/`. Read both before changing simulation logic.
 - M7 calibration targets the medium crowd (Jason's decision); the approved changes are in tuning-log.md.
 - Fatigue raises the walk penalty only; departure follows stay_hours (Jason's decision). Fatigue-driven departure
   is a later refinement. Results, gaps and the recommended startup-cascade follow-up are in docs/m7-report.md.
+- Everest cascade storms after a stop (and the startup burst) stay as modeled (Jason, 2026-10-17): the [fan] source
+  says operators reset cascades constantly. Revisit with [user] counts of stops per hour and reset time.
