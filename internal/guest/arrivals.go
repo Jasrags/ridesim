@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/jasrags/ridesim/internal/config"
 	"github.com/jasrags/ridesim/internal/engine"
 )
 
@@ -50,19 +51,50 @@ type Arriver interface {
 	Arrive(p *Party, lane Lane)
 }
 
-// Arrivals generates single-guest standby parties as a Poisson process following Curve, using the
-// arrivals RNG stream only.
+// SizeWeight is one entry of a party-size distribution.
+type SizeWeight struct {
+	Size   int
+	Weight float64
+}
+
+// Profile describes who arrives. The zero Profile is single-guest standby parties with unlimited
+// patience (the M1 behavior).
+type Profile struct {
+	PartySizes       []SizeWeight // sorted by size; empty = always 1
+	SingleRiderShare float64      // probability an arrival is a single rider (size 1, single-rider lane)
+	PatienceMin      *config.Dist // nil = unlimited (no balking or reneging)
+}
+
+// PartySizesFrom converts a size->share map (as in the park file) into sorted weights.
+func PartySizesFrom(m map[int]float64) []SizeWeight {
+	out := make([]SizeWeight, 0, len(m))
+	for s, w := range m {
+		out = append(out, SizeWeight{s, w})
+	}
+	sort.Slice(out, func(i, j int) bool { return out[i].Size < out[j].Size })
+	return out
+}
+
+// Arrivals generates parties as a Poisson process following Curve. Arrival times use the arrivals
+// stream; who arrives (size, lane, patience) uses guest_choice, so changing the profile never shifts
+// arrival times.
 type Arrivals struct {
-	sim    *engine.Sim
-	curve  Curve
-	to     Arriver
-	end    engine.Time
-	nextID int64
+	sim     *engine.Sim
+	curve   Curve
+	profile Profile
+	to      Arriver
+	end     engine.Time
+	nextID  int64
 }
 
 // StartArrivals schedules arrivals into to until end.
 func StartArrivals(sim *engine.Sim, curve Curve, to Arriver, end engine.Time) *Arrivals {
-	a := &Arrivals{sim: sim, curve: curve, to: to, end: end}
+	return StartArrivalsWith(sim, curve, Profile{}, to, end)
+}
+
+// StartArrivalsWith is StartArrivals with a guest profile.
+func StartArrivalsWith(sim *engine.Sim, curve Curve, profile Profile, to Arriver, end engine.Time) *Arrivals {
+	a := &Arrivals{sim: sim, curve: curve, profile: profile, to: to, end: end}
 	a.scheduleFrom(sim.Now())
 	return a
 }
@@ -99,6 +131,38 @@ func (a *Arrivals) scheduleFrom(t engine.Time) {
 
 func (a *Arrivals) arrive(t engine.Time) {
 	a.nextID++
-	a.to.Arrive(&Party{ID: a.nextID, Size: 1}, Standby)
+	p := a.draw()
+	p.ID = a.nextID
+	a.to.Arrive(p, p.Lane)
 	a.scheduleFrom(t)
+}
+
+func (a *Arrivals) draw() *Party {
+	pr := a.profile
+	p := &Party{Size: 1, Lane: Standby}
+	if len(pr.PartySizes) == 0 && pr.SingleRiderShare == 0 && pr.PatienceMin == nil {
+		return p // M1 behavior; consumes no guest_choice draws
+	}
+	r := a.sim.Stream(engine.StreamGuestChoice)
+	if pr.SingleRiderShare > 0 && r.Float64() < pr.SingleRiderShare {
+		p.Lane = SingleRider
+	} else if len(pr.PartySizes) > 0 {
+		total := 0.0
+		for _, sw := range pr.PartySizes {
+			total += sw.Weight
+		}
+		x := r.Float64() * total
+		for _, sw := range pr.PartySizes {
+			if x < sw.Weight {
+				p.Size = sw.Size
+				break
+			}
+			x -= sw.Weight
+		}
+	}
+	if d := pr.PatienceMin; d != nil {
+		m := math.Max(1, d.Mean+d.SD*r.NormFloat64()) // at least a minute of patience
+		p.Patience = engine.Seconds(m * 60)
+	}
+	return p
 }

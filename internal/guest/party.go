@@ -1,5 +1,5 @@
-// Package guest holds parties and arrival generation. M1 uses single-guest parties and a fixed
-// piecewise-constant Poisson arrival curve; the park-level crowd model (M7) builds on this.
+// Package guest holds parties and arrival generation: a piecewise-constant Poisson arrival curve, party
+// sizes, single-rider choice and patience. The park-level crowd model (M7) builds on this.
 package guest
 
 import "github.com/jasrags/ridesim/internal/engine"
@@ -29,5 +29,12 @@ func (l Lane) String() string {
 type Party struct {
 	ID       int64
 	Size     int
+	Lane     Lane
 	JoinedAt engine.Time
+	Patience engine.Duration // longest wait tolerated; 0 = unlimited (no balk or renege)
+
+	// Committed parties are past the point of reneging (inside a preshow room or the load area).
+	Committed bool
+	// Gone parties reneged; queues skip them (lazy deletion).
+	Gone bool
 }

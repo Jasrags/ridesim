@@ -4,6 +4,7 @@ import (
 	"math"
 	"testing"
 
+	"github.com/jasrags/ridesim/internal/config"
 	"github.com/jasrags/ridesim/internal/engine"
 )
 
@@ -39,3 +40,63 @@ func TestArrivalsFollowPiecewiseRates(t *testing.T) {
 type arriverFunc func(*Party, Lane)
 
 func (f arriverFunc) Arrive(p *Party, l Lane) { f(p, l) }
+
+func TestProfileDrawsSizesLanesPatience(t *testing.T) {
+	sim := engine.New(9)
+	var n, singles, guests int
+	var patience float64
+	sizes := map[int]int{}
+	to := arriverFunc(func(p *Party, l Lane) {
+		n++
+		guests += p.Size
+		sizes[p.Size]++
+		patience += p.Patience.Seconds() / 60
+		if l == SingleRider {
+			singles++
+			if p.Size != 1 {
+				t.Errorf("single rider party of %d", p.Size)
+			}
+		}
+	})
+	prof := Profile{
+		PartySizes:       PartySizesFrom(map[int]float64{1: 0.2, 2: 0.5, 4: 0.3}),
+		SingleRiderShare: 0.1,
+		PatienceMin:      &config.Dist{Mean: 40, SD: 10},
+	}
+	StartArrivalsWith(sim, Curve{{0, 20000}}, prof, to, engine.Time(engine.Hour))
+	sim.RunUntil(engine.Time(engine.Hour))
+	frac := func(k int) float64 { return float64(k) / float64(n) }
+	if math.Abs(frac(singles)-0.1) > 0.01 {
+		t.Errorf("single-rider share %.3f, want 0.10", frac(singles))
+	}
+	if want := 0.9 * 0.5; math.Abs(frac(sizes[2])-want) > 0.015 {
+		t.Errorf("size-2 share %.3f, want %.3f", frac(sizes[2]), want)
+	}
+	if sizes[3] != 0 {
+		t.Errorf("drew size 3, not in the distribution")
+	}
+	if mean := patience / float64(n); math.Abs(mean-40) > 0.5 {
+		t.Errorf("mean patience %.1f min, want 40", mean)
+	}
+}
+
+// Arrival times come from the arrivals stream only, so a guest profile must not shift them.
+func TestProfileDoesNotShiftArrivalTimes(t *testing.T) {
+	times := func(p Profile) []engine.Time {
+		sim := engine.New(4)
+		var out []engine.Time
+		StartArrivalsWith(sim, Curve{{0, 3000}}, p, arriverFunc(func(*Party, Lane) { out = append(out, sim.Now()) }), engine.Time(engine.Hour))
+		sim.RunUntil(engine.Time(engine.Hour))
+		return out
+	}
+	a := times(Profile{})
+	b := times(Profile{PartySizes: PartySizesFrom(map[int]float64{1: 0.5, 3: 0.5}), SingleRiderShare: 0.2})
+	if len(a) != len(b) {
+		t.Fatalf("%d vs %d arrivals", len(a), len(b))
+	}
+	for i := range a {
+		if a[i] != b[i] {
+			t.Fatalf("arrival %d at %v vs %v", i, a[i], b[i])
+		}
+	}
+}
