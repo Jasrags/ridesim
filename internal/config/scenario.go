@@ -110,10 +110,27 @@ type ArrivalStep struct {
 	RatePerHr float64 `yaml:"rate_per_hr"`
 }
 
+// OpsEvent is a scripted operations action. Ride scenarios use add_train / remove_train on their ride; park
+// scenarios (M8 live levers) name the node and may set minutes (close_ride) or value (crowd_scale).
 type OpsEvent struct {
-	At     string `yaml:"at"`
-	Action string `yaml:"action"`
+	At      string   `yaml:"at"`
+	Action  string   `yaml:"action"`
+	Node    string   `yaml:"node,omitempty"`
+	Minutes float64  `yaml:"minutes,omitempty"`
+	Value   *float64 `yaml:"value,omitempty"`
 }
+
+// Park ops actions (besides add_train / remove_train) and the closure cause they use.
+const (
+	OpSingleRiderOpen  = "single_rider_open"
+	OpSingleRiderClose = "single_rider_close"
+	OpCloseRide        = "close_ride"
+	OpCrowdScale       = "crowd_scale"
+
+	CauseOpsClosure = "ops_closure" // operations closed the ride: the board shows it closed
+
+	MaxCrowdScale = 2.0 // crowd scale thins a day drawn at this multiple of attendance
+)
 
 type WeatherWindow struct {
 	From string `yaml:"from"`
@@ -235,11 +252,11 @@ func parkOnlyConflicts(s *Scenario) []string {
 	var bad []string
 	set := map[string]bool{
 		"ride_id": s.RideID != "", "trains": s.Trains != 0, "dispatch_rule": s.DispatchRule != "",
-		"posted_wait": s.PostedWait != nil, "arrivals": len(s.Arrivals) > 0, "ops": len(s.Ops) > 0,
+		"posted_wait": s.PostedWait != nil, "arrivals": len(s.Arrivals) > 0,
 		"weather": len(s.Weather) > 0, "guests": s.Guests != nil, "lightning_lane": s.LightningLane != nil,
 		"single_rider_closed": len(s.SingleRiderClosed) > 0, "accessibility_holds": s.AccessibilityHolds != nil,
 	}
-	for _, k := range []string{"ride_id", "trains", "dispatch_rule", "posted_wait", "arrivals", "ops", "weather", "guests",
+	for _, k := range []string{"ride_id", "trains", "dispatch_rule", "posted_wait", "arrivals", "weather", "guests",
 		"lightning_lane", "single_rider_closed", "accessibility_holds"} {
 		if set[k] {
 			bad = append(bad, k+" is for ride scenarios; park runs derive it from the park")
@@ -339,8 +356,9 @@ func checkScenarioOps(f *ScenarioFile) (bool, string) {
 			return false, fmt.Sprintf("ops event at %s is after the run ends", o.At)
 		case at < prev:
 			return false, fmt.Sprintf("ops event at %s is out of order", o.At)
-		case o.Action != OpAddTrain && o.Action != OpRemoveTrain:
-			return false, fmt.Sprintf("unknown ops action %q", o.Action)
+		}
+		if bad := OpShape(o, f.Scenario.IsPark()); bad != "" {
+			return false, fmt.Sprintf("ops event at %s: %s", o.At, bad)
 		}
 		prev = at
 	}
@@ -410,7 +428,10 @@ func checkScenarioRide(ds *Dataset, f *ScenarioFile) Result {
 		if park == nil {
 			return fail("park_id %s not found", s.ParkID)
 		}
-		r.Status, r.Detail = StatusPass, fmt.Sprintf("park %s, %d guests", s.ParkID, s.ParkAttendance(park))
+		if bad := checkParkOps(ds, park, s.Ops); bad != "" {
+			return fail("%s", bad)
+		}
+		r.Status, r.Detail = StatusPass, fmt.Sprintf("park %s, %d guests, %d ops", s.ParkID, s.ParkAttendance(park), len(s.Ops))
 		return r
 	}
 	rf := ds.Ride(s.RideID)
@@ -480,4 +501,70 @@ func (s *Scenario) ParkAttendance(p *ParkFile) int {
 		return p.Guests.DailyAttendance.High
 	}
 	return p.Guests.DailyAttendance.Medium
+}
+
+// OpShape checks an ops event has the fields its action needs ("" = fine).
+func OpShape(o OpsEvent, park bool) string {
+	if !park {
+		if o.Action != OpAddTrain && o.Action != OpRemoveTrain {
+			return fmt.Sprintf("unknown ops action %q", o.Action)
+		}
+		if o.Node != "" || o.Minutes != 0 || o.Value != nil {
+			return "node, minutes and value are for park scenarios"
+		}
+		return ""
+	}
+	switch o.Action {
+	case OpAddTrain, OpRemoveTrain, OpSingleRiderOpen, OpSingleRiderClose:
+		if o.Node == "" || o.Minutes != 0 || o.Value != nil {
+			return o.Action + " needs node only"
+		}
+	case OpCloseRide:
+		if o.Node == "" || o.Minutes <= 0 || o.Value != nil {
+			return "close_ride needs node and minutes > 0"
+		}
+	case OpCrowdScale:
+		if o.Node != "" || o.Minutes != 0 || o.Value == nil || *o.Value < 0 || *o.Value > MaxCrowdScale {
+			return fmt.Sprintf("crowd_scale needs value in [0, %g] and nothing else", MaxCrowdScale)
+		}
+	default:
+		return fmt.Sprintf("unknown park ops action %q", o.Action)
+	}
+	return ""
+}
+
+// checkParkOps is the cross-file check: each op names a node that supports it.
+func checkParkOps(ds *Dataset, park *ParkFile, ops []OpsEvent) string {
+	nodes := map[string]ParkNode{}
+	for _, n := range park.Nodes {
+		nodes[n.ID] = n
+	}
+	for _, o := range ops {
+		if o.Action == OpCrowdScale {
+			continue
+		}
+		n, ok := nodes[o.Node]
+		if !ok {
+			return fmt.Sprintf("ops %s at %s: node %q not in park %s", o.Action, o.At, o.Node, park.Park.ID)
+		}
+		var rf *File
+		if n.Kind == NodeRide {
+			rf = ds.Ride(n.RideID)
+		}
+		switch o.Action {
+		case OpAddTrain, OpRemoveTrain:
+			if rf == nil || rf.Kind != KindCoaster || rf.Coaster.Barn == nil {
+				return fmt.Sprintf("ops %s at %s: %s is not a coaster with a barn", o.Action, o.At, o.Node)
+			}
+		case OpSingleRiderOpen, OpSingleRiderClose:
+			if rf == nil || !rf.RideInfoQueues().SingleRider.Enabled {
+				return fmt.Sprintf("ops %s at %s: %s has no single-rider line", o.Action, o.At, o.Node)
+			}
+		case OpCloseRide:
+			if rf == nil {
+				return fmt.Sprintf("ops close_ride at %s: %s is not a modeled ride", o.At, o.Node)
+			}
+		}
+	}
+	return ""
 }

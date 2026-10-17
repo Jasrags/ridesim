@@ -83,3 +83,20 @@ func TestParkScaleMultipliesAttendance(t *testing.T) {
 		t.Fatalf("scale 2 gave %d vs %d arrivals", b.Arrived, a.Arrived)
 	}
 }
+
+// Scripted park ops run at their times and are logged.
+func TestParkScenarioOpsRun(t *testing.T) {
+	log, err := fixtureParkRun(t).Run()
+	if err != nil {
+		t.Fatal(err)
+	}
+	var at []string
+	for _, e := range log.Events() {
+		if e.Type == "ops" {
+			at = append(at, e.T.String()+" "+e.Info)
+		}
+	}
+	if len(at) != 4 || !strings.HasPrefix(at[2], "02:00:00.000 action=close_ride") {
+		t.Fatalf("ops events %v", at)
+	}
+}

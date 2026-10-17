@@ -1,0 +1,100 @@
+package park
+
+import (
+	"fmt"
+
+	"github.com/jasrags/ridesim/internal/config"
+	"github.com/jasrags/ridesim/internal/engine"
+)
+
+// EvParkOps records an operations lever applied to the park (scripted or live). Block = node,
+// Info = "action=... minutes=... value=...".
+const EvParkOps = "ops"
+
+type fleet interface {
+	AddTrain()
+	RemoveTrain()
+}
+
+type singleRiderLine interface {
+	SetSingleRiderOpen(open bool)
+}
+
+type stopper interface {
+	Stop(cause string)
+	Resume(cause string)
+}
+
+// Apply runs an operations lever now: add/remove a train, open/close a single-rider line, close a ride for
+// some minutes, or set the crowd scale. The same actions run from scenario ops and from live play, so a
+// played session exported as ops reruns identically.
+func (p *Park) Apply(op config.OpsEvent) error {
+	if bad := opShapeErr(op); bad != nil {
+		return bad
+	}
+	var ra *rideAct
+	if op.Action != config.OpCrowdScale {
+		n := p.g.Node(op.Node)
+		if n == nil {
+			return fmt.Errorf("ops %s: no node %q", op.Action, op.Node)
+		}
+		ra, _ = p.acts[n.Idx].(*rideAct)
+		if ra == nil {
+			return fmt.Errorf("ops %s: %s is not a modeled ride", op.Action, op.Node)
+		}
+	}
+	switch op.Action {
+	case config.OpAddTrain, config.OpRemoveTrain:
+		f, ok := ra.r.(fleet)
+		if !ok {
+			return fmt.Errorf("ops %s: %s has no trains to add or remove", op.Action, op.Node)
+		}
+		p.logOp(op)
+		if op.Action == config.OpAddTrain {
+			f.AddTrain()
+		} else {
+			f.RemoveTrain()
+		}
+	case config.OpSingleRiderOpen, config.OpSingleRiderClose:
+		l, ok := ra.r.(singleRiderLine)
+		if !ok || !ra.single {
+			return fmt.Errorf("ops %s: %s has no single-rider line", op.Action, op.Node)
+		}
+		p.logOp(op)
+		l.SetSingleRiderOpen(op.Action == config.OpSingleRiderOpen)
+	case config.OpCloseRide:
+		s, ok := ra.r.(stopper)
+		if !ok {
+			return fmt.Errorf("ops close_ride: %s cannot be stopped", op.Node)
+		}
+		p.logOp(op)
+		s.Stop(config.CauseOpsClosure)
+		p.sim.After(engine.Seconds(op.Minutes*60), func() { s.Resume(config.CauseOpsClosure) })
+	case config.OpCrowdScale:
+		p.logOp(op)
+		p.crowd = *op.Value
+	}
+	return nil
+}
+
+func opShapeErr(op config.OpsEvent) error {
+	f := &config.ScenarioFile{Scenario: config.Scenario{ParkID: "x", Ops: []config.OpsEvent{op}}}
+	if bad := config.OpShape(op, f.Scenario.IsPark()); bad != "" {
+		return fmt.Errorf("ops: %s", bad)
+	}
+	return nil
+}
+
+func (p *Park) logOp(op config.OpsEvent) {
+	info := "action=" + op.Action
+	if op.Minutes != 0 {
+		info += fmt.Sprintf(" minutes=%g", op.Minutes)
+	}
+	if op.Value != nil {
+		info += fmt.Sprintf(" value=%g", *op.Value)
+	}
+	p.sim.Emit(engine.Event{Type: EvParkOps, Block: op.Node, Info: info})
+}
+
+// CrowdScale is the current crowd scale (1 = the scenario's attendance).
+func (p *Park) CrowdScale() float64 { return p.crowd }

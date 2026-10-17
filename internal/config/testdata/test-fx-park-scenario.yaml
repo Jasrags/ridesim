@@ -9,3 +9,8 @@ scenario:
   crowd_level: medium
   walking_mode: fixed_delay
   failures: [cascade_stop]
+  ops:
+    - { at: "01:00", action: remove_train, node: coaster }
+    - { at: "01:30", action: add_train, node: coaster }
+    - { at: "02:00", action: close_ride, node: coaster, minutes: 20 }
+    - { at: "03:00", action: crowd_scale, value: 1.5 }

@@ -205,3 +205,14 @@ func (d *Dataset) Ride(id string) *File {
 	}
 	return nil
 }
+
+// RideInfoQueues returns a ride file's queues section (nil-safe for non-ride files: zero value).
+func (f *File) RideInfoQueues() Queues {
+	switch f.Kind {
+	case KindCoaster:
+		return f.Coaster.Queues
+	case KindContinuous:
+		return f.Continuous.Queues
+	}
+	return Queues{}
+}

@@ -167,13 +167,13 @@ const reopenRecovery = 15 * engine.Minute
 
 type span struct{ from, to engine.Time }
 
-// closedSpans are long-downtime closures plus the recovery after each (Queue-Times records a closure,
+// closedSpans are long-downtime and operations closures plus the recovery after each (Queue-Times records a closure,
 // not a wait). Nested stops of the same cause close once.
 func closedSpans(evs []engine.Event) []span {
 	var out []span
 	depth, since := 0, engine.Time(0)
 	for _, e := range evs {
-		if e.Info != config.FailLongDowntime {
+		if e.Info != config.FailLongDowntime && e.Info != config.CauseOpsClosure {
 			continue
 		}
 		switch e.Type {

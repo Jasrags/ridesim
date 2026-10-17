@@ -132,3 +132,11 @@ numbers come from `data/`. Read both before changing simulation logic.
 - Front end: both, web first (Jason). M8 builds a web control room (Go standard-library HTTP server, plain
   HTML/SVG/JS page) on a shared event-stream API; a terminal console on the same API comes later. Mockups:
   https://claude.ai/artifact/A5DmkWDkphfcvzCJ2y8YeB
+- Live play (M8): `ridesim serve` owns one park sim in a server goroutine and advances it with RunUntil per tick;
+  sim logic stays single-threaded. Snapshots stream over server-sent events; controls are POSTs applied between
+  ticks at the current sim time and recorded as timed park ops.
+- Park node coordinates are x/y fields in the park file (Jason). A played session exports as a park scenario with
+  those ops and reruns byte-identically. Jumping back to time T reruns the day from open with the ops before T
+  (later ops are discarded).
+- Crowd scale thins a day drawn at 2x attendance: each party keeps a fixed uniform draw and arrives only while it is
+  below scale / 2, so changing the scale never shifts other draws.

@@ -51,6 +51,7 @@ type Park struct {
 
 	agents []*agent
 	inPark int
+	crowd  float64        // crowd scale; parties drawn at config.MaxCrowdScale x attendance arrive while thin < crowd/max
 	states map[string]int // lookup by name only; snapshots iterate agentStates
 	starts []func()
 }
@@ -68,7 +69,7 @@ func New(root *engine.Sim, ds *config.Dataset, cfg *config.ParkFile, opts Option
 	}
 	p := &Park{root: root, sim: root.Scope(Scope), cfg: cfg, opts: opts, g: g, tt: NewTravelTime(cfg),
 		acts: make([]activity, len(g.Nodes)), board: make([]engine.Duration, len(g.Nodes)), closed: make([]bool, len(g.Nodes)), elsewhere: -1,
-		closeAt: engine.Time(engine.Seconds(float64(cfg.Park.CloseHour-cfg.Park.OpenHour) * 3600)), states: map[string]int{}}
+		closeAt: engine.Time(engine.Seconds(float64(cfg.Park.CloseHour-cfg.Park.OpenHour) * 3600)), states: map[string]int{}, crowd: 1}
 	openS := float64(cfg.Park.OpenHour * 3600)
 	for _, w := range cfg.Decision.MealWindows {
 		from, to, err := config.ParseClockWindow(w)
@@ -233,7 +234,13 @@ func (p *Park) Start() {
 	refresh()
 	p.drawParties()
 	if p.ll != nil {
-		p.ll.advance(p.agents)
+		var expected []*agent // advance bookings only for parties expected at the opening crowd scale
+		for _, a := range p.agents {
+			if p.admits(a) {
+				expected = append(expected, a)
+			}
+		}
+		p.ll.advance(expected)
 	}
 	for _, a := range p.agents {
 		a := a
@@ -270,7 +277,9 @@ func (p *Park) drawParties() {
 	if scale == 0 {
 		scale = 1
 	}
-	attendance := float64(p.opts.Attendance) * scale
+	// The day is drawn at MaxCrowdScale x attendance; each party keeps a uniform thin draw and arrives only
+	// while thin < crowd / MaxCrowdScale, so the live crowd lever never shifts any other draw.
+	attendance := float64(p.opts.Attendance) * scale * config.MaxCrowdScale
 	times := p.sim.Stream(engine.StreamArrivals)
 	traits := p.sim.Stream(engine.StreamGuestChoice)
 	norm := func(d config.Dist, lo float64) float64 {
@@ -304,6 +313,7 @@ func (p *Park) drawParties() {
 			}
 			a := &agent{id: id, size: size, arrive: t, count: make([]int, len(p.g.Nodes)),
 				meals: make([]bool, len(p.meals)), llBooked: make([]bool, len(p.g.Nodes))}
+			a.thin = traits.Float64()
 			a.patience = engine.Seconds(norm(gc.PatienceMin, 5) * 60)
 			a.thrill = math.Min(1, norm(gc.ThrillTolerance, 0))
 			a.leaveAt = t.Add(engine.Seconds(norm(gc.StayHours, 1) * 3600))
@@ -319,3 +329,6 @@ func (p *Park) drawParties() {
 		}
 	}
 }
+
+// admits reports whether a party arrives at the current crowd scale.
+func (p *Park) admits(a *agent) bool { return a.thin < p.crowd/config.MaxCrowdScale }

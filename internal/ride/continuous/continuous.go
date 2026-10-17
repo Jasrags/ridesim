@@ -214,7 +214,9 @@ func (r *Ride) dispatch(id, n int, done *guest.Party) {
 func (r *Ride) Stopped() bool { return r.stopCount > 0 }
 
 // Closed reports a long downtime in progress: the sign says closed (decision 2026-10-17).
-func (r *Ride) Closed() bool { return r.stopDepth[CauseLongDowntime] > 0 }
+func (r *Ride) Closed() bool {
+	return r.stopDepth[CauseLongDowntime] > 0 || r.stopDepth[config.CauseOpsClosure] > 0
+}
 
 // Stop halts the whole chain for cause. Causes nest.
 func (r *Ride) Stop(cause string) {

@@ -28,6 +28,7 @@ func TestScenarioErrorChecks(t *testing.T) {
 		{"scenario.arrivals", `{ at: "02:00", rate_per_hr: 400 }`, `{ at: "2h", rate_per_hr: 400 }`},
 		{"scenario.ops", "action: add_train", "action: teleport_train"},
 		{"scenario.ops", `{ at: "03:00", action: remove_train }`, `{ at: "05:00", action: remove_train }`},
+		{"scenario.ops", `{ at: "03:00", action: remove_train }`, `{ at: "03:00", action: remove_train, node: x }`},
 		{"scenario.weather", `{ from: "02:30", to: "02:45" }`, `{ from: "02:45", to: "02:30" }`},
 		{"scenario.weather", "  guests:\n", "  single_rider_closed: [{ from: \"03:00\", to: \"09:00\" }]\n  guests:\n"},
 		{"scenario.enums", "failures: [cascade_stop]", "failures: [meteor]"},
@@ -149,6 +150,14 @@ func TestParkScenarioChecks(t *testing.T) {
 		{"scenario.enums", "crowd_level: medium", "crowd_level: mob"},
 		{"scenario.enums", "walking_mode: fixed_delay", "walking_mode: teleport"},
 		{"scenario.ride_refs", "park_id: fx_park", "park_id: nowhere"},
+		{"scenario.ops", "action: crowd_scale, value: 1.5", "action: crowd_scale, value: 2.5"},
+		{"scenario.ops", "action: crowd_scale, value: 1.5", "action: crowd_scale"},
+		{"scenario.ops", "action: close_ride, node: coaster, minutes: 20", "action: close_ride, node: coaster"},
+		{"scenario.ops", "action: remove_train, node: coaster", "action: remove_train"},
+		{"scenario.ops", "action: crowd_scale, value: 1.5", "action: teleport"},
+		{"scenario.ride_refs", "action: close_ride, node: coaster", "action: close_ride, node: nowhere"},
+		{"scenario.ride_refs", "action: add_train, node: coaster", "action: add_train, node: filler"},
+		{"scenario.ride_refs", "action: close_ride, node: coaster", "action: close_ride, node: dining"},
 	}
 	for _, c := range cases {
 		t.Run(c.check+"/"+c.new, func(t *testing.T) {

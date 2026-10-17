@@ -28,6 +28,9 @@ type agent struct {
 	state  string
 	gone   bool
 
+	thin     float64 // crowd-scale draw: arrives while thin < crowd / MaxCrowdScale
+	advanced bool    // made its before-the-day Lightning Lane bookings
+
 	passes   int // bookings still to make today
 	held     []*booking
 	llBooked []bool // per node: booked today
@@ -71,6 +74,18 @@ func (p *Park) setState(a *agent, s string) {
 
 // enter admits an arriving party at the gate.
 func (p *Park) enter(a *agent) {
+	if !p.admits(a) {
+		return // thinned out at the current crowd scale
+	}
+	if p.ll != nil && !a.advanced {
+		// A party admitted by a raised crowd scale books on arrival what others booked before the day.
+		for i := 0; i < p.ll.cfg.AdvanceBookings && a.passes > 0; i++ {
+			if !p.ll.book(a, p.sim.Now()) {
+				break
+			}
+		}
+		a.advanced = true
+	}
 	p.inPark += a.size
 	a.at = p.entrance
 	p.sim.Emit(engine.Event{Type: EvParkArrive, Guest: a.id, N: a.size})

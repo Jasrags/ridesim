@@ -1,0 +1,90 @@
+package park
+
+import (
+	"testing"
+
+	"github.com/jasrags/ridesim/internal/config"
+	"github.com/jasrags/ridesim/internal/engine"
+)
+
+func newFixturePark(t *testing.T, seed uint64, opts Options) (*Park, *engine.Sim) {
+	t.Helper()
+	ds, pf := fixtureDataset(t)
+	sim := engine.New(seed)
+	p, err := New(sim, ds, pf, opts)
+	if err != nil {
+		t.Fatal(err)
+	}
+	p.Start()
+	return p, sim
+}
+
+func scale(v float64) *float64 { return &v }
+
+// close_ride shows the ride closed for the given minutes, then reopens it; it is logged as an ops event.
+func TestCloseRideForMinutes(t *testing.T) {
+	p, sim := newFixturePark(t, 1, Options{Attendance: 300})
+	sim.RunUntil(engine.Time(engine.Hour))
+	if err := p.Apply(config.OpsEvent{Action: config.OpCloseRide, Node: "coaster", Minutes: 20}); err != nil {
+		t.Fatal(err)
+	}
+	ra := p.acts[p.g.Node("coaster").Idx].(*rideAct)
+	sim.RunUntil(engine.Time(engine.Hour + 10*engine.Minute))
+	if !ra.closed() {
+		t.Fatal("coaster should be closed 10 min into a 20 min closure")
+	}
+	sim.RunUntil(engine.Time(engine.Hour + 21*engine.Minute))
+	if ra.closed() {
+		t.Fatal("coaster should reopen after 20 min")
+	}
+	if n, _ := count(sim, EvParkOps, Scope); n != 1 {
+		t.Fatalf("%d ops events, want 1", n)
+	}
+}
+
+func TestApplyRejectsBadOps(t *testing.T) {
+	p, _ := newFixturePark(t, 1, Options{Attendance: 10})
+	for _, op := range []config.OpsEvent{
+		{Action: config.OpCloseRide, Node: "nowhere", Minutes: 5},
+		{Action: config.OpAddTrain, Node: "filler"},
+		{Action: config.OpCrowdScale, Value: scale(3)},
+		{Action: "teleport"},
+	} {
+		if err := p.Apply(op); err == nil {
+			t.Errorf("%+v accepted", op)
+		}
+	}
+}
+
+// Crowd scale thins a fixed day: half the scale admits about half the guests, and a change later in the day
+// leaves every event before it unchanged.
+func TestCrowdScaleThinsWithoutShiftingEarlierEvents(t *testing.T) {
+	arrived := func(p *Park, sim *engine.Sim) int { _, g := count(sim, EvParkArrive, Scope); return g }
+	full, fsim := newFixturePark(t, 4, Options{Attendance: 1000})
+	fsim.RunUntil(full.CloseAt())
+	half, hsim := newFixturePark(t, 4, Options{Attendance: 1000})
+	if err := half.Apply(config.OpsEvent{Action: config.OpCrowdScale, Value: scale(0.5)}); err != nil {
+		t.Fatal(err)
+	}
+	hsim.RunUntil(half.CloseAt())
+	if r := float64(arrived(half, hsim)) / float64(arrived(full, fsim)); r < 0.4 || r > 0.6 {
+		t.Fatalf("scale 0.5 admitted %.2f of the guests", r)
+	}
+
+	late, lsim := newFixturePark(t, 4, Options{Attendance: 1000})
+	lsim.RunUntil(engine.Time(engine.Hour)) // the fixture admits guests in hours 0-2
+	cut := len(lsim.Log.Events())
+	if err := late.Apply(config.OpsEvent{Action: config.OpCrowdScale, Value: scale(1.8)}); err != nil {
+		t.Fatal(err)
+	}
+	lsim.RunUntil(late.CloseAt())
+	a, b := fsim.Log.Events(), lsim.Log.Events()
+	for i := 0; i < cut; i++ {
+		if a[i] != b[i] {
+			t.Fatalf("event %d differs before the scale change: %+v vs %+v", i, a[i], b[i])
+		}
+	}
+	if arrived(late, lsim) <= arrived(full, fsim) {
+		t.Fatal("raising the scale at 1 h admitted no extra guests")
+	}
+}

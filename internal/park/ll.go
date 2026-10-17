@@ -61,6 +61,7 @@ func (ll *lightningLane) advance(agents []*agent) {
 	rng := ll.p.sim.Stream(engine.StreamLLChoice)
 	rng.Shuffle(len(buyers), func(i, j int) { buyers[i], buyers[j] = buyers[j], buyers[i] })
 	for _, a := range buyers {
+		a.advanced = true
 		for i := 0; i < ll.cfg.AdvanceBookings && a.passes > 0; i++ {
 			if !ll.book(a, a.arrive) {
 				break
