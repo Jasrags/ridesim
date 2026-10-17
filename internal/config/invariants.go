@@ -88,6 +88,8 @@ func CheckFile(f *File) []Result {
 		return run(parkChecks, f.Park)
 	case KindScenario:
 		return run(scenarioChecks, f.Scenario)
+	case KindStudy:
+		return run(studyChecks, f.Study)
 	}
 	return nil
 }

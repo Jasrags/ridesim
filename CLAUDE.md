@@ -69,6 +69,8 @@ numbers come from `data/`. Read both before changing simulation logic.
 - `go run ./cmd/ridesim validate [-data data]`
 - `go run ./cmd/ridesim run -ride wdw.ak.expedition_everest -trains 5 -seed 1 -fixed-times -hours 4 -log out/events.jsonl`
 - `go run ./cmd/ridesim report -log out/events.jsonl`
+- `go run ./cmd/ridesim run -scenario data/scenarios/everest-baseline-day.yaml`
+- `go run ./cmd/ridesim study -file data/studies/everest-operations.yaml -json out/study.json`
 
 ## Decisions log (M3 kickoff, 2026-10-17)
 - Rock 'n' Roller max_in_service 5 -> 4 [fan] (web summary: a 5th train stacks). The spec's "five give
@@ -93,3 +95,12 @@ numbers come from `data/`. Read both before changing simulation logic.
 - The standby posted wait is standby-side guests / standby riders per second (15 min window).
 - The LL share bands (13/26/33%) are calibrated by LL demand per crowd level (pre-approved; tuning log).
 - Single-rider lines are not always open ([user]; criteria unknown): scenarios script closure windows.
+
+## Decisions log (M6, 2026-10-17)
+- A/B studies live in `data/studies/*.yaml`: a base scenario plus variants with `set` (scenario deep-merge),
+  `ride_set` (ride-file deep-merge, in memory only) and `scale` (arrival multipliers). Every variant is resolved
+  and checked like a data file during `validate`.
+- Default 20 paired seeds per variant (common random numbers via named streams); report paired differences
+  with 95% t intervals. Output: text table plus JSON (`ridesim study -file ... -json out.json`).
+- Replications run in parallel goroutines, one single-threaded sim each; results are ordered by seed, so
+  output never depends on scheduling (tested). Simulation logic itself stays goroutine-free.

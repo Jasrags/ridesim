@@ -1,0 +1,15 @@
+# Everest operating levers at a medium crowd: train count and a faster load.
+schema_version: "1.0"
+study:
+  id: everest_operations
+  description: "What does running 4 trains cost, and what would a 3 s faster load buy?"
+  base: everest_crowd_medium
+  seeds: 20
+  variants:
+    - id: four_trains
+      note: "one train in the barn all day"
+      set: { trains: 4 }
+    - id: faster_load
+      note: "what-if: load_s 43 -> 40 s (in memory only)"
+      ride_set:
+        station: { load_s: { mean: 40 } }

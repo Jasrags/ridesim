@@ -1,0 +1,13 @@
+# Rock 'n' Roller guest-flow levers at a medium crowd: more Lightning Lane, and no single-rider line.
+schema_version: "1.0"
+study:
+  id: rnrc_guest_flow
+  description: "Effect of 30% more LL demand, and of closing the single-rider line all day"
+  base: rnrc_crowd_medium
+  seeds: 20
+  variants:
+    - id: ll_plus_30pct
+      scale: { lightning_lane: 1.3 }
+    - id: single_rider_closed
+      set:
+        single_rider_closed: [{ from: "00:00", to: "11:00" }]

@@ -1,0 +1,18 @@
+# Haunted Mansion data questions as what-ifs: how much do the open [assumed] values matter?
+schema_version: "1.0"
+study:
+  id: hm_what_ifs
+  description: "Accessibility holds and buggy spacing, the two biggest unknowns (docs/m5-report.md)"
+  base: hm_baseline_day
+  seeds: 20
+  variants:
+    - id: no_accessibility_holds
+      set: { accessibility_holds: false }
+    - id: half_accessibility_holds
+      note: "4/hr instead of the [assumed] 8/hr"
+      ride_set:
+        loading_shared: { accessibility_hold: { rate_per_hr: 4 } }
+    - id: route_spacing_3s
+      note: "spacing implied by the route (~2.96 s) instead of the [assumed] 3.6 s"
+      ride_set:
+        vehicles: { spacing_s: 3.0 }

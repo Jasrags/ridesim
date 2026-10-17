@@ -129,3 +129,23 @@ func WithSeed(run Runner, seed uint64) Runner {
 	}
 	return run
 }
+
+// WithScale returns run with standby and Lightning Lane arrival rates multiplied.
+func WithScale(run Runner, arrivals, ll float64) Runner {
+	scale := func(c guest.Curve, k float64) guest.Curve {
+		out := make(guest.Curve, len(c))
+		for i, s := range c {
+			out[i] = guest.Segment{Start: s.Start, RatePerHr: s.RatePerHr * k}
+		}
+		return out
+	}
+	switch r := run.(type) {
+	case CoasterRun:
+		r.Arrivals, r.LLArrivals = scale(r.Arrivals, arrivals), scale(r.LLArrivals, ll)
+		return r
+	case ContinuousRun:
+		r.Arrivals, r.LLArrivals = scale(r.Arrivals, arrivals), scale(r.LLArrivals, ll)
+		return r
+	}
+	return run
+}

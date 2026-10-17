@@ -135,7 +135,21 @@ func (r *Ride) PostedWait() engine.Duration {
 func (r *Ride) Start() {
 	r.lines.Start()
 	r.startStops()
+	r.startPosting()
 	r.sim.After(0, r.nextBuggy)
+}
+
+// postingRefresh matches the park's posted_wait_refresh_s.
+const postingRefresh = 300 * engine.Second
+
+// startPosting logs the posted wait now and every refresh, so metrics can compare it with true waits.
+func (r *Ride) startPosting() {
+	var post func()
+	post = func() {
+		r.sim.Emit(engine.Event{Type: engine.EvPostedWait, N: int(r.PostedWait() / engine.Second), Info: config.PostedQueueLenOverThroughput})
+		r.sim.After(postingRefresh, post)
+	}
+	post()
 }
 
 // nextBuggy loads the buggy now at the load zone and schedules the next one a spacing later.

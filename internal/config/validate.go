@@ -51,6 +51,15 @@ func Validate(ds *Dataset) *Report {
 		case KindScenario:
 			fr.ID = f.Scenario.Scenario.ID
 			fr.Results = append(fr.Results, checkScenarioRide(ds, f.Scenario))
+		case KindStudy:
+			fr.ID = f.Study.Study.ID
+			r := Result{CheckID: "study.variants", Severity: SevError, Status: StatusPass}
+			if vs, err := f.Study.Study.Resolve(ds); err != nil {
+				r.Status, r.Detail = StatusFail, err.Error()
+			} else {
+				r.Detail = fmt.Sprintf("%d variant(s) resolve and pass every check", len(vs)-1)
+			}
+			fr.Results = append(fr.Results, r)
 		}
 		rep.Files = append(rep.Files, fr)
 	}

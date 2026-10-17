@@ -21,6 +21,7 @@ var commands = []command{
 	{"validate", "load every file under the data directory and check all invariants", runValidate},
 	{"run", "simulate one ride (multi_train_coaster) and print metrics", runRun},
 	{"report", "recompute metrics from a saved event log", runReport},
+	{"study", "run an A/B study: base scenario vs variants on paired seeds", runStudy},
 }
 
 func main() {

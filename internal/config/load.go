@@ -21,6 +21,7 @@ const (
 	KindContinuous
 	KindPark
 	KindScenario
+	KindStudy
 )
 
 func (k Kind) String() string {
@@ -33,6 +34,8 @@ func (k Kind) String() string {
 		return "park"
 	case KindScenario:
 		return "scenario"
+	case KindStudy:
+		return "study"
 	}
 	return "unknown"
 }
@@ -45,6 +48,7 @@ type File struct {
 	Continuous *ContinuousFile
 	Park       *ParkFile
 	Scenario   *ScenarioFile
+	Study      *StudyFile
 }
 
 // RideID returns the ride id for ride files and "" for park files.
@@ -80,6 +84,7 @@ type header struct {
 	} `yaml:"ride"`
 	Park     *yaml.Node `yaml:"park"`
 	Scenario *yaml.Node `yaml:"scenario"`
+	Study    *yaml.Node `yaml:"study"`
 }
 
 // LoadBytes parses one file. name is used for error messages and the filename invariant.
@@ -97,14 +102,17 @@ func LoadBytes(name string, data []byte) (*File, error) {
 
 	f := &File{Path: name}
 	sections := 0
-	for _, present := range []bool{h.Ride != nil, h.Park != nil, h.Scenario != nil} {
+	for _, present := range []bool{h.Ride != nil, h.Park != nil, h.Scenario != nil, h.Study != nil} {
 		if present {
 			sections++
 		}
 	}
 	switch {
 	case sections > 1:
-		return nil, fmt.Errorf("%s: file has more than one of ride, park, scenario", name)
+		return nil, fmt.Errorf("%s: file has more than one of ride, park, scenario, study", name)
+	case h.Study != nil:
+		f.Kind, f.Study = KindStudy, &StudyFile{}
+		return f, decodeStrict(name, data, f.Study)
 	case h.Scenario != nil:
 		f.Kind, f.Scenario = KindScenario, &ScenarioFile{}
 		return f, decodeStrict(name, data, f.Scenario)
@@ -112,7 +120,7 @@ func LoadBytes(name string, data []byte) (*File, error) {
 		f.Kind, f.Park = KindPark, &ParkFile{}
 		return f, decodeStrict(name, data, f.Park)
 	case h.Ride == nil:
-		return nil, fmt.Errorf("%s: no ride, park or scenario section", name)
+		return nil, fmt.Errorf("%s: no ride, park, scenario or study section", name)
 	}
 
 	switch h.Ride.Archetype {

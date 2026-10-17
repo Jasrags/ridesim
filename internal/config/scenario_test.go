@@ -97,3 +97,27 @@ func TestParseOffset(t *testing.T) {
 		}
 	}
 }
+
+func TestStudyBasicsChecks(t *testing.T) {
+	good := []byte("schema_version: \"1.0\"\nstudy:\n  id: s\n  base: b\n  variants:\n    - { id: v, scale: { arrivals: 1.2 } }\n")
+	f, err := LoadBytes("s.yaml", good)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if r := resultFor(t, CheckFile(f), "study.basics"); r.Status != StatusPass {
+		t.Fatalf("valid study: %s", r.Detail)
+	}
+	for name, body := range map[string]string{
+		"bad scale key": "schema_version: \"1.0\"\nstudy:\n  id: s\n  base: b\n  variants:\n    - { id: v, scale: { trains: 2 } }\n",
+		"dup ids":       "schema_version: \"1.0\"\nstudy:\n  id: s\n  base: b\n  variants:\n    - { id: v }\n    - { id: v }\n",
+		"no base":       "schema_version: \"1.0\"\nstudy:\n  id: s\n",
+	} {
+		f, err := LoadBytes("s.yaml", []byte(body))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if r := resultFor(t, CheckFile(f), "study.basics"); r.Status != StatusFail {
+			t.Errorf("%s: got %v", name, r.Status)
+		}
+	}
+}
