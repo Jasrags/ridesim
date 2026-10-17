@@ -80,6 +80,8 @@ type Report struct {
 	Holds         []BlockHolds       // every block with a pass in the window, in first-seen order
 	Little        Little
 	LoadIdleS     float64 // time the load station sat empty during the window
+	PostedMean    float64 // min, time-weighted posted wait over the window (0 when nothing is posted)
+	PostedPeak    float64 // min, highest clock-hour mean posted wait
 	StationBlocks []string
 	Ops           Ops
 
@@ -246,6 +248,7 @@ func Compute(events []engine.Event, warmup engine.Duration) (*Report, error) {
 	r.Dispatches = len(dispatchT)
 	window := r.WindowEnd.Sub(r.WindowStart).Seconds()
 	r.RidersPerHr = float64(r.Riders) / window * 3600
+	r.PostedMean, r.PostedPeak = postedStats(events, r.WindowStart, r.WindowEnd)
 	r.Wait = summarize(waits)
 	for lane, ws := range laneWaits {
 		r.LaneWait[lane] = summarize(ws)

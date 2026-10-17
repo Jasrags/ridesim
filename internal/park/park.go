@@ -89,6 +89,16 @@ func New(root *engine.Sim, ds *config.Dataset, cfg *config.ParkFile, opts Option
 				return nil, err
 			}
 			p.acts[n.Idx] = a
+		case config.NodeRideSimple, config.NodeShow, config.NodeDining, config.NodeElsewhere:
+			// Every activity scope opens with run_start, so per-node metrics work on its events.
+			exitTo := ""
+			if e := g.Edge(n.ExitEdge); e != nil {
+				exitTo = g.Nodes[e.Other(n.Idx)].ID
+			}
+			scope.Emit(engine.Event{Type: engine.EvRunStart, Info: fmt.Sprintf(
+				"scenario=park node=%s archetype=%s seats=0 load= brakes= preshow_batch=0 ll_phase=none exit_to=%s", n.ID, n.Kind, exitTo)})
+		}
+		switch n.Kind {
 		case config.NodeRideSimple:
 			s := newSimpleRide(scope, n)
 			p.acts[n.Idx], p.starts = s, append(p.starts, s.start)
@@ -201,6 +211,11 @@ func (p *Park) Start() {
 	}
 	for _, s := range p.starts {
 		s()
+	}
+	for _, e := range p.g.Edges {
+		// N = comfortable capacity C in guests (length x width x comfortable density), for congestion metrics.
+		c := int(math.Round(e.LengthFt * e.WidthFt * p.cfg.Congestion.ComfortableDensityPerSqft))
+		p.sim.Emit(engine.Event{Type: EvParkEdge, Block: e.ID, N: c, Info: p.g.Nodes[e.from].ID + "-" + p.g.Nodes[e.to].ID})
 	}
 	var refresh func()
 	refresh = func() {

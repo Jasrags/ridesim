@@ -1,0 +1,11 @@
+# Minimal valid park scenario fixture against test-fx-park.yaml. Broken variants are patches in scenario_test.go.
+schema_version: "1.0"
+scenario:
+  id: fx_park_day
+  park_id: fx_park
+  seed: 1
+  duration_h: 10
+  warmup_min: 30
+  crowd_level: medium
+  walking_mode: fixed_delay
+  failures: [cascade_stop]

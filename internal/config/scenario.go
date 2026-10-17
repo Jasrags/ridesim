@@ -47,12 +47,18 @@ type ScenarioFile struct {
 }
 
 type Scenario struct {
-	ID          string  `yaml:"id"`
-	Description string  `yaml:"description"`
-	RideID      string  `yaml:"ride_id"`
-	Seed        uint64  `yaml:"seed"`
-	DurationH   float64 `yaml:"duration_h"`
-	WarmupMin   float64 `yaml:"warmup_min"`
+	ID          string `yaml:"id"`
+	Description string `yaml:"description"`
+	RideID      string `yaml:"ride_id"`
+	// Park runs (M7) name park_id instead of ride_id, with a crowd level or an explicit attendance.
+	ParkID          string  `yaml:"park_id"`
+	CrowdLevel      string  `yaml:"crowd_level"` // low | medium | high: the park's daily_attendance
+	Attendance      int     `yaml:"attendance"`
+	WalkingMode     string  `yaml:"walking_mode"` // "" = the park file's mode
+	NoLightningLane bool    `yaml:"no_lightning_lane"`
+	Seed            uint64  `yaml:"seed"`
+	DurationH       float64 `yaml:"duration_h"`
+	WarmupMin       float64 `yaml:"warmup_min"`
 	// AccessibilityHolds turns continuous_load accessibility holds off when false (default on).
 	AccessibilityHolds *bool               `yaml:"accessibility_holds"`
 	Trains             int                 `yaml:"trains"` // 0 = trains.default_in_service
@@ -214,14 +220,55 @@ func (d *Dataset) Park(id string) *ParkFile {
 	return nil
 }
 
+// IsPark reports whether the scenario is a park run.
+func (s *Scenario) IsPark() bool { return s.ParkID != "" }
+
+// Crowd levels.
+const (
+	CrowdLow    = "low"
+	CrowdMedium = "medium"
+	CrowdHigh   = "high"
+)
+
+// parkOnlyConflicts lists ride-scenario fields a park scenario must not set.
+func parkOnlyConflicts(s *Scenario) []string {
+	var bad []string
+	set := map[string]bool{
+		"ride_id": s.RideID != "", "trains": s.Trains != 0, "dispatch_rule": s.DispatchRule != "",
+		"posted_wait": s.PostedWait != nil, "arrivals": len(s.Arrivals) > 0, "ops": len(s.Ops) > 0,
+		"weather": len(s.Weather) > 0, "guests": s.Guests != nil, "lightning_lane": s.LightningLane != nil,
+		"single_rider_closed": len(s.SingleRiderClosed) > 0, "accessibility_holds": s.AccessibilityHolds != nil,
+	}
+	for _, k := range []string{"ride_id", "trains", "dispatch_rule", "posted_wait", "arrivals", "ops", "weather", "guests",
+		"lightning_lane", "single_rider_closed", "accessibility_holds"} {
+		if set[k] {
+			bad = append(bad, k+" is for ride scenarios; park runs derive it from the park")
+		}
+	}
+	if (s.CrowdLevel == "") == (s.Attendance == 0) {
+		bad = append(bad, "give exactly one of crowd_level and attendance")
+	}
+	if s.Attendance < 0 {
+		bad = append(bad, "attendance must be > 0")
+	}
+	return bad
+}
+
 func checkScenarioBasics(f *ScenarioFile) (bool, string) {
 	s := f.Scenario
 	var bad []string
 	if s.ID == "" {
 		bad = append(bad, "missing id")
 	}
-	if !validRideID(s.RideID) {
-		bad = append(bad, fmt.Sprintf("ride_id %q is not <resort>.<park>.<ride>", s.RideID))
+	if s.IsPark() {
+		bad = append(bad, parkOnlyConflicts(&s)...)
+	} else {
+		if !validRideID(s.RideID) {
+			bad = append(bad, fmt.Sprintf("ride_id %q is not <resort>.<park>.<ride>", s.RideID))
+		}
+		if s.CrowdLevel != "" || s.Attendance != 0 || s.WalkingMode != "" || s.NoLightningLane {
+			bad = append(bad, "crowd_level, attendance, walking_mode and no_lightning_lane are for park scenarios")
+		}
 	}
 	if s.DurationH <= 0 {
 		bad = append(bad, "duration_h must be > 0")
@@ -235,10 +282,17 @@ func checkScenarioBasics(f *ScenarioFile) (bool, string) {
 	if len(bad) > 0 {
 		return false, strings.Join(bad, "; ")
 	}
-	return true, fmt.Sprintf("%s on %s, %g h, warmup %g min", s.ID, s.RideID, s.DurationH, s.WarmupMin)
+	on := s.RideID
+	if s.IsPark() {
+		on = "park " + s.ParkID
+	}
+	return true, fmt.Sprintf("%s on %s, %g h, warmup %g min", s.ID, on, s.DurationH, s.WarmupMin)
 }
 
 func checkScenarioArrivals(f *ScenarioFile) (bool, string) {
+	if f.Scenario.IsPark() {
+		return true, "park run: arrivals come from the park's attendance and hourly shares"
+	}
 	if ok, detail := checkArrivalSteps("arrivals", f.Scenario.Arrivals); !ok {
 		return false, detail
 	}
@@ -319,6 +373,12 @@ func checkScenarioEnums(f *ScenarioFile) (bool, string) {
 			bad = append(bad, fmt.Sprintf("unknown failure kind %q", k))
 		}
 	}
+	if c := s.CrowdLevel; c != "" && c != CrowdLow && c != CrowdMedium && c != CrowdHigh {
+		bad = append(bad, fmt.Sprintf("unknown crowd_level %q (low, medium, high)", c))
+	}
+	if m := s.WalkingMode; m != "" && m != WalkingFixedDelay && m != WalkingCongestion {
+		bad = append(bad, fmt.Sprintf("unknown walking_mode %q", m))
+	}
 	if s.DispatchRule != "" && !validDispatchRules[s.DispatchRule] {
 		bad = append(bad, fmt.Sprintf("unknown dispatch_rule %q", s.DispatchRule))
 	}
@@ -345,6 +405,14 @@ func checkScenarioRide(ds *Dataset, f *ScenarioFile) Result {
 		return r
 	}
 	s := f.Scenario
+	if s.IsPark() {
+		park := ds.Park(s.ParkID)
+		if park == nil {
+			return fail("park_id %s not found", s.ParkID)
+		}
+		r.Status, r.Detail = StatusPass, fmt.Sprintf("park %s, %d guests", s.ParkID, s.ParkAttendance(park))
+		return r
+	}
 	rf := ds.Ride(s.RideID)
 	if rf == nil {
 		return fail("ride_id %s not found", s.RideID)
@@ -398,4 +466,18 @@ func checkScenarioRide(ds *Dataset, f *ScenarioFile) Result {
 	}
 	r.Status, r.Detail = StatusPass, fmt.Sprintf("%s (%s), %d trains", s.RideID, rf.Path, trains)
 	return r
+}
+
+// ParkAttendance is the day's guests: attendance, or the park's figure for crowd_level.
+func (s *Scenario) ParkAttendance(p *ParkFile) int {
+	if s.Attendance > 0 {
+		return s.Attendance
+	}
+	switch s.CrowdLevel {
+	case CrowdLow:
+		return p.Guests.DailyAttendance.Low
+	case CrowdHigh:
+		return p.Guests.DailyAttendance.High
+	}
+	return p.Guests.DailyAttendance.Medium
 }

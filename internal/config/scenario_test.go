@@ -2,7 +2,10 @@ package config
 
 import "testing"
 
-const fxScenario = "testdata/test-fx-scenario.yaml"
+const (
+	fxScenario     = "testdata/test-fx-scenario.yaml"
+	fxParkScenario = "testdata/test-fx-park-scenario.yaml"
+)
 
 func TestScenarioFixtureValid(t *testing.T) {
 	coaster := patched(t, fxCoaster, "", "", "")
@@ -119,5 +122,40 @@ func TestStudyBasicsChecks(t *testing.T) {
 		if r := resultFor(t, CheckFile(f), "study.basics"); r.Status != StatusFail {
 			t.Errorf("%s: got %v", name, r.Status)
 		}
+	}
+}
+
+func parkScenarioDataset(t *testing.T, old, new string) *Dataset {
+	t.Helper()
+	return &Dataset{Files: []*File{patched(t, fxCoaster, "", "", ""), patched(t, fxPark, "", "", ""),
+		patched(t, fxOmnimover, "", "", ""), patched(t, fxParkScenario, "", old, new)}}
+}
+
+func TestParkScenarioFixtureValid(t *testing.T) {
+	for _, r := range Validate(parkScenarioDataset(t, "", "")).FileReport(fxParkScenario).Results {
+		if r.Status != StatusPass {
+			t.Errorf("%s: %s: %s", r.CheckID, r.Status, r.Detail)
+		}
+	}
+}
+
+func TestParkScenarioChecks(t *testing.T) {
+	cases := []struct{ check, old, new string }{
+		{"scenario.basics", "park_id: fx_park", "park_id: fx_park\n  ride_id: test.fx.coaster"},
+		{"scenario.basics", "crowd_level: medium", "crowd_level: medium\n  trains: 2"},
+		{"scenario.basics", "crowd_level: medium", "crowd_level: medium\n  arrivals: [{ at: \"00:00\", rate_per_hr: 100 }]"},
+		{"scenario.basics", "crowd_level: medium", "crowd_level: medium\n  attendance: 500"},
+		{"scenario.basics", "  crowd_level: medium\n", ""},
+		{"scenario.enums", "crowd_level: medium", "crowd_level: mob"},
+		{"scenario.enums", "walking_mode: fixed_delay", "walking_mode: teleport"},
+		{"scenario.ride_refs", "park_id: fx_park", "park_id: nowhere"},
+	}
+	for _, c := range cases {
+		t.Run(c.check+"/"+c.new, func(t *testing.T) {
+			r := resultFor(t, Validate(parkScenarioDataset(t, c.old, c.new)).FileReport(fxParkScenario).Results, c.check)
+			if r.Status != StatusFail || r.Severity != SevError {
+				t.Fatalf("got %v/%v (%s), want error FAIL", r.Severity, r.Status, r.Detail)
+			}
+		})
 	}
 }

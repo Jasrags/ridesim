@@ -125,3 +125,37 @@ func TestStudyRejectsBadVariants(t *testing.T) {
 		t.Error("unknown base resolved")
 	}
 }
+
+// A park study compares one node across variants; the identical variant shows no difference.
+func TestParkStudyReportsTheNamedNode(t *testing.T) {
+	ds, err := config.LoadDir("../config/testdata")
+	if err != nil {
+		t.Fatal(err)
+	}
+	st := &config.Study{ID: "t", Base: "fx_park_day", ReportNode: "coaster", Variants: []config.Variant{
+		{ID: "same", Set: node(t, "{}")},
+		{ID: "congestion", Set: node(t, "{ walking_mode: congestion }")},
+	}}
+	res, err := Run(ds, st, 2, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	j := res.JSON()
+	if len(j.Variants) != 3 || j.Variants[0].Metrics[0].Mean == 0 {
+		t.Fatalf("variants %d, base riders %+v", len(j.Variants), j.Variants[0].Metrics[0])
+	}
+	for _, m := range j.Variants[1].Metrics {
+		if m.Diff.Mean != 0 {
+			t.Errorf("identical variant: %s differs by %v", m.Name, m.Diff.Mean)
+		}
+	}
+	for _, bad := range []*config.Study{
+		{ID: "t", Base: "fx_park_day"},
+		{ID: "t", Base: "fx_park_day", ReportNode: "hub"},
+		{ID: "t", Base: "fx_park_day", ReportNode: "coaster", Variants: []config.Variant{{ID: "r", RideSet: node(t, "{ ride: { listed_capacity_per_hr: 1 } }")}}},
+	} {
+		if _, err := bad.Resolve(ds); err == nil {
+			t.Errorf("study %+v resolved, want an error", bad)
+		}
+	}
+}

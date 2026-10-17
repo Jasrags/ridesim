@@ -9,6 +9,7 @@ import (
 	"sync"
 
 	"github.com/jasrags/ridesim/internal/config"
+	"github.com/jasrags/ridesim/internal/engine"
 	"github.com/jasrags/ridesim/internal/metrics"
 	"github.com/jasrags/ridesim/internal/scenario"
 )
@@ -51,7 +52,7 @@ func Run(ds *config.Dataset, st *config.Study, seeds, parallel int) (*Result, er
 		if err != nil {
 			return nil, fmt.Errorf("study %s variant %s: %w", st.ID, v.ID, err)
 		}
-		reps, err := replicate(runner, res.Seeds, parallel)
+		reps, err := replicate(runner, st.ReportNode, res.Seeds, parallel)
 		if err != nil {
 			return nil, fmt.Errorf("study %s variant %s: %w", st.ID, v.ID, err)
 		}
@@ -91,7 +92,8 @@ func build(ds *config.Dataset, v config.ResolvedVariant) (scenario.Runner, error
 	return run, nil
 }
 
-func replicate(run scenario.Runner, seeds []uint64, parallel int) ([]*metrics.Report, error) {
+// replicate runs every seed; for park runs the report is node's.
+func replicate(run scenario.Runner, node string, seeds []uint64, parallel int) ([]*metrics.Report, error) {
 	if parallel <= 0 {
 		parallel = runtime.GOMAXPROCS(0)
 	}
@@ -110,7 +112,7 @@ func replicate(run scenario.Runner, seeds []uint64, parallel int) ([]*metrics.Re
 				errs[i] = err
 				return
 			}
-			out[i], errs[i] = metrics.Compute(log.Events(), run.WarmupDuration())
+			out[i], errs[i] = report(log.Events(), run.WarmupDuration(), node)
 		}(i, seed)
 	}
 	wg.Wait()
@@ -120,4 +122,19 @@ func replicate(run scenario.Runner, seeds []uint64, parallel int) ([]*metrics.Re
 		}
 	}
 	return out, nil
+}
+
+func report(events []engine.Event, warmup engine.Duration, node string) (*metrics.Report, error) {
+	if !metrics.IsParkLog(events) {
+		return metrics.Compute(events, warmup)
+	}
+	pr, err := metrics.ComputePark(events, warmup)
+	if err != nil {
+		return nil, err
+	}
+	n := pr.Node(node)
+	if n == nil {
+		return nil, fmt.Errorf("park log has no node %s", node)
+	}
+	return n.Report, nil
 }

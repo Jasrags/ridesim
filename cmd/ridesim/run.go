@@ -101,7 +101,19 @@ func runScenarioFile(ds *config.Dataset, path string, seed uint64, seedSet bool,
 			return err
 		}
 	}
-	m, err := metrics.Compute(log.Events(), run.WarmupDuration())
+	return writeReport(log.Events(), run.WarmupDuration(), stdout)
+}
+
+// writeReport renders the park report for park logs and the ride report otherwise.
+func writeReport(events []engine.Event, warmup engine.Duration, stdout io.Writer) error {
+	if metrics.IsParkLog(events) {
+		m, err := metrics.ComputePark(events, warmup)
+		if err != nil {
+			return err
+		}
+		return m.Write(stdout)
+	}
+	m, err := metrics.Compute(events, warmup)
 	if err != nil {
 		return err
 	}
@@ -142,9 +154,5 @@ func runReport(args []string, stdout io.Writer) error {
 	if err != nil {
 		return fmt.Errorf("%s: %w", *logPath, err)
 	}
-	m, err := metrics.Compute(events, engine.Seconds(*warmup*60))
-	if err != nil {
-		return err
-	}
-	return m.Write(stdout)
+	return writeReport(events, engine.Seconds(*warmup*60), stdout)
 }

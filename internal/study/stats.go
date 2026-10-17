@@ -23,6 +23,8 @@ var Metrics = []Metric{
 	{"balks", "guests", func(r *metrics.Report) float64 { return float64(r.Balks) }},
 	{"reneges", "guests", func(r *metrics.Report) float64 { return float64(r.Reneges) }},
 	{"empty_seats_per_dispatch", "seats", func(r *metrics.Report) float64 { return r.Ops.EmptySeats.Mean }},
+	{"posted_mean_min", "min", func(r *metrics.Report) float64 { return r.PostedMean }},
+	{"posted_peak_hr_min", "min", func(r *metrics.Report) float64 { return r.PostedPeak }},
 	{"posted_error_min", "min", func(r *metrics.Report) float64 { return r.Ops.Posted.MeanAbsS / 60 }},
 	{"max_queue", "guests", func(r *metrics.Report) float64 { return float64(r.QueueMax) }},
 }

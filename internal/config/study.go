@@ -24,6 +24,7 @@ type Study struct {
 	Description string    `yaml:"description"`
 	Base        string    `yaml:"base"` // scenario id
 	Seeds       int       `yaml:"seeds"`
+	ReportNode  string    `yaml:"report_node"` // park studies: the node whose metrics are compared
 	Variants    []Variant `yaml:"variants"`
 }
 
@@ -108,6 +109,12 @@ func (s *Study) Resolve(ds *Dataset) ([]ResolvedVariant, error) {
 	base := ds.Scenario(s.Base)
 	if base == nil {
 		return nil, fmt.Errorf("study %s: base scenario %s not found", s.ID, s.Base)
+	}
+	if base.Scenario.Scenario.IsPark() {
+		return s.resolvePark(ds, base)
+	}
+	if s.ReportNode != "" {
+		return nil, fmt.Errorf("study %s: report_node is for park studies", s.ID)
 	}
 	rideFile := ds.Ride(base.Scenario.Scenario.RideID)
 	if rideFile == nil {
@@ -226,4 +233,50 @@ func checkResolved(ds *Dataset, rideFile *File, rv ResolvedVariant) error {
 		return fmt.Errorf("variant fails checks: %s", strings.TrimSuffix(bad.String(), "; "))
 	}
 	return nil
+}
+
+// resolvePark resolves a study on a park scenario: scenario overrides only (ride_set would change a ride
+// inside the park and is not supported yet), and report_node must name an activity node of the park.
+func (s *Study) resolvePark(ds *Dataset, base *File) ([]ResolvedVariant, error) {
+	pf := ds.Park(base.Scenario.Scenario.ParkID)
+	if pf == nil {
+		return nil, fmt.Errorf("study %s: park %s not found", s.ID, base.Scenario.Scenario.ParkID)
+	}
+	found := false
+	for _, n := range pf.Nodes {
+		if n.ID == s.ReportNode && n.Kind != NodeEntrance && n.Kind != NodeExit && n.Kind != NodePlaza {
+			found = true
+		}
+	}
+	if !found {
+		return nil, fmt.Errorf("study %s: report_node %q must be an activity node of park %s", s.ID, s.ReportNode, pf.Park.ID)
+	}
+	out := []ResolvedVariant{{ID: "base", Scenario: base.Scenario}}
+	for _, v := range s.Variants {
+		if v.RideSet.Kind != 0 {
+			return nil, fmt.Errorf("study %s variant %s: ride_set is not supported on park studies", s.ID, v.ID)
+		}
+		sc, err := mergeInto(base.Scenario, "scenario", &v.Set, "study "+s.ID+" variant "+v.ID)
+		if err != nil {
+			return nil, err
+		}
+		rv := ResolvedVariant{ID: v.ID, Scenario: sc.Scenario, Scale: v.Scale}
+		files := []*File{{Path: "variant.yaml", Kind: KindScenario, Scenario: rv.Scenario}}
+		for _, f := range ds.Files {
+			if f.Kind == KindPark || f.Kind == KindCoaster || f.Kind == KindContinuous {
+				files = append(files, f)
+			}
+		}
+		var bad []string
+		for _, r := range Validate(&Dataset{Files: files}).FileReport("variant.yaml").Results {
+			if r.Status == StatusFail {
+				bad = append(bad, r.CheckID+": "+r.Detail)
+			}
+		}
+		if len(bad) > 0 {
+			return nil, fmt.Errorf("study %s variant %s: variant fails checks: %s", s.ID, v.ID, strings.Join(bad, "; "))
+		}
+		out = append(out, rv)
+	}
+	return out, nil
 }

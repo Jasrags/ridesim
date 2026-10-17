@@ -91,6 +91,9 @@ func (r ContinuousRun) Run() (*engine.Log, error) {
 
 // Load builds the runner for any validated scenario file.
 func Load(ds *config.Dataset, f *config.ScenarioFile) (Runner, error) {
+	if f.Scenario.IsPark() {
+		return parkFromFile(ds, f)
+	}
 	rf := ds.Ride(f.Scenario.RideID)
 	if rf == nil {
 		return nil, fmt.Errorf("scenario %s: ride %s not found", f.Scenario.ID, f.Scenario.RideID)
@@ -126,6 +129,9 @@ func WithSeed(run Runner, seed uint64) Runner {
 	case ContinuousRun:
 		r.Seed = seed
 		return r
+	case ParkRun:
+		r.Seed = seed
+		return r
 	}
 	return run
 }
@@ -145,6 +151,10 @@ func WithScale(run Runner, arrivals, ll float64) Runner {
 		return r
 	case ContinuousRun:
 		r.Arrivals, r.LLArrivals = scale(r.Arrivals, arrivals), scale(r.LLArrivals, ll)
+		return r
+	case ParkRun:
+		// Park runs scale attendance; Lightning Lane demand follows from it (ll is ignored).
+		r.Options.Scale = arrivals
 		return r
 	}
 	return run

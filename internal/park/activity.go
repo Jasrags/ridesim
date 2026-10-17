@@ -26,6 +26,7 @@ const (
 	EvShowStart    = "show_start"    // show scope: N=audience
 	EvShowEnd      = "show_end"      // show scope: N=audience let out
 	EvParkSnapshot = "park_snapshot" // N=guests in park, Info=per-state counts
+	EvParkEdge     = "park_edge"     // Block=edge, N=comfortable capacity in guests, Info=from-to (at start)
 )
 
 const visitBits = 8
@@ -204,6 +205,7 @@ func (s *show) begin(i int) {
 		s.sim.Emit(engine.Event{Type: engine.EvBoard, Train: i + 1, Guest: p.ID, N: p.Size, Info: guest.Standby.String()})
 	}
 	s.sim.Emit(engine.Event{Type: EvShowStart, Train: i + 1, N: n})
+	s.sim.Emit(engine.Event{Type: engine.EvDispatch, Train: i + 1, N: n}) // riders, for per-node metrics
 	s.sim.After(engine.Seconds(s.n.DurationMin*60), func() {
 		s.sim.Emit(engine.Event{Type: EvShowEnd, Train: i + 1, N: n})
 		for _, p := range audience {
@@ -253,6 +255,7 @@ func (d *dining) seat() {
 		d.line.Pop()
 		d.free -= p.Size
 		d.sim.Emit(engine.Event{Type: engine.EvBoard, Guest: p.ID, N: p.Size, Info: p.Lane.String()})
+		d.sim.Emit(engine.Event{Type: engine.EvDispatch, N: p.Size}) // seated guests, for per-node metrics
 		p := p
 		d.sim.After(sampleDist(d.sim, *d.n.ServiceTimeMin, 60, d.fixed), func() {
 			d.free += p.Size
@@ -277,6 +280,7 @@ func (e *elsewhere) queueCapacity() int      { return 0 }
 
 func (e *elsewhere) visit(p *guest.Party, lane guest.Lane) {
 	e.sim.Emit(engine.Event{Type: engine.EvBoard, Guest: p.ID, N: p.Size, Info: lane.String()})
+	e.sim.Emit(engine.Event{Type: engine.EvDispatch, N: p.Size})
 	e.sim.After(sampleDist(e.sim, *e.n.VisitMin, 60, e.fixed), func() {
 		e.sim.Emit(engine.Event{Type: engine.EvUnload, Guest: p.ID, N: p.Size})
 		p.Exited(guest.Rode)
