@@ -63,8 +63,8 @@ func (c *Coaster) Arrive(p *guest.Party, lane guest.Lane) {
 		c.flow()
 		return
 	case guest.SingleRider:
-		if !c.cfg.Queues.SingleRider.Enabled {
-			lane = guest.Standby // no single-rider line: they queue standby as a party of 1
+		if !c.SingleRiderOpen() {
+			lane = guest.Standby // no open single-rider line: they queue standby as a party of 1
 		}
 	}
 	p.Lane = lane
@@ -89,6 +89,23 @@ func (c *Coaster) Arrive(p *guest.Party, lane guest.Lane) {
 		})
 	}
 	c.flow()
+}
+
+// SingleRiderOpen reports whether the single-rider line takes new guests. The ride file says whether the
+// ride has one; operations open and close it ([user]: not always available; criteria unknown).
+func (c *Coaster) SingleRiderOpen() bool { return c.cfg.Queues.SingleRider.Enabled && !c.srClosed }
+
+// SetSingleRiderOpen opens or closes the single-rider line. Closing keeps the guests already in it.
+func (c *Coaster) SetSingleRiderOpen(open bool) {
+	if c.srClosed == !open {
+		return
+	}
+	c.srClosed = !open
+	state := "closed"
+	if open {
+		state = "open"
+	}
+	c.sim.Emit(engine.Event{Type: engine.EvSingleRider, Info: state})
 }
 
 // flow moves guests forward after any queue change.

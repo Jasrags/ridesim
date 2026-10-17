@@ -28,6 +28,7 @@ const (
 	EvOpsRejected   = "ops_rejected"    // Info=reason
 	EvBalk          = "balk"            // Guest, N, Info=lane: left on arrival, posted wait over patience
 	EvRenege        = "renege"          // Guest, N, Info=lane: left the outdoor line, wait over patience
+	EvSingleRider   = "single_rider"    // Info=open|closed: operations opened or closed the line
 	EvPostedWait    = "posted_wait"     // N=posted seconds, Info=algorithm
 	EvRunEnd        = "run_end"
 )

@@ -63,6 +63,9 @@ type Scenario struct {
 	Guests       *ScenarioGuests     `yaml:"guests"`
 	// LightningLane holds Lightning Lane return arrivals (guests/hr). Party sizes follow guests.
 	LightningLane *ScenarioLL `yaml:"lightning_lane"`
+	// SingleRiderClosed are windows when operations close the single-rider line ([user]: it is not
+	// always open; the criteria are unknown, so they are scripted).
+	SingleRiderClosed []WeatherWindow `yaml:"single_rider_closed"`
 }
 
 // ScenarioLL is Lightning Lane demand at the merge point. Smooth Poisson within each step for now;
@@ -257,7 +260,8 @@ func checkScenarioOps(f *ScenarioFile) (bool, string) {
 
 func checkScenarioWeather(f *ScenarioFile) (bool, string) {
 	end := f.Scenario.DurationH * 3600
-	for _, w := range f.Scenario.Weather {
+	windows := append(append([]WeatherWindow(nil), f.Scenario.Weather...), f.Scenario.SingleRiderClosed...)
+	for _, w := range windows {
 		from, err1 := ParseOffset(w.From)
 		to, err2 := ParseOffset(w.To)
 		switch {
@@ -266,7 +270,7 @@ func checkScenarioWeather(f *ScenarioFile) (bool, string) {
 		case err2 != nil:
 			return false, err2.Error()
 		case from >= to || to > end:
-			return false, fmt.Sprintf("weather window %s-%s must be non-empty and inside the run", w.From, w.To)
+			return false, fmt.Sprintf("window %s-%s must be non-empty and inside the run", w.From, w.To)
 		}
 	}
 	return true, fmt.Sprintf("%d weather window(s)", len(f.Scenario.Weather))
@@ -347,6 +351,9 @@ func checkScenarioRide(ds *Dataset, f *ScenarioFile) Result {
 			(k == FailCascadeStop && c.Failures.CascadeStop == nil) {
 			return fail("failure %s enabled but not configured in %s", k, rf.Path)
 		}
+	}
+	if len(s.SingleRiderClosed) > 0 && !c.Queues.SingleRider.Enabled {
+		return fail("single_rider_closed windows but %s has no single-rider line", s.RideID)
 	}
 	if s.LightningLane != nil && !c.Queues.SkipLine.Enabled {
 		return fail("lightning_lane arrivals but %s has no skip_line", s.RideID)

@@ -181,3 +181,21 @@ func TestMaxWaitEndsEarlyWhenNobodyCanFill(t *testing.T) {
 		t.Fatalf("dispatch at %v, want 32 s", got)
 	}
 }
+
+// Operations close the single-rider line: new single riders queue standby; those already in it stay.
+func TestSingleRiderLineClosure(t *testing.T) {
+	h := loadingHarness(t, Options{})
+	h.sim.At(0, func() { h.c.Stop(CauseWeatherHold) })
+	before := arriveAt(h, 1, 1, guest.SingleRider, 0)
+	h.sim.At(sec(2), func() { h.c.SetSingleRiderOpen(false) })
+	during := arriveAt(h, 3, 1, guest.SingleRider, 0)
+	h.sim.At(sec(4), func() { h.c.SetSingleRiderOpen(true) })
+	after := arriveAt(h, 5, 1, guest.SingleRider, 0)
+	h.sim.RunUntil(sec(6))
+	if before.Lane != guest.SingleRider || during.Lane != guest.Standby || after.Lane != guest.SingleRider {
+		t.Fatalf("lanes %v %v %v, want single_rider, standby, single_rider", before.Lane, during.Lane, after.Lane)
+	}
+	if h.c.single.Guests() != 2 {
+		t.Fatalf("%d guests in the single-rider line, want 2 (closing keeps those already in it)", h.c.single.Guests())
+	}
+}

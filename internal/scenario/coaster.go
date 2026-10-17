@@ -37,6 +37,7 @@ type CoasterRun struct {
 	PostedWait   coaster.PostedWaitOptions
 	Ops          []OpsAt
 	Weather      []Window
+	SRClosed     []Window // single-rider line closed by operations
 
 	Guests     guest.Profile // zero = single guests, unlimited patience
 	LLArrivals guest.Curve   // Lightning Lane returns, guests/hr; nil = none
@@ -91,6 +92,14 @@ func FromFile(ds *config.Dataset, f *config.ScenarioFile) (CoasterRun, error) {
 			return CoasterRun{}, err
 		}
 		r.Ops = append(r.Ops, OpsAt{At: at, Action: o.Action})
+	}
+	for _, w := range s.SingleRiderClosed {
+		from, err1 := off(w.From)
+		to, err2 := off(w.To)
+		if err1 != nil || err2 != nil {
+			return CoasterRun{}, fmt.Errorf("scenario %s: single_rider_closed window %s-%s", s.ID, w.From, w.To)
+		}
+		r.SRClosed = append(r.SRClosed, Window{From: from, To: to})
 	}
 	for _, w := range s.Weather {
 		from, err1 := off(w.From)
@@ -151,6 +160,10 @@ func (r CoasterRun) Run() (*engine.Log, error) {
 		ll := guest.Profile{Lane: guest.LightningLane, TimeStream: engine.StreamLLArrivals, ChoiceStream: engine.StreamLLChoice,
 			IDBase: 1 << 40, PartySizes: r.Guests.PartySizes}
 		guest.StartArrivalsWith(sim, r.LLArrivals, ll, c, end)
+	}
+	for _, w := range r.SRClosed {
+		sim.At(engine.Time(w.From), func() { c.SetSingleRiderOpen(false) })
+		sim.At(engine.Time(w.To), func() { c.SetSingleRiderOpen(true) })
 	}
 	for _, w := range r.Weather {
 		sim.At(engine.Time(w.From), func() { c.Stop(coaster.CauseWeatherHold) })

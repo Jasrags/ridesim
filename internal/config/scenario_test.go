@@ -26,6 +26,7 @@ func TestScenarioErrorChecks(t *testing.T) {
 		{"scenario.ops", "action: add_train", "action: teleport_train"},
 		{"scenario.ops", `{ at: "03:00", action: remove_train }`, `{ at: "05:00", action: remove_train }`},
 		{"scenario.weather", `{ from: "02:30", to: "02:45" }`, `{ from: "02:45", to: "02:30" }`},
+		{"scenario.weather", "  guests:\n", "  single_rider_closed: [{ from: \"03:00\", to: \"09:00\" }]\n  guests:\n"},
 		{"scenario.enums", "failures: [cascade_stop]", "failures: [meteor]"},
 		{"scenario.enums", "dispatch_rule: dispatch_when_ready", "dispatch_rule: yolo"},
 		{"scenario.enums", "algorithm: last_n_observed", "algorithm: vibes"},
@@ -54,6 +55,7 @@ func TestScenarioRideRefs(t *testing.T) {
 		{"failure not configured", fxScenario, "failures: [cascade_stop]", "failures: [brief_stop]"},
 		{"unknown park", fxScenario, "single_rider_share: 0.1", "single_rider_share: 0.1\n    park_id: nowhere"},
 		{"ll without skip line", fxCoaster, "    enabled: true\n    merge:", "    enabled: false\n    merge:"},
+		{"sr closed without line", fxScenario, "  guests:\n", "  single_rider_closed: [{ from: \"01:00\", to: \"02:00\" }]\n  guests:\n"},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {

@@ -134,6 +134,7 @@ type Coaster struct {
 	llInside int          // LL guests past the merge (preshow / load area) not yet boarded
 
 	recentStandby []dispatchRecord // non-LL guests boarded, for the standby posted wait
+	srClosed      bool             // single-rider line closed by operations
 
 	lastDispatch   engine.Time
 	dispatched     bool
