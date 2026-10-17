@@ -127,3 +127,8 @@ numbers come from `data/`. Read both before changing simulation logic.
   is a later refinement. Results, gaps and the recommended startup-cascade follow-up are in docs/m7-report.md.
 - Everest cascade storms after a stop (and the startup burst) stay as modeled (Jason, 2026-10-17): the [fan] source
   says operators reset cascades constantly. Revisit with [user] counts of stops per hour and reset time.
+
+## Decisions log (M8 kickoff, 2026-10-17)
+- Front end: both, web first (Jason). M8 builds a web control room (Go standard-library HTTP server, plain
+  HTML/SVG/JS page) on a shared event-stream API; a terminal console on the same API comes later. Mockups:
+  https://claude.ai/artifact/A5DmkWDkphfcvzCJ2y8YeB
