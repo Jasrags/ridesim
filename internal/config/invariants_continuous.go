@@ -112,8 +112,14 @@ func checkCapacityCeiling(c *ContinuousFile) (bool, string) {
 	}
 	n := c.Conveyor.ChainCount()
 	ceiling := float64(n) * 3600 / c.Vehicles.SpacingS * float64(c.Vehicles.SeatsMax)
-	return c.Ride.ListedCapacityPerHr <= ceiling,
-		fmt.Sprintf("listed %.0f/hr <= %d chain(s) x 3600 / %g s x %d seats = %.0f/hr", c.Ride.ListedCapacityPerHr, n, c.Vehicles.SpacingS, c.Vehicles.SeatsMax, ceiling)
+	// The ride must reach what it is built to: theoretical_riders_per_hr_at_target when set (a ride built to
+	// 90% of its listed figure, Jason's M9 rule), else the listed capacity.
+	want, what := c.Ride.ListedCapacityPerHr, "listed"
+	if t := c.ValidationTargets.TheoreticalRidersPerHrAtTarget; t > 0 {
+		want, what = t, "target"
+	}
+	return want <= ceiling,
+		fmt.Sprintf("%s %.0f/hr <= %d chain(s) x 3600 / %g s x %d seats = %.0f/hr", what, want, n, c.Vehicles.SpacingS, c.Vehicles.SeatsMax, ceiling)
 }
 
 func checkSeats(c *ContinuousFile) (bool, string) {

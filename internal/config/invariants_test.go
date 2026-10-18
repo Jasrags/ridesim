@@ -266,8 +266,8 @@ func TestRealData(t *testing.T) {
 	for _, le := range ds.LoadErrors {
 		t.Errorf("load error %s: %v", le.Path, le.Err)
 	}
-	if len(ds.Files) != 30 {
-		t.Fatalf("loaded %d files, want 30 (9 rides, 2 parks, 16 scenarios, 3 studies)", len(ds.Files))
+	if len(ds.Files) != 31 {
+		t.Fatalf("loaded %d files, want 31 (10 rides, 2 parks, 16 scenarios, 3 studies)", len(ds.Files))
 	}
 	rep := Validate(ds)
 	for _, fr := range rep.Files {
@@ -396,5 +396,17 @@ func TestContinuousSharedPolicyAndChains(t *testing.T) {
 	f.Continuous.Conveyor.Chains = 2
 	if r := resultFor(t, CheckFile(f), "continuous.capacity_ceiling"); r.Status != StatusPass {
 		t.Fatalf("2 chains, listed 4,000: %s %s", r.Status, r.Detail)
+	}
+}
+
+// A ride built below its listed figure checks the ceiling against its target instead.
+func TestContinuousCeilingUsesTheTarget(t *testing.T) {
+	f := patched(t, fxOmnimover, "", "listed_capacity_per_hr: 2000", "listed_capacity_per_hr: 4000")
+	if r := resultFor(t, CheckFile(f), "continuous.capacity_ceiling"); r.Status != StatusFail {
+		t.Fatalf("listed 4,000 over the ceiling with no target: %s %s", r.Status, r.Detail)
+	}
+	f.Continuous.ValidationTargets.TheoreticalRidersPerHrAtTarget = 2000
+	if r := resultFor(t, CheckFile(f), "continuous.capacity_ceiling"); r.Status != StatusPass {
+		t.Fatalf("target 2,000 under the ceiling: %s %s", r.Status, r.Detail)
 	}
 }

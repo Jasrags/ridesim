@@ -1,0 +1,107 @@
+# Toy Story Mania! (Disney's Hollywood Studios) — ride config, schema 1.0, continuous_load with chains (M14)
+# Confidence tags: [wiki] = Wikipedia, [fan] = forum/fan sources, [assumed] = our placeholder
+# Research pass 2026-10-18 (pages fetched):
+#   wiki   https://en.wikipedia.org/wiki/Toy_Story_Mania!
+#   drd    https://darkridedatabase.com/rides/toy-story-mania-2/
+#   crooks https://crooksinwdw.wordpress.com/2013/12/14/theoreticaloperational-hourly-ride-capacity-at-wdw/
+#   mp     https://mouseplanet.com/toy-story-mania-the-ride/2069/
+#   wdwnt  https://archive.wdwnt.com/?p=9070 and https://archive.wdwnt.com/?p=83791
+#
+# Ride system: three tracks; "Track one and two are served by the same loading station ... completely seperate third track on the
+# opposite side of the building" [fan drd]; the third track opened in 2016 [wiki]. Trams of two linked cars, each two back-to-back
+# benches of two: 8 riders [wiki][fan mp]. Trams stop in front of each game and run programmed speed profiles under a central
+# controller [fan wdwnt]. Modeled as continuous_load with 3 chains (Jason, 2026-10-18), one tram reaching each track's load point
+# every 40 s; the game stops are inside the ride time. Capacity (Jason): 90% of 2,400 = 2,160/hr = 3 x 8 x 3600 / 40.
+
+schema_version: "1.0"
+
+ride:
+  id: wdw.dhs.toy_story_mania          # <resort>.<park>.<ride>, unique across all parks
+  family: toy_story_mania
+  name: "Toy Story Mania!"
+  location:
+    resort: walt_disney_world
+    park: disneys_hollywood_studios
+    land: toy_story_land               # [wiki]
+  other_versions:
+    - { resort: disneyland_resort, park: disney_california_adventure, status: operating }
+    - { resort: tokyo_disney_resort, park: tokyo_disneysea, status: operating }
+  archetype: continuous_load
+  ride_duration_s: 340                 # [wiki] 5-6 minutes; 20 s load + 300 s of games + 20 s unload
+  total_experience_s: 420              # [fan TouringPlans] 7 min
+  height_restriction_in: 0             # [fan TouringPlans] none
+  listed_capacity_per_hr: 2400         # [fan crooks][fan drd] with the third track; operational 2,160 [fan crooks]
+  data_conflicts:
+    - field: ride_duration_s
+      values: { wiki: "300-360", fan_touringplans: 420, fan_drd: 480 }
+      chosen: wiki
+      note: "TouringPlans and darkridedatabase probably include loading."
+
+conveyor:
+  speed_fps: 0                         # not used: trams run speed profiles and stop at games [fan wdwnt]
+  continuous: false
+  topology: closed_loop
+  chains: 3                            # [fan drd][wiki] three tracks; tracks 1 and 2 share a station (not modeled: each track loads on its own)
+
+# One tram's lap, all [assumed]: 20 s boarding, 300 s of games, 20 s unloading, 60 s back to load = 400 s = 10 trams x 40 s.
+route:
+  - { id: load_zone,   kind: load,   est_s: 20 }
+  - { id: games,       kind: scene,  est_s: 300 }   # [fan wdwnt] stops at each game; 56 screens
+  - { id: unload_zone, kind: unload, est_s: 20 }
+  - { id: return_run,  kind: return, est_s: 60 }
+
+vehicles:
+  count: 10                            # per track [assumed]; not found
+  seats_nominal: 8                     # [wiki] up to eight in four back-to-back pairs
+  seats_max: 8
+  spacing_s: 40                        # [assumed] set for 2,160/hr (Jason, 2026-10-18)
+  occupancy_target: { mean: 7.5, sd: 0.5 }   # [assumed] posted-wait fallback only
+
+load_zone: { type: station, load_window_s: { mean: 20, sd: 4 }, loaders: 3, board_fail_rate: 0 }   # [assumed]
+unload_zone: { type: station, unload_window_s: { mean: 20, sd: 4 }, unloaders: 3 }                 # [assumed]
+
+loading_shared:
+  accessibility_freeze_zones: []
+  accessibility_hold: { rate_per_hr: 0, duration_s: { mean: 0, sd: 0 } }   # an offline loading area serves guests with disabilities [fan]
+  party_vehicle_policy: shared         # parties share a tram (two back-to-back benches per car)
+  callout_parties: 10                  # [assumed] lead only (AllEars, not fetched): cast "call for single riders or a party of two to fill a car"
+
+failures:
+  chain_stop:                          # the whole ride stops [assumed]
+    rate_per_hr: 0.4
+    duration_s: { mean: 180, sd: 60 }
+  long_downtime:
+    mtbf_hr: 30                        # [assumed] as the other rides
+    mttr_min: { mean: 40, sd: 15 }
+  side_down:                           # one track out, the others keep running [assumed rate]
+    rate_per_hr: 0.1
+    duration_s: { mean: 1800, sd: 900 }
+  weather_hold: none                   # indoor
+
+queues:
+  party_split_policy: never            # a party of 9+ takes consecutive trams
+  standby: { physical_capacity: 3200 } # [assumed] as the M9 simple ride
+  single_rider: { enabled: false }     # no fetched source lists one
+  skip_line:
+    enabled: true                      # [fan TouringPlans] Lightning Lane Multi Pass, second group (tier 2)
+    merge_point: station_queue_entrance   # [assumed]
+    merge:
+      unit: guests
+      empty_lane_rule: pull_other
+      phase_hysteresis_guests: 20      # [assumed]
+      phases:                          # [assumed] same fan-reported placeholders as the other rides
+        - { name: normal,   when_ll_queue_guests_below: 60,  ll_per_standby: 2 }
+        - { name: elevated, when_ll_queue_guests_below: 200, ll_per_standby: 4 }
+        - { name: recovery, when_ll_queue_guests_below: null, ll_per_standby: 10 }
+  posted_wait: { algorithm: queue_len_over_throughput, padding_pct: 0 }
+
+validation_targets:
+  listed_capacity_per_hr: 2400
+  theoretical_riders_per_hr_at_target: 2160   # 3 tracks x 8 x 3600 / 40 s
+  hard_ceiling_per_hr: 2160
+  avg_standby_wait_min_2026: 30               # [fan] Queue-Times 2026 (park calibration target)
+
+config_invariants:
+  - "sum(route.est_s for kinds load, scene, unload) == ride.ride_duration_s (+/- 5 s)"
+  - "vehicles.count * vehicles.spacing_s ~= sum(route.est_s) (+/- 15%), per chain"
+  - "ride.listed_capacity_per_hr <= chains x 3600 / vehicles.spacing_s x vehicles.seats_max"
