@@ -1,0 +1,12 @@
+# Disney's Hollywood Studios, medium crowd (M9): Rock 'n' Roller runs its full model; other rides are simple rides.
+# Confidence tags: [assumed] = our placeholder
+schema_version: "1.0"
+scenario:
+  id: dhs_medium_day
+  description: "Hollywood Studios day 09:00-21:00 at medium attendance; failures on"
+  park_id: wdw_dhs
+  seed: 1
+  duration_h: 12
+  warmup_min: 60
+  crowd_level: medium
+  failures: [brief_stop, long_downtime, cascade_stop]
