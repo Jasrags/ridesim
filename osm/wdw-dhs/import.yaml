@@ -36,7 +36,7 @@ nodes:
   - { id: smugglers_run, kind: ride_simple, name: "Millennium Falcon: Smugglers Run", land: galaxys_edge, map_no: [29], osm: [w688502132] }
   - { id: alien_saucers, kind: ride_simple, name: "Alien Swirling Saucers", land: toy_story_land, map_no: [41], osm: [w685092734] }
   - { id: slinky_dog_dash, kind: ride_simple, name: "Slinky Dog Dash", land: toy_story_land, map_no: [42], osm: [w685092736] }
-  - { id: toy_story_mania, kind: ride_simple, name: "Toy Story Mania!", land: toy_story_land, map_no: [43], osm: [w294905178] }
+  - { id: toy_story_mania, kind: ride_simple, name: "Toy Story Mania!", land: toy_story_land, map_no: [43], osm: [w294905178], at: n6419360130 }   # entrance faces Toy Story Land, not Pixar Plaza
   - { id: tower_of_terror, kind: ride_simple, name: "The Twilight Zone Tower of Terror", land: sunset_boulevard, map_no: [56], osm: [w530750421] }
   - { id: rock_n_roller_coaster, kind: ride, name: "Rock 'n' Roller Coaster Starring The Muppets", land: sunset_boulevard, map_no: [57], osm: [w357021885] }
 
