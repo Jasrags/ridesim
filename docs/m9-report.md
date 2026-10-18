@@ -108,9 +108,24 @@ Notes on the calibration:
 
 Crowd levels (5 seeds each, Slinky / Rise / Runaway Railway averages): low 43 / 27 / 7, medium 60 / 45 / 32, high 71 / 58 / 47.
 
+## Follow-up: Slinky Dog Dash full model (2026-10-18)
+- **Ride file** `data/rides/wdw-dhs-slinky-dog-dash.yaml` (Jason's choices: ~1,296/hr target, 4 trains, no barn).
+  - **Sourced:** 4 trains of 5 cars, 9 rows of 2 = 18 riders, 2 LSM launches, 40 mph, 2 min ride [wiki]; separate unload (rear)
+    and load (front) positions and five stopping points [fan coastergallery]; no single rider line [fan].
+  - **Blocks:** unload, load, launch 1, course, launch 2 (the designed stop and countdown), course, final brake past Wheezy.
+    Segment times are [assumed] and sum to 120 s.
+- **Checks:** fixed times give 50 s / 1,296/hr with no idle load position; random times give 51.6 s / 1,253/hr; 3 trains give
+  65 s / 990/hr, which matches the 65 s one observer timed in July 2018 (yourfirstvisit), so 3 trains may have run that day.
+- **In the park** it carries ~1,031/hr, against 1,248/hr as a simple ride:
+  - 2-seat rows with parties kept together and no single rider line leave ~1.5 of 18 seats empty per train (8%);
+  - random station times stretch the gap between trains to 52.9 s (−5%).
+- **Re-fit (approved):** appeal 1.25 → 1.15 gives 60.8 / 85.6 min against 63 / 83. Turn-aways fall from 4,911 to 4,569 a day.
+  Other rides moved up by at most 0.8 min; Olaf rose 1.2 min to 16.3 (target 15).
+- **Open:** a "party of one" call from deeper in standby (unverified lead) would refill some empty seats; segment times and
+  load/unload dwell need timing; a stranded train at launch 2 (Sept 2026, fan) suggests launch-2 faults worth a failure kind later.
+
 ## Known gaps and next steps
-- **Headliner models.** Slinky Dog Dash is next: it fits `multi_train_coaster` (4 trains × 18 riders, 2 launches [wiki];
-  track length is missing from the research). After it: Tower of Terror, Rise of the Resistance, then the trackless and
+- **Headliner models.** Slinky Dog Dash is done (above). Next: Tower of Terror, Rise of the Resistance, then the trackless and
   simulator rides.
 - **Turn-aways at the entrance.** At 60-minute waits, guests whose patience is shorter turn away when they reach the ride:
   about 4,900 a day at Slinky. Guests choose on a 5-minute-old board without considering their own patience. M7 tried

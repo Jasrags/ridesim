@@ -50,3 +50,8 @@ avg / busiest hour vs Queue-Times 2026 avg / avg daily max: Slinky 60.2 / 76.6 (
 43.6 / 58.5 (45 / 63), Runaway Railway 31.6 / 48.2 (34 / 45), Tower of Terror 28.2 / 43.5 (30 / 53), Toy Story Mania 27.8 / 43.2
 (30 / 51), Smugglers Run 27.6 / 40.9 (29 / 47), Saucers 15.4 / 24.5 (16 / 30), Star Tours 6.5 / 16.4 (7 / 13), meets Mickey & Minnie
 29.4, Olaf 15.1, Edna 13.8 avg (31, 15, 14). Vacation Fun is not fitted (Disney posts a fixed 10 min). Details in docs/m9-report.md.
+| 2026-10-18 | wdw-dhs-slinky-dog-dash.yaml | (new file) | — | — | Full coaster model for Slinky Dog Dash (approved). Station times are [assumed], set for the 50 s / 1,296/hr target Jason chose (90% of 1,440 listed): load 39 + restraint 8 + clearance 3 = 50 s, unload 24 s. Fixed times hit 50 s / 1,296/hr; random times 51.6 s / 1,253/hr; 3 trains 65 s / 990/hr. |
+| 2026-10-18 | wdw-dhs.yaml | nodes.slinky_dog_dash appeal | 1.25 | 1.15 | Re-fit after the switch to the full model (approved). In the park the coaster carries ~1,031/hr against 1,248/hr as a simple ride: 2-seat rows with no single rider line leave ~1.5 of 18 seats empty per train (odd parties), and random station times give 52.9 s between trains. At 1.25 Slinky posted 69.4 / 97.6 min (target 63 / 83). 1.08 gave 54.4 / 71.7. |
+
+Slinky full-model result (10 seeds, medium, as above): Slinky 60.8 / 85.6 (63 / 83), turn-aways 4,569 a day (4,911 as a simple ride);
+every other ride within 0.8 min of the M9 result (all slightly up), meets within 1.2 min (Olaf 15.1 -> 16.3 against 15).

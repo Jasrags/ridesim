@@ -173,3 +173,6 @@ numbers come from `data/`. Read both before changing simulation logic.
   park is unchanged. Simple rides and meets log their posted waits at each board refresh.
 - DHS calibration (approved): patience 75 +- 30, wait penalty 0.012, ride and meet appeals fitted to Queue-Times 2026 (appeal
   may exceed 1.0). Results and gaps in docs/m9-report.md; changes in docs/tuning-log.md.
+- Slinky Dog Dash full model (Jason, 2026-10-18): `data/rides/wdw-dhs-slinky-dog-dash.yaml`, 4 trains x 18 seats, no barn, no single
+  rider line. Station times [assumed] for 50 s / 1,296/hr (90% of 1,440 listed). In the park it carries ~1,031/hr (odd parties leave
+  seats empty, dispatch variance), so its appeal was re-fit 1.25 -> 1.15 (approved). Results in docs/m9-report.md.

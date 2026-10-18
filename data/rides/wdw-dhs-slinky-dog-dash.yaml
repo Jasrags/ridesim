@@ -1,0 +1,156 @@
+# Slinky Dog Dash (Disney's Hollywood Studios) — ride config, schema 1.0
+# Confidence tags: [wiki] = Wikipedia, [rcdb] = RCDB, [fan] = forum/fan sources, [assumed] = our placeholder, tune later
+# Research pass 2026-10-18 (pages fetched; URLs in the comments):
+#   wiki  https://en.wikipedia.org/wiki/Slinky_Dog_Dash
+#   rcdb  https://rcdb.com/13377.htm
+#   wdwm  https://www.wdwmagic.com/attractions/slinky-dog-dash.htm
+#   cg    coastergallery.com hollywood_studios_13/14/19/23/29 (Wayback snapshots 2025-05-04)
+#   yfv   https://yourfirstvisit.net/2018/07/04/slinky-dog-dash-in-toy-story-land-in-disneys-hollywood-studios
+# Capacity target (Jason, 2026-10-18): ~1,296/hr, ~90% of the 1,440/hr listed figure (the M9 operational rule), so the
+# [assumed] station times are set for one train every 50 s. 4 trains, no barn (Jason).
+
+schema_version: "1.0"
+
+ride:
+  id: wdw.dhs.slinky_dog_dash          # <resort>.<park>.<ride>, unique across all parks
+  family: slinky_dog_dash
+  name: "Slinky Dog Dash"
+  location:
+    resort: walt_disney_world
+    park: disneys_hollywood_studios
+    land: toy_story_land               # [wiki]
+  other_versions: []                   # none found
+  archetype: multi_train_coaster
+  ride_duration_s: 120                 # [wiki] 2 min; what span is timed is not stated
+  height_restriction_in: 38            # [wiki][fan wdwm]
+  listed_capacity_per_hr: 1440         # [fan] crooksinwdw OHRC (M9 research; not re-checked 2026-10-18, site did not resolve)
+  data_conflicts:
+    - field: ride_duration_s
+      values: { wiki: 120, fan_wdwm: 117 }
+      chosen: wiki
+      note: "Neither source says what is timed. Time a ride to settle."
+    - field: listed_capacity_per_hr
+      values: { fan_crooksinwdw: 1440, fan_yfv_observed_2018: 1000, fan_touringplans_implied: 1200 }
+      chosen: fan_crooksinwdw
+      note: "yfv timed 65 s mean between trains (range 49-94, median 61) on 2018-07-01, opening month. Target is 90% of 1,440 (Jason, 2026-10-18)."
+    - field: track_length_ft
+      values: { fan_thrillzing: 2789, fan_magic_tips: 4830 }
+      chosen: none
+      note: "Wikipedia and RCDB list no length. Not used by the model (block times are inputs)."
+
+trains:
+  fleet_size: 4                        # [wiki] "4 trains with five cars"
+  max_in_service: 4                    # [wiki] "can accommodate up to four trains at a time"; [fan cg23] four at once
+  default_in_service: 4                # [wiki] (Jason, 2026-10-18); a low-reliability fan site says 3 run with 1 in maintenance
+  cars_per_train: 5                    # [wiki]
+  seats_per_train: 18                  # [wiki] 18 riders per train
+  seats_per_row: 2                     # [wiki] 2 across; [fan wdwm] "9 rows of 2" (last car has one row)
+  layout: "2 across, 2 rows per car, last car 1 row"
+  restraints: lap_bar                  # [fan wdwm] lap bar; [fan yfv] one per row
+
+# Travel order [wiki]: station -> right turn into launch 1 -> airtime hill, Jessie frame, helix, Rex tower, tunnel ->
+# stop at launch 2 (countdown) -> GO! rings, airtime hill, bunny hills, turns -> final brake run (Wheezy) -> station.
+# Stopping points [fan cg23]: unload (rear), load (front), launch 1, launch 2, and the final brake by Wheezy; 5 places for 4 trains.
+# Segment times are not sourced; the split below is [assumed] and sums to ride_duration_s.
+blocks:
+  - id: UNLOAD                         # [fan cg23] rear station position
+    kind: station
+    next: LOAD
+  - id: LOAD                           # [fan cg23] forward station position
+    kind: station
+    next: LAUNCH_1
+  - id: LAUNCH_1
+    kind: launch
+    transit_s: { mean: 8, sd: 1 }      # [assumed] roll out and right turn, then the launch
+    launch: { accel_s: 5, top_speed_mph: 40 }   # [fan cg13] LSM "to about 40 miles per hour in around 5 seconds"; 40 mph [wiki]
+    next: COURSE_1
+  - id: COURSE_1
+    kind: course
+    transit_s: { mean: 36, sd: 1 }     # [assumed] airtime hill, Jessie frame, helix, Rex tower, tunnel, slow down
+    next: LAUNCH_2
+  - id: LAUNCH_2                       # [wiki] "stops at the second launch and the countdown begins"; [fan cg29] stop, roll back a few feet, pause, launch
+    kind: launch
+    transit_s: { mean: 22, sd: 1 }     # [assumed] includes the designed stop, rollback and countdown (a few seconds [fan cg29])
+    launch: { accel_s: 3, top_speed_mph: 40 }   # [assumed] no source for launch 2; 40 mph is the ride's top speed [wiki]
+    next: COURSE_2
+  - id: COURSE_2
+    kind: course
+    transit_s: { mean: 34, sd: 1 }     # [assumed] GO! rings, airtime hill, bunny hills, left and right turns
+    next: FINAL_BRAKE
+  - id: FINAL_BRAKE                    # [wiki] Wheezy "on the final brake run"; [fan cg19] before the unloading area
+    kind: brake
+    transit_s: { mean: 20, sd: 1 }     # [assumed] brake run past Wheezy into the station
+    brake: { hold_capable: true, stop_policy: stop_if_next_occupied, release_delay_s: { mean: 2, sd: 0.5 } }   # release delay [assumed]
+    next: UNLOAD
+  # transit sum = 8 + 36 + 22 + 34 + 20 = 120 = ride_duration_s
+
+# Clearance regions are [assumed] block boundaries at the stopping points; each stays under the 50 s station interval
+# (LAUNCH_1 + COURSE_1 44 s, COURSE_2 34 s, FINAL_BRAKE 20 s) so the station, not the track, sets the pace.
+clearance:
+  rules:
+    - { id: dispatch_from_load,     from: LOAD,        requires_empty: [LAUNCH_1, COURSE_1] }
+    - { id: dispatch_from_launch_2, from: LAUNCH_2,    requires_empty: [COURSE_2] }
+    - { id: dispatch_from_course_2, from: COURSE_2,    requires_empty: [FINAL_BRAKE] }
+    - { id: dispatch_to_unload,     from: FINAL_BRAKE, requires_empty: [UNLOAD], conditions: [{ kind: load_clear_to_advance }] }
+
+station:
+  separate_load_unload: true           # [fan cg23] unload in the rear position, load in the forward position
+  unload_s:        { mean: 24, sd: 6 } # [assumed] lap bars, no loose-article bins found; lap 120 + 24 + 50 = 194 s < 4 x 50
+  load_s:          { mean: 39, sd: 8 } # [assumed] set for the 50 s target (39 + 8 + 3), decision 2026-10-18
+  restraint_check_s: { mean: 8, sd: 2 }# [assumed]
+  dispatch_clearance_s: { mean: 3, sd: 1 }   # [assumed]
+  target_dispatch_interval_s: 50       # derived: 3600 x 18 / 1296 (Jason, 2026-10-18)
+  min_dispatch_interval_s: 40          # [assumed]
+  staff_at_station: 5                  # [assumed]
+  dispatch_rule: hold_for_full_or_max_wait
+  max_wait_after_ready_s: 8            # [assumed]
+
+layout:
+  topology: circuit                    # [wiki] track sequence returns to the same station
+  sequence: [unload, load, launch_1, course_1, launch_2, course_2, final_brake_wheezy, unload]
+  brake_positions_on_map: unknown
+
+guest_path: [outdoor_queue, load]      # [assumed] no preshow
+exit_path: [unload, exit]              # [assumed]
+
+failures:
+  # No cascade_stop: the only brake feeds the station, where trains normally queue (scope course_brakes would never count it).
+  brief_stop:
+    rate_per_hr: 0.4                   # [assumed] as Rock 'n' Roller; [fan] frequent stops reported (stranded at launch 2, Sept 2026)
+    duration_s: { mean: 180, sd: 60 }  # [assumed]
+  long_downtime:
+    mtbf_hr: 30                        # [assumed] as Rock 'n' Roller; [fan] a 3-day closure in Sept 2026 is out of scope for a day model
+    mttr_min: { mean: 40, sd: 15 }     # [assumed]
+  weather_hold: scripted               # outdoor coaster; lightning closures set per scenario
+
+queues:
+  party_split_policy: never            # parties ride together; leftover seats go to a solo party at the head of standby
+  standby: { physical_capacity: 1900 } # [assumed] as the M9 simple ride
+  single_rider: { enabled: false, fill_only_empty_seats: true }   # [fan] no single rider line (solotravellerapp)
+  skip_line:
+    enabled: true                      # [fan] TouringPlans: Lightning Lane Multi Pass, first group (tier 1)
+    merge_point: station_queue_entrance   # [assumed] no preshow, so the merge feeds the load area
+    merge:
+      unit: guests
+      empty_lane_rule: pull_other
+      phase_hysteresis_guests: 20      # [assumed]
+      phases:                          # [assumed] same fan-reported placeholders as the other coasters
+        - { name: normal,   when_ll_queue_guests_below: 60,  ll_per_standby: 2 }
+        - { name: elevated, when_ll_queue_guests_below: 200, ll_per_standby: 4 }
+        - { name: recovery, when_ll_queue_guests_below: null, ll_per_standby: 10 }
+  posted_wait: { algorithm: queue_len_over_throughput, padding_pct: 0 }
+
+validation_targets:
+  listed_capacity_per_hr: 1440
+  implied_dispatch_interval_s: 50      # target 1,296/hr: 3600 x 18 / 1296
+  theoretical_riders_per_hr_at_target: 1296
+  expect_four_trains_sufficient: true  # lap 120 + 24 + 50 = 194 s <= 4 x 50
+  avg_standby_wait_min_2026: 63        # [fan] Queue-Times 2026 (park calibration target)
+
+config_invariants:                     # enforced by the loader, applies to every ride
+  - "sum(block.transit_s.mean over non-station blocks) == ride.ride_duration_s (+/- 2 s)"
+  - "count(blocks) >= trains.max_in_service + 1"
+  - "trains.default_in_service <= trains.max_in_service <= trains.fleet_size"
+  - "station.target_dispatch_interval_s >= station.min_dispatch_interval_s"
+  - "every block with kind=brake defines brake.hold_capable, brake.stop_policy and brake.release_delay_s"
+  - "every id in clearance.requires_empty and every block.next refers to an existing block id"
