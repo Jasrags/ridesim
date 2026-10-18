@@ -9,6 +9,7 @@ import (
 	"github.com/jasrags/ridesim/internal/config"
 	"github.com/jasrags/ridesim/internal/engine"
 	"github.com/jasrags/ridesim/internal/guest"
+	"github.com/jasrags/ridesim/internal/ride/bays"
 	"github.com/jasrags/ridesim/internal/ride/coaster"
 	"github.com/jasrags/ridesim/internal/ride/continuous"
 	"github.com/jasrags/ridesim/internal/ride/elevator"
@@ -185,6 +186,17 @@ func (p *Park) hostRide(ds *config.Dataset, sim *engine.Sim, n *Node) (*rideAct,
 		}
 		info = fmt.Sprintf("archetype=continuous_load seats=%d load=%s brakes=", cfg.Vehicles.SeatsMax, continuous.LoadZone)
 		a.r, a.capacity = c, cfg.Queues.Standby.PhysicalCapacity
+		a.ll, a.single = cfg.Queues.SkipLine.Enabled, cfg.Queues.SingleRider.Enabled
+		info += runInfoTail(cfg.Preshow, cfg.Queues)
+	case config.KindBays:
+		cfg := rf.Bays
+		b, err := bays.New(sim, cfg, bays.Options{FixedTimes: p.opts.FixedTimes,
+			Failures: failures(config.FailBriefStop, config.FailLongDowntime, config.FailSideDown)})
+		if err != nil {
+			return nil, err
+		}
+		info = fmt.Sprintf("archetype=simulator_bays seats=%d load=%s brakes=", cfg.Bays.SeatsPerBay, bays.LoadBlock)
+		a.r, a.capacity = b, cfg.Queues.Standby.PhysicalCapacity
 		a.ll, a.single = cfg.Queues.SkipLine.Enabled, cfg.Queues.SingleRider.Enabled
 		info += runInfoTail(cfg.Preshow, cfg.Queues)
 	case config.KindElevator:

@@ -443,6 +443,8 @@ func checkScenarioRide(ds *Dataset, f *ScenarioFile) Result {
 		return checkContinuousScenario(ds, rf, f)
 	case KindElevator:
 		return checkElevatorScenario(ds, rf, f)
+	case KindBays:
+		return checkBaysScenario(ds, rf, f)
 	}
 	c := rf.Coaster
 	trains := s.Trains

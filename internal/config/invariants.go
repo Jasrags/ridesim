@@ -87,6 +87,9 @@ func CheckFile(f *File) []Result {
 	case KindElevator:
 		res := run(rideChecks, rideCtx{f.Path, &f.Elevator.Ride, f.Elevator.Preshow, &f.Elevator.Queues})
 		return append(res, run(elevatorChecks, f.Elevator)...)
+	case KindBays:
+		res := run(rideChecks, rideCtx{f.Path, &f.Bays.Ride, f.Bays.Preshow, &f.Bays.Queues})
+		return append(res, run(baysChecks, f.Bays)...)
 	case KindPark:
 		return run(parkChecks, f.Park)
 	case KindScenario:

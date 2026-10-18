@@ -205,3 +205,9 @@ numbers come from `data/`. Read both before changing simulation logic.
   unchanged.
 - Smugglers capacity emerges from the sourced 45 s rotation (Jason): ~1,800/hr with the park mix. Crew rule [user] (one observation):
   parties fill the four front seats, single riders the engineers. Appeal re-fit 0.90 -> 0.96 (approved). Results in docs/m12-report.md.
+
+## Decisions log (M13, Star Tours, 2026-10-18)
+- New archetype `simulator_bays` (Jason: each bay launches on its own schedule from boarding and loading times): bays cycle exit ->
+  board -> check -> safety video + flight; one shared line; `side_down` = one bay. Seating rules moved to `internal/ride/seats`
+  (rows, boarding groups + callouts), shared with elevator_drop.
+- Star Tours built to 1,620/hr (90% rule = crooksinwdw operational): 6 bays x 40, 533 s cycle, only the flight sourced. No re-fit.

@@ -134,6 +134,8 @@ func (s *Study) Resolve(ds *Dataset) ([]ResolvedVariant, error) {
 				rideStruct = rideFile.Continuous
 			case KindElevator:
 				rideStruct = rideFile.Elevator
+			case KindBays:
+				rideStruct = rideFile.Bays
 			}
 			merged, err := mergeInto(rideStruct, "", &v.RideSet, "study "+s.ID+" variant "+v.ID+" ride_set")
 			if err != nil {
@@ -266,7 +268,7 @@ func (s *Study) resolvePark(ds *Dataset, base *File) ([]ResolvedVariant, error) 
 		rv := ResolvedVariant{ID: v.ID, Scenario: sc.Scenario, Scale: v.Scale}
 		files := []*File{{Path: "variant.yaml", Kind: KindScenario, Scenario: rv.Scenario}}
 		for _, f := range ds.Files {
-			if f.Kind == KindPark || f.Kind == KindCoaster || f.Kind == KindContinuous || f.Kind == KindElevator {
+			if f.Kind == KindPark || f.Kind == KindCoaster || f.Kind == KindContinuous || f.Kind == KindElevator || f.Kind == KindBays {
 				files = append(files, f)
 			}
 		}

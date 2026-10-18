@@ -9,6 +9,7 @@ import (
 	"github.com/jasrags/ridesim/internal/config"
 	"github.com/jasrags/ridesim/internal/engine"
 	"github.com/jasrags/ridesim/internal/guest"
+	"github.com/jasrags/ridesim/internal/ride/seats"
 )
 
 const fixturePath = "../../config/testdata/test-fx-elevator.yaml"
@@ -249,7 +250,7 @@ func TestPlaceInGroups(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			free := append([]int(nil), c.free...)
-			placeInGroups(free, c.size)
+			seats.PlaceInGroups(free, c.size)
 			for i := range free {
 				if free[i] != c.wantFreeAt[i] {
 					t.Fatalf("free after seating %d: %v, want %v", c.size, free, c.wantFreeAt)

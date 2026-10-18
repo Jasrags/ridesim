@@ -1,0 +1,98 @@
+# Star Tours – The Adventures Continue (Disney's Hollywood Studios) — ride config, schema 1.0, archetype simulator_bays (M13)
+# Confidence tags: [wiki] = Wikipedia, [fan] = forum/fan sources, [assumed] = our placeholder
+# Research pass 2026-10-18 (pages fetched):
+#   wiki   https://en.wikipedia.org/wiki/Star_Tours_%E2%80%93_The_Adventures_Continue and https://en.wikipedia.org/wiki/Star_Tours
+#   crooks https://crooksinwdw.wordpress.com/2013/12/14/theoreticaloperational-hourly-ride-capacity-at-wdw/
+#   tpb    https://touringplans.com/blog/?p=598731
+#   rg     https://www.resortsgal.com/disneys-hollywood-studios/star-tours/
+#
+# Six simulator bays [wiki], each seating 40 in 5 rows [wiki]. Guests are sent left or right, assigned a row at their gate, and
+# wait in front of the doors; "when the doors open, you'll see guests ahead of you exiting. As the row clears, you'll move ahead
+# and take your seat" [fan rg]; a safety video plays and cast check each row's strap [fan rg]. Each bay runs its own cycle,
+# launching when its boarding is done (Jason, 2026-10-18).
+# Capacity (Jason): 90% of the 1,800/hr theoretical = 1,620/hr, crooksinwdw's operational figure; 6 x 40 x 3600 / 1620 = 533 s per
+# bay cycle. Only the flight is sourced; the rest of the cycle is [assumed] to fit.
+
+schema_version: "1.0"
+
+ride:
+  id: wdw.dhs.star_tours               # <resort>.<park>.<ride>, unique across all parks
+  family: star_tours
+  name: "Star Tours – The Adventures Continue"
+  location:
+    resort: walt_disney_world
+    park: disneys_hollywood_studios
+    land: echo_lake                    # [map]
+  other_versions:
+    - { resort: disneyland_resort, park: disneyland, status: operating, note: "4 bays [wiki]; single rider line since 2020" }
+  archetype: simulator_bays
+  ride_duration_s: 270                 # [wiki] 4:30 flight
+  total_experience_s: 420              # [fan tpb] "about 7 minutes"
+  height_restriction_in: 40            # [wiki]
+  listed_capacity_per_hr: 1800         # [fan crooks] theoretical; operational 1,620
+  data_conflicts:
+    - field: listed_capacity_per_hr
+      values: { fan_crooks_theoretical: 1800, fan_crooks_operational: 1620, fan_disneyblog: 1500, fan_tp_implied_5min_per_100: 1200 }
+      chosen: fan_crooks_theoretical
+      note: "Model built to 90% = 1,620/hr (Jason, 2026-10-18)."
+    - field: seats_per_row
+      values: { fan_tpb: 8, fan_rg: 7 }
+      chosen: fan_tpb
+      note: "40 riders in 5 rows [wiki] means 8 per row."
+
+bays:
+  count: 6                             # [wiki] six motion bases / boarding gates at Hollywood Studios
+  seats_per_bay: 40                    # [wiki]
+  seats_per_row: 8                     # unused with boarding_groups (kept for the row rule's check)
+  boarding_groups: [8, 8, 8, 8, 8]     # [wiki] 5 rows; [fan tpb] 8 seats each; cast assign parties to rows [fan rg]
+  layout: "5 rows of 8"
+  restraints: lap_belt                 # [fan rg] cast check each row's yellow strap
+
+cycle:
+  exit_s:             { mean: 60, sd: 10 }    # [assumed] the previous flight leaves; rows clear front to back [fan rg]
+  load_s:             { mean: 120, sd: 15 }   # [assumed] boarding window at the gate
+  max_wait_after_ready_s: 10                  # [assumed]
+  callout_parties: 10                         # [assumed] cast fill rows from the gate lanes, as Tower of Terror's callouts
+  restraint_check_s:  { mean: 23.3, sd: 4 }   # [assumed] strap check row by row [fan rg]
+  safety_video_s:     { mean: 60, sd: 2 }     # [assumed] [fan rg] a pre-show safety video plays
+  flight_s:           { mean: 270, sd: 1 }    # [wiki] 4:30
+  # cycle = 60 + 120 + 23.3 + 60 + 270 = 533.3 s -> 6 x 40 x 3600 / 533.3 = 1,620/hr
+
+failures:
+  brief_stop:
+    rate_per_hr: 0.4                   # [assumed] as the other rides; no downtime data found
+    duration_s: { mean: 180, sd: 60 }
+  long_downtime:
+    mtbf_hr: 30                        # [assumed]
+    mttr_min: { mean: 40, sd: 15 }
+  side_down:                           # one bay out, the others keep flying [assumed rate]
+    rate_per_hr: 0.1
+    duration_s: { mean: 1800, sd: 900 }
+  weather_hold: none                   # indoor
+
+queues:
+  party_split_policy: never
+  standby: { physical_capacity: 2400 } # [assumed] as the M9 simple ride
+  single_rider: { enabled: false }     # [fan] none at Walt Disney World (Disneyland only [wiki])
+  skip_line:
+    enabled: true                      # [fan tp] Lightning Lane Multi Pass, second group (tier 2)
+    merge_point: station_queue_entrance   # [assumed] no batch stage before the gates
+    merge:
+      unit: guests
+      empty_lane_rule: pull_other
+      phase_hysteresis_guests: 20      # [assumed]
+      phases:                          # [assumed] same fan-reported placeholders as the other rides
+        - { name: normal,   when_ll_queue_guests_below: 60,  ll_per_standby: 2 }
+        - { name: elevated, when_ll_queue_guests_below: 200, ll_per_standby: 4 }
+        - { name: recovery, when_ll_queue_guests_below: null, ll_per_standby: 10 }
+  posted_wait: { algorithm: queue_len_over_throughput, padding_pct: 0 }
+
+validation_targets:
+  listed_capacity_per_hr: 1800
+  theoretical_riders_per_hr_at_target: 1620   # 6 bays x 40 x 3600 / 533.3 s
+  avg_standby_wait_min_2026: 7                # [fan] Queue-Times 2026 (park calibration target)
+
+config_invariants:                     # enforced by the loader (internal/config/invariants_bays.go)
+  - "bays.count >= 1; boarding_groups sum to seats_per_bay (or seats_per_row divides it)"
+  - "cycle.flight_s == ride.ride_duration_s (+/- 2 s)"
+  - "warn: bays x seats x 3600 / (exit + load + restraint + video + flight) within 5% of theoretical_riders_per_hr_at_target"

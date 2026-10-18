@@ -116,6 +116,12 @@ The `config_invariants` strings in each file document checks the loader implemen
 - A ride stop freezes every cab with its remaining time. `side_down` freezes one side only (logged as `side_down` / `side_up`, not
   `ride_stop`), so capacity halves and the ride stays open.
 
+### 7b. Archetype: simulator bays (M13, Star Tours)
+- `bays.count` identical bays seating `seats_per_bay` (rows, or `boarding_groups` with `callout_parties`, package `seats`). Each bay
+  repeats: riders exit (`exit_s`), the next group boards (`load_s`, then up to `max_wait_after_ready_s` unless full or nobody fits),
+  restraint check, safety video and flight (`flight_s` = `ride_duration_s`). Bays share one line, oldest boarding bay first; there is no
+  common clock. A ride stop freezes all bays; `side_down` freezes one.
+
 ## 8. Queue model
 - Further batch stages (M11): a coaster ride file may list `stages:` after its `preshow`, in guest order. Each is a batch stage with
   the preshow's fields plus an `id`; each releases into a holding area of its `load_area_capacity`, which the next stage fills from

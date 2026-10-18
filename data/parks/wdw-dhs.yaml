@@ -21,8 +21,8 @@ nodes:
   # ride_simple
   - { id: runaway_railway, kind: ride, x: 1075, y: 1972, ride_id: wdw.dhs.runaway_railway, lightning_lane: tier1, appeal: 1.10, thrill: 0.20 }
       # full ride model (ride file 2026-10-18; was ride_simple 2,160/hr, 300 s, queue 3,200); tier [fan resortsgal 2026-09-23]; appeal, thrill [assumed]. Position [osm] w294898804 · Mickey & Minnie's Runaway Railway · hollywood_boulevard · map 1
-  - { id: star_tours, kind: ride_simple, x: 1615, y: 2359, capacity_per_hr: 1620, duration_s: 270, queue_capacity: 2400, lightning_lane: tier2, appeal: 0.50, thrill: 0.60 }
-      # capacity 90% of 1,800 [fan crooksinwdw, darkridedatabase]; duration 4:30 [wiki]; tier [fan]; rest [assumed]. Position [osm] w294899629 · Star Tours – The Adventures Continue · echo_lake · map 13
+  - { id: star_tours, kind: ride, x: 1615, y: 2359, ride_id: wdw.dhs.star_tours, lightning_lane: tier2, appeal: 0.50, thrill: 0.60 }
+      # full ride model (simulator_bays ride file 2026-10-18; was ride_simple 1,620/hr, 270 s, queue 2,400); tier [fan]; appeal, thrill [assumed]. Position [osm] w294899629 · Star Tours – The Adventures Continue · echo_lake · map 13
   - { id: rise_of_the_resistance, kind: ride, x: 913, y: 2778, ride_id: wdw.dhs.rise_of_the_resistance, lightning_lane: single_pass, appeal: 1.02, thrill: 0.55 }
       # full ride model (stage chain + vehicle pairs, ride file 2026-10-18; was ride_simple 1,530/hr, 1,080 s, queue 2,300); Single Pass [wiki][fan]; appeal [assumed] (1.09 -> 1.02 with the full model, tuning-log 2026-10-18), thrill [assumed]. Position [osm] w751722737 · Star Wars: Rise of the Resistance · galaxys_edge · map 28
   - { id: smugglers_run, kind: ride, x: 662, y: 2974, ride_id: wdw.dhs.smugglers_run, lightning_lane: tier1, appeal: 0.96, thrill: 0.55 }

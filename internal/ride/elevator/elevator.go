@@ -25,6 +25,7 @@ import (
 	"github.com/jasrags/ridesim/internal/guest"
 	"github.com/jasrags/ridesim/internal/ride"
 	"github.com/jasrags/ridesim/internal/ride/lines"
+	"github.com/jasrags/ridesim/internal/ride/seats"
 )
 
 // Stop causes recorded in ride_stop / ride_resume events.
@@ -72,12 +73,12 @@ type side struct {
 type cab struct {
 	id   int
 	side *side
-	at   string   // the place the cab holds, "" if none
-	pool *pool    // the pool `at` belongs to
-	next func()   // what to do once the requested place is granted
-	held bool     // waiting for a place (hold_start logged)
-	work work     // the one pending timer
-	seat seatings // this load
+	at   string     // the place the cab holds, "" if none
+	pool *pool      // the pool `at` belongs to
+	next func()     // what to do once the requested place is granted
+	held bool       // waiting for a place (hold_start logged)
+	work work       // the one pending timer
+	seat seats.Load // this load
 }
 
 // Ride is one elevator_drop ride. It implements ride.Ride and lines.Ride.
@@ -218,8 +219,8 @@ func (r *Ride) startLoading(c *cab) {
 }
 
 func (r *Ride) loadDone(c *cab) {
-	c.seat.fillWait = true
-	r.sim.Emit(engine.Event{Type: engine.EvLoadDone, Train: c.id, Block: LoadBlock, N: c.seat.riders})
+	c.seat.FillWait = true
+	r.sim.Emit(engine.Event{Type: engine.EvLoadDone, Train: c.id, Block: LoadBlock, N: c.seat.Riders})
 	r.boardCab(c)
 	if !r.atLoad(c) { // boarding re-entered Board, which already started the check
 		return
@@ -243,7 +244,7 @@ func (r *Ride) startCheck(c *cab) {
 }
 
 func (r *Ride) dispatch(c *cab) {
-	r.sim.Emit(engine.Event{Type: engine.EvDispatch, Train: c.id, Block: LoadBlock, N: c.seat.riders, Info: c.at})
+	r.sim.Emit(engine.Event{Type: engine.EvDispatch, Train: c.id, Block: LoadBlock, N: c.seat.Riders, Info: c.at})
 	r.startWork(c, r.sample(r.cfg.Cycle.ShowS, engine.StreamTrackTimes), func() {
 		r.request(c, c.side.drop, func() {
 			r.startWork(c, r.sample(r.cfg.Cycle.DropS, engine.StreamTrackTimes), func() {
@@ -258,11 +259,11 @@ func (r *Ride) dispatch(c *cab) {
 func (r *Ride) unload(c *cab) {
 	r.startWork(c, r.sample(r.cfg.Cycle.UnloadS, engine.StreamStationTimes), func() {
 		s := c.seat
-		r.sim.Emit(engine.Event{Type: engine.EvUnload, Train: c.id, Block: c.at, N: s.riders})
-		for _, p := range s.parties {
+		r.sim.Emit(engine.Event{Type: engine.EvUnload, Train: c.id, Block: c.at, N: s.Riders})
+		for _, p := range s.Parties {
 			p.Exited(guest.Rode)
 		}
-		c.seat = seatings{}
+		c.seat = seats.Load{}
 		r.wantShow(c)
 	})
 }

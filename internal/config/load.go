@@ -23,6 +23,7 @@ const (
 	KindScenario
 	KindStudy
 	KindElevator
+	KindBays
 )
 
 func (k Kind) String() string {
@@ -33,6 +34,8 @@ func (k Kind) String() string {
 		return ArchetypeContinuousLoad
 	case KindElevator:
 		return ArchetypeElevatorDrop
+	case KindBays:
+		return ArchetypeSimulatorBays
 	case KindPark:
 		return "park"
 	case KindScenario:
@@ -50,6 +53,7 @@ type File struct {
 	Coaster    *CoasterFile
 	Continuous *ContinuousFile
 	Elevator   *ElevatorFile
+	Bays       *BaysFile
 	Park       *ParkFile
 	Scenario   *ScenarioFile
 	Study      *StudyFile
@@ -64,6 +68,8 @@ func (f *File) RideID() string {
 		return f.Continuous.Ride.ID
 	case KindElevator:
 		return f.Elevator.Ride.ID
+	case KindBays:
+		return f.Bays.Ride.ID
 	}
 	return ""
 }
@@ -77,6 +83,8 @@ func (f *File) RideInfo() *RideInfo {
 		return &f.Continuous.Ride
 	case KindElevator:
 		return &f.Elevator.Ride
+	case KindBays:
+		return &f.Bays.Ride
 	}
 	return nil
 }
@@ -141,6 +149,9 @@ func LoadBytes(name string, data []byte) (*File, error) {
 	case ArchetypeElevatorDrop:
 		f.Kind, f.Elevator = KindElevator, &ElevatorFile{}
 		return f, decodeStrict(name, data, f.Elevator)
+	case ArchetypeSimulatorBays:
+		f.Kind, f.Bays = KindBays, &BaysFile{}
+		return f, decodeStrict(name, data, f.Bays)
 	default:
 		return nil, fmt.Errorf("%s: unknown ride.archetype %q", name, h.Ride.Archetype)
 	}
@@ -226,6 +237,8 @@ func (f *File) RideInfoQueues() Queues {
 		return f.Continuous.Queues
 	case KindElevator:
 		return f.Elevator.Queues
+	case KindBays:
+		return f.Bays.Queues
 	}
 	return Queues{}
 }

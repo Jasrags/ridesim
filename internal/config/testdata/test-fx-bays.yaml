@@ -1,0 +1,26 @@
+# Minimal valid simulator_bays fixture. Broken variants are produced by one-line patches in invariants_test.go.
+# Cycle 10 + 20 + 5 + 5 + 60 = 100 s; 2 bays x 10 seats x 3600 / 100 = 720/hr.
+schema_version: "1.0"
+ride:
+  id: test.fx.bays
+  family: fixture_bays
+  name: "Fixture Bays"
+  location: { resort: test, park: fx, land: none }
+  archetype: simulator_bays
+  ride_duration_s: 60
+  listed_capacity_per_hr: 720
+bays: { count: 2, seats_per_bay: 10, seats_per_row: 5, boarding_groups: [5, 5] }
+cycle:
+  exit_s: { mean: 10, sd: 1 }
+  load_s: { mean: 20, sd: 2 }
+  max_wait_after_ready_s: 5
+  callout_parties: 5
+  restraint_check_s: { mean: 5, sd: 1 }
+  safety_video_s: { mean: 5, sd: 1 }
+  flight_s: { mean: 60, sd: 1 }
+failures:
+  brief_stop: { rate_per_hr: 0.1, duration_s: { mean: 100, sd: 10 } }
+  side_down: { rate_per_hr: 0.1, duration_s: { mean: 600, sd: 60 } }
+queues:
+  party_split_policy: never
+  standby: { physical_capacity: 500 }

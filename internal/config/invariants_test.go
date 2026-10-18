@@ -11,6 +11,7 @@ const (
 	fxCoaster    = "testdata/test-fx-coaster.yaml"
 	fxOmnimover  = "testdata/test-fx-omnimover.yaml"
 	fxElevator   = "testdata/test-fx-elevator.yaml"
+	fxBays       = "testdata/test-fx-bays.yaml"
 	fxPark       = "testdata/test-fx-park.yaml"
 	realDataRoot = "../../data"
 )
@@ -116,6 +117,13 @@ func TestErrorChecksFailOnBrokenFixtures(t *testing.T) {
 		{"coaster.stages", fxCoaster, "", "queues:\n  party_split_policy: never", "stages:\n  - { enabled: true, rooms: 2, batch_size: 20, duration_s: { mean: 60, sd: 1 }, turnover_s: { mean: 10, sd: 1 } }\nqueues:\n  party_split_policy: never"},                              // no id
 		{"coaster.stages", fxCoaster, "", "queues:\n  party_split_policy: never", "stages:\n  - { id: cell, enabled: true, rooms: 2, batch_size: 20, merge_point: true, duration_s: { mean: 60, sd: 1 }, turnover_s: { mean: 10, sd: 1 } }\nqueues:\n  party_split_policy: never"}, // merge
 		{"coaster.stages", fxCoaster, "", "queues:\n  party_split_policy: never", "stages:\n  - { id: cell, enabled: true, rooms: 0, batch_size: 20, duration_s: { mean: 60, sd: 1 }, turnover_s: { mean: 10, sd: 1 } }\nqueues:\n  party_split_policy: never"},                    // rooms
+		// simulator_bays
+		{"bays.count", fxBays, "", "count: 2,", "count: 0,"},
+		{"bays.count", fxBays, "", "count: 2,", "count: 1,"}, // side_down needs two bays
+		{"bays.seats", fxBays, "", "boarding_groups: [5, 5]", "boarding_groups: [5, 4]"},
+		{"bays.seats", fxBays, "", "callout_parties: 5", "callout_parties: -1"},
+		{"bays.times", fxBays, "", "flight_s: { mean: 60, sd: 1 }", "flight_s: { mean: 0, sd: 1 }"},
+		{"bays.duration", fxBays, "", "ride_duration_s: 60", "ride_duration_s: 90"},
 		// elevator_drop
 		{"elevator.sides", fxElevator, "", "drop_shafts: 1", "drop_shafts: 0"},
 		{"elevator.sides", fxElevator, "", "names: [left, right]", "names: [left]"},
@@ -176,6 +184,7 @@ func TestWarnChecksWarnButDoNotBlock(t *testing.T) {
 		{"continuous.spacing_vs_route", fxOmnimover, "spacing_s: 3.0", "spacing_s: 4.0"},
 		{"continuous.loop_time", fxOmnimover, "total_experience_s: 100", "total_experience_s: 300"},
 		{"elevator.capacity", fxElevator, "listed_capacity_per_hr: 1400", "listed_capacity_per_hr: 1680"},
+		{"bays.capacity", fxBays, "listed_capacity_per_hr: 720", "listed_capacity_per_hr: 900"},
 	}
 	for _, c := range cases {
 		t.Run(c.check, func(t *testing.T) {
@@ -257,8 +266,8 @@ func TestRealData(t *testing.T) {
 	for _, le := range ds.LoadErrors {
 		t.Errorf("load error %s: %v", le.Path, le.Err)
 	}
-	if len(ds.Files) != 29 {
-		t.Fatalf("loaded %d files, want 29 (8 rides, 2 parks, 16 scenarios, 3 studies)", len(ds.Files))
+	if len(ds.Files) != 30 {
+		t.Fatalf("loaded %d files, want 30 (9 rides, 2 parks, 16 scenarios, 3 studies)", len(ds.Files))
 	}
 	rep := Validate(ds)
 	for _, fr := range rep.Files {

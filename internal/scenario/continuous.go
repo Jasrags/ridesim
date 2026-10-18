@@ -103,6 +103,8 @@ func Load(ds *config.Dataset, f *config.ScenarioFile) (Runner, error) {
 		return FromFile(ds, f)
 	case config.KindElevator:
 		return elevatorFromFile(ds, rf.Elevator, f)
+	case config.KindBays:
+		return baysFromFile(ds, rf.Bays, f)
 	}
 	return continuousFromFile(ds, rf.Continuous, f)
 }
@@ -135,6 +137,9 @@ func WithSeed(run Runner, seed uint64) Runner {
 	case ElevatorRun:
 		r.Seed = seed
 		return r
+	case BaysRun:
+		r.Seed = seed
+		return r
 	case ParkRun:
 		r.Seed = seed
 		return r
@@ -159,6 +164,9 @@ func WithScale(run Runner, arrivals, ll float64) Runner {
 		r.Arrivals, r.LLArrivals = scale(r.Arrivals, arrivals), scale(r.LLArrivals, ll)
 		return r
 	case ElevatorRun:
+		r.Arrivals, r.LLArrivals = scale(r.Arrivals, arrivals), scale(r.LLArrivals, ll)
+		return r
+	case BaysRun:
 		r.Arrivals, r.LLArrivals = scale(r.Arrivals, arrivals), scale(r.LLArrivals, ll)
 		return r
 	case ParkRun:
