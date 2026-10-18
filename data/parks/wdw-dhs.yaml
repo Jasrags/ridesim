@@ -33,8 +33,8 @@ nodes:
       # full ride model (ride file, 2026-10-18; was ride_simple 1,296/hr, 120 s, queue 1,900); tier [fan]; appeal [assumed] (1.25 -> 1.15 with the full model, tuning-log 2026-10-18), thrill [assumed]. Position [osm] w685092736 · Slinky Dog Dash · toy_story_land · map 42
   - { id: toy_story_mania, kind: ride_simple, x: 684, y: 2060, capacity_per_hr: 2160, duration_s: 330, queue_capacity: 3200, lightning_lane: tier2, appeal: 1.07, thrill: 0.20 }
       # capacity 90% of 2,400 with 3 tracks [fan crooksinwdw, darkridedatabase]; ride 5-6 min [wiki]; tier [fan]; rest [assumed]. Position [osm] w294905178 · Toy Story Mania! · toy_story_land · map 43
-  - { id: tower_of_terror, kind: ride_simple, x: 1290, y: 848, capacity_per_hr: 1680, duration_s: 214, queue_capacity: 2500, lightning_lane: tier2, appeal: 1.07, thrill: 0.90 }
-      # capacity 1,680 forum calculation (2 load shafts, 90 s, 21 seats) [fan wdwmagic]; ride 3:34 [wiki]; tier [fan]; rest [assumed]. Position [osm] w530750421 · The Twilight Zone Tower of Terror · sunset_boulevard · map 56
+  - { id: tower_of_terror, kind: ride, x: 1290, y: 848, ride_id: wdw.dhs.tower_of_terror, lightning_lane: tier2, appeal: 1.07, thrill: 0.90 }
+      # full ride model (elevator_drop ride file, 2026-10-18; was ride_simple 1,680/hr, 214 s, queue 2,500); tier [fan]; appeal, thrill [assumed]. Position [osm] w530750421 · The Twilight Zone Tower of Terror · sunset_boulevard · map 56
   # ride
   - { id: rock_n_roller_coaster, kind: ride, x: 886, y: 821, ride_id: wdw.dhs.rock_n_roller_coaster, lightning_lane: tier1, appeal: 1.31, thrill: 1.00 }
       # full ride model (ride file); Muppets retheme kept the hardware [wiki]; tier [fan]; appeal, thrill [assumed]. Position [osm] w357021885 · Rock 'n' Roller Coaster Starring The Muppets · sunset_boulevard · map 57

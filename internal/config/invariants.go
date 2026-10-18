@@ -84,6 +84,9 @@ func CheckFile(f *File) []Result {
 	case KindContinuous:
 		res := run(rideChecks, rideCtx{f.Path, &f.Continuous.Ride, f.Continuous.Preshow, &f.Continuous.Queues})
 		return append(res, run(continuousChecks, f.Continuous)...)
+	case KindElevator:
+		res := run(rideChecks, rideCtx{f.Path, &f.Elevator.Ride, f.Elevator.Preshow, &f.Elevator.Queues})
+		return append(res, run(elevatorChecks, f.Elevator)...)
 	case KindPark:
 		return run(parkChecks, f.Park)
 	case KindScenario:

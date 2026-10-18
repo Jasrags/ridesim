@@ -1,0 +1,128 @@
+# The Twilight Zone Tower of Terror (Disney's Hollywood Studios) — ride config, schema 1.0, archetype elevator_drop (M10)
+# Confidence tags: [wiki] = Wikipedia, [fan] = forum/fan sources, [patent] = ride-system patent, [user] = Jason's observation,
+# [assumed] = our placeholder, tune later
+# Research pass 2026-10-18 (pages fetched):
+#   wiki   https://en.wikipedia.org/wiki/The_Twilight_Zone_Tower_of_Terror
+#   forum  https://forums.wdwmagic.com/threads/hourly-capacity-data.980409/page-2 (Tom Morrow, 2024-03-01)
+#   ts     https://towersecrets.com/tower-of-terror-how-the-5th-dimension-scene-works/ (2014, with comments)
+#   tom    https://forums.wdwmagic.com/threads/tower-of-terror-updated-please-reread.903107/ (2015)
+#   patent https://patents.google.com/patent/US20140200087A1/en
+#
+# Ride system [wiki][fan ts][fan tom]: self-propelled cabs (AGVs) lock into vertical motion cabs. Two mirrored sides; on each,
+# two show shafts (A/B on one side, C/D on the other) lift a cab from the basement one floor to load, then up through the
+# hallway to a Fifth Dimension scene shared by that side's two show shafts, where the cab drives forward into the side's one
+# drop shaft (E or F). After the drops it comes down, backs out, pivots and pulls up to one of two unload doors in the basement,
+# then backs into a show shaft again. Cabs can cross sides only through a basement bridge (not modeled: cabs stay on their side).
+
+schema_version: "1.0"
+
+ride:
+  id: wdw.dhs.tower_of_terror          # <resort>.<park>.<ride>, unique across all parks
+  family: tower_of_terror
+  name: "The Twilight Zone Tower of Terror"
+  location:
+    resort: walt_disney_world
+    park: disneys_hollywood_studios
+    land: sunset_boulevard             # [wiki]
+  other_versions:
+    - { resort: tokyo_disney_resort, park: tokyo_disneysea, status: operating, note: "Tower of Terror, different story and ride system layout" }
+    - { resort: disneyland_resort, park: disney_california_adventure, status: closed_2017, note: "rethemed to Guardians of the Galaxy - Mission: Breakout!; no Fifth Dimension scene" }
+  archetype: elevator_drop
+  ride_duration_s: 214                 # [wiki] 3:34; span not stated, taken here as dispatch at load to arrival at the unload door
+  height_restriction_in: 40            # [wiki]
+  listed_capacity_per_hr: 1680         # [fan forum] "(3600 / 90) x 21 seats per elevator = 840 x 2 sides = 1,680 riders per hour as the theoretical max"
+  data_conflicts:
+    - field: ride_duration_s
+      values: { wiki: 214, fan_guide2wdw: 180 }
+      chosen: wiki
+      note: "Neither says what is timed."
+    - field: load_area
+      values: { fan_tom_2015: "load is one floor above unload, in the show shaft", fan_figment1986_2003: "two-story loading area, 2 cars to one shaft" }
+      chosen: fan_tom_2015
+      note: "The 2003 post is older and conflicts with the 2015 operator-style description and Wikipedia's basement unload."
+
+vehicles:
+  fleet_size: 8                        # [wiki] "Vehicles: 8"
+  per_side: 4                          # [fan ts] "Each side can run 4 AGVs"; [fan forum] "max four vehicles online" per side
+  seats_per_vehicle: 21                # [wiki] 21 riders
+  seats_per_row: 1                     # [wiki] 3 rows x 7 benches; [assumed] parties share a bench, so seats are modeled one by one
+  layout: "3 rows of 7"                # [wiki]
+  restraints: individual_seat_belt     # [assumed] lap belts; not in the fetched sources
+
+sides:
+  count: 2                             # [wiki] the four shafts merge into two Fifth Dimension scenes, each feeding one drop shaft
+  names: [AB, CD]                      # [fan ts] show shafts A and B feed drop shaft E; C and D feed F
+  show_shafts: 2                       # [fan ts][fan forum] two load shafts per side
+  drop_shafts: 1                       # [fan ts] E, F
+  unload_doors: 2                      # [fan tom] "pulls up to one of two unload doors"
+
+# One cab's lap, all [assumed]: no segment timings were found. They are fitted to the forum's 90 s per side, with the drop shaft
+# as the bottleneck (drop_s 90 s); each show shaft cycles in 12 + 8 + (38 + 6 + 3) + 110 = 177 s, so two keep up (88.5 s);
+# doors (14 + 40) / 2 = 27 s; the lap 40 + 177 + 90 + 14 = 321 s over 4 cabs = 80 s. show + drop + to_unload = 214 = ride_duration_s.
+cycle:
+  unload_s:            { mean: 40, sd: 8 }   # [assumed] at the basement door
+  to_show_shaft_s:     { mean: 12, sd: 2 }   # [assumed] back out, pivot, drive into a show shaft [fan tom]
+  lift_to_load_s:      { mean: 8, sd: 1 }    # [assumed] "takes the car up a floor to Load" [fan tom]
+  load_s:              { mean: 38, sd: 8 }   # [assumed] boarding window
+  restraint_check_s:   { mean: 6, sd: 2 }    # [assumed]
+  dispatch_clearance_s: { mean: 3, sd: 1 }   # [assumed]
+  max_wait_after_ready_s: 8                  # [assumed]
+  show_s:              { mean: 110, sd: 3 }  # [assumed] lift to the hallway scene, lift to the Fifth Dimension, drive to the drop shaft
+  drop_s:              { mean: 90, sd: 3 }   # [assumed] into the drop shaft, randomized drop sequence [wiki], down to the basement, back out
+  to_unload_s:         { mean: 14, sd: 2 }   # [assumed] back out, pivot, pull up to an unload door [fan tom]
+
+failures:
+  brief_stop:
+    rate_per_hr: 0.4                   # [assumed] as Rock 'n' Roller
+    duration_s: { mean: 180, sd: 60 }  # [assumed]
+  long_downtime:
+    mtbf_hr: 30                        # [assumed] as Rock 'n' Roller
+    mttr_min: { mean: 40, sd: 15 }     # [assumed]
+  side_down:                           # one side out, the other keeps running. Lead only (not verified): if a drop shaft or Fifth
+    rate_per_hr: 0.1                   # Dimension scene fails "capacity is automatically halved" (towersecrets summary); rate [assumed]
+    duration_s: { mean: 1800, sd: 900 }   # [assumed]
+  weather_hold: scripted
+
+preshow:                               # the library [wiki]
+  enabled: true
+  rooms: 2                             # [user] two library rooms off the lobby (Jason, 2026-10-18); they open into the boiler room
+  batch_size: 60                       # [assumed] "probably around the Haunted Mansion" [user]; HM uses 60 (itself [assumed])
+  duration_s: { mean: 120, sd: 10 }    # [assumed] as Haunted Mansion; an unverified lead says 5 min including the walk
+  turnover_s: { mean: 45, sd: 8 }      # [assumed] as Haunted Mansion
+  fill_rule: full_or_max_wait
+  max_fill_wait_s: 30                  # [assumed]
+  release_rule: when_load_area_has_room
+  load_area_capacity: 120              # [assumed] the boiler room and load docks hold two rooms' worth
+  party_integrity: true
+  merge_point: true                    # [assumed] Lightning Lane merges before the library, as at Haunted Mansion
+  bypass_for_single_rider: false
+
+queues:
+  party_split_policy: never
+  standby: { physical_capacity: 2500 } # [assumed] as the M9 simple ride
+  single_rider: { enabled: false }     # lead only: no single rider line (DHS single rider is Rock 'n' Roller and Smugglers Run)
+  skip_line:
+    enabled: true                      # [fan] TouringPlans: Lightning Lane Multi Pass, tier 2
+    merge_point: preshow_entrance      # [assumed]
+    merge:
+      unit: guests
+      empty_lane_rule: pull_other
+      phase_hysteresis_guests: 20      # [assumed]
+      phases:                          # [assumed] same fan-reported placeholders as the other rides
+        - { name: normal,   when_ll_queue_guests_below: 60,  ll_per_standby: 2 }
+        - { name: elevated, when_ll_queue_guests_below: 200, ll_per_standby: 4 }
+        - { name: recovery, when_ll_queue_guests_below: null, ll_per_standby: 10 }
+  posted_wait: { algorithm: queue_len_over_throughput, padding_pct: 0 }
+
+validation_targets:
+  listed_capacity_per_hr: 1680
+  theoretical_riders_per_hr_at_target: 1680   # 2 sides x 21 seats x 3600 / 90 s
+  avg_standby_wait_min_2026: 30               # [fan] Queue-Times 2026 (park calibration target)
+
+config_invariants:                     # enforced by the loader (internal/config/invariants_elevator.go)
+  - "sides.count >= 1 and every side has >= 1 show shaft, drop shaft and unload door"
+  - "vehicles.per_side x sides.count <= vehicles.fleet_size"
+  - "vehicles.per_side < show_shafts + drop_shafts + unload_doors (no gridlock)"
+  - "cycle.show_s + cycle.drop_s + cycle.to_unload_s == ride.ride_duration_s (+/- 2 s)"
+  - "warn: sides x seats x 3600 / slowest per-side interval within 5% of listed_capacity_per_hr"
+  - "if preshow.enabled: preshow.rooms * preshow.batch_size * 3600 / (preshow.duration_s.mean + preshow.turnover_s.mean) >= ride.listed_capacity_per_hr"

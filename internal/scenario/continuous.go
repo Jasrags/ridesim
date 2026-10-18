@@ -98,8 +98,11 @@ func Load(ds *config.Dataset, f *config.ScenarioFile) (Runner, error) {
 	if rf == nil {
 		return nil, fmt.Errorf("scenario %s: ride %s not found", f.Scenario.ID, f.Scenario.RideID)
 	}
-	if rf.Kind == config.KindCoaster {
+	switch rf.Kind {
+	case config.KindCoaster:
 		return FromFile(ds, f)
+	case config.KindElevator:
+		return elevatorFromFile(ds, rf.Elevator, f)
 	}
 	return continuousFromFile(ds, rf.Continuous, f)
 }
@@ -129,6 +132,9 @@ func WithSeed(run Runner, seed uint64) Runner {
 	case ContinuousRun:
 		r.Seed = seed
 		return r
+	case ElevatorRun:
+		r.Seed = seed
+		return r
 	case ParkRun:
 		r.Seed = seed
 		return r
@@ -150,6 +156,9 @@ func WithScale(run Runner, arrivals, ll float64) Runner {
 		r.Arrivals, r.LLArrivals = scale(r.Arrivals, arrivals), scale(r.LLArrivals, ll)
 		return r
 	case ContinuousRun:
+		r.Arrivals, r.LLArrivals = scale(r.Arrivals, arrivals), scale(r.LLArrivals, ll)
+		return r
+	case ElevatorRun:
 		r.Arrivals, r.LLArrivals = scale(r.Arrivals, arrivals), scale(r.LLArrivals, ll)
 		return r
 	case ParkRun:

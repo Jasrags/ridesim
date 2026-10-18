@@ -22,6 +22,7 @@ const (
 	KindPark
 	KindScenario
 	KindStudy
+	KindElevator
 )
 
 func (k Kind) String() string {
@@ -30,6 +31,8 @@ func (k Kind) String() string {
 		return ArchetypeMultiTrainCoaster
 	case KindContinuous:
 		return ArchetypeContinuousLoad
+	case KindElevator:
+		return ArchetypeElevatorDrop
 	case KindPark:
 		return "park"
 	case KindScenario:
@@ -40,12 +43,13 @@ func (k Kind) String() string {
 	return "unknown"
 }
 
-// File is one loaded data file. Exactly one of Coaster, Continuous, Park, Scenario is set.
+// File is one loaded data file. Exactly one of Coaster, Continuous, Elevator, Park, Scenario, Study is set.
 type File struct {
 	Path       string
 	Kind       Kind
 	Coaster    *CoasterFile
 	Continuous *ContinuousFile
+	Elevator   *ElevatorFile
 	Park       *ParkFile
 	Scenario   *ScenarioFile
 	Study      *StudyFile
@@ -58,6 +62,8 @@ func (f *File) RideID() string {
 		return f.Coaster.Ride.ID
 	case KindContinuous:
 		return f.Continuous.Ride.ID
+	case KindElevator:
+		return f.Elevator.Ride.ID
 	}
 	return ""
 }
@@ -69,6 +75,8 @@ func (f *File) RideInfo() *RideInfo {
 		return &f.Coaster.Ride
 	case KindContinuous:
 		return &f.Continuous.Ride
+	case KindElevator:
+		return &f.Elevator.Ride
 	}
 	return nil
 }
@@ -130,6 +138,9 @@ func LoadBytes(name string, data []byte) (*File, error) {
 	case ArchetypeContinuousLoad:
 		f.Kind, f.Continuous = KindContinuous, &ContinuousFile{}
 		return f, decodeStrict(name, data, f.Continuous)
+	case ArchetypeElevatorDrop:
+		f.Kind, f.Elevator = KindElevator, &ElevatorFile{}
+		return f, decodeStrict(name, data, f.Elevator)
 	default:
 		return nil, fmt.Errorf("%s: unknown ride.archetype %q", name, h.Ride.Archetype)
 	}
@@ -213,6 +224,8 @@ func (f *File) RideInfoQueues() Queues {
 		return f.Coaster.Queues
 	case KindContinuous:
 		return f.Continuous.Queues
+	case KindElevator:
+		return f.Elevator.Queues
 	}
 	return Queues{}
 }

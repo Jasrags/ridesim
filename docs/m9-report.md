@@ -125,8 +125,8 @@ Crowd levels (5 seeds each, Slinky / Rise / Runaway Railway averages): low 43 / 
   load/unload dwell need timing; a stranded train at launch 2 (Sept 2026, fan) suggests launch-2 faults worth a failure kind later.
 
 ## Known gaps and next steps
-- **Headliner models.** Slinky Dog Dash is done (above). Next: Tower of Terror, Rise of the Resistance, then the trackless and
-  simulator rides.
+- **Headliner models.** Slinky Dog Dash is done (above); Tower of Terror is done in M10 (docs/m10-report.md). Next: Rise of
+  the Resistance, then the trackless and simulator rides.
 - **Turn-aways at the entrance.** At 60-minute waits, guests whose patience is shorter turn away when they reach the ride:
   about 4,900 a day at Slinky. Guests choose on a 5-minute-old board without considering their own patience. M7 tried
   patience-aware choice and it had no effect.

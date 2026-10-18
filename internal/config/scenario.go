@@ -438,8 +438,11 @@ func checkScenarioRide(ds *Dataset, f *ScenarioFile) Result {
 	if rf == nil {
 		return fail("ride_id %s not found", s.RideID)
 	}
-	if rf.Kind == KindContinuous {
+	switch rf.Kind {
+	case KindContinuous:
 		return checkContinuousScenario(ds, rf, f)
+	case KindElevator:
+		return checkElevatorScenario(ds, rf, f)
 	}
 	c := rf.Coaster
 	trains := s.Trains

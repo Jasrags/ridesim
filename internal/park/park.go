@@ -11,6 +11,7 @@ import (
 	"github.com/jasrags/ridesim/internal/guest"
 	"github.com/jasrags/ridesim/internal/ride/coaster"
 	"github.com/jasrags/ridesim/internal/ride/continuous"
+	"github.com/jasrags/ridesim/internal/ride/elevator"
 )
 
 // Scope is the source name of park-level events.
@@ -184,6 +185,17 @@ func (p *Park) hostRide(ds *config.Dataset, sim *engine.Sim, n *Node) (*rideAct,
 		}
 		info = fmt.Sprintf("archetype=continuous_load seats=%d load=%s brakes=", cfg.Vehicles.SeatsMax, continuous.LoadZone)
 		a.r, a.capacity = c, cfg.Queues.Standby.PhysicalCapacity
+		a.ll, a.single = cfg.Queues.SkipLine.Enabled, cfg.Queues.SingleRider.Enabled
+		info += runInfoTail(cfg.Preshow, cfg.Queues)
+	case config.KindElevator:
+		cfg := rf.Elevator
+		e, err := elevator.New(sim, cfg, elevator.Options{FixedTimes: p.opts.FixedTimes,
+			Failures: failures(config.FailBriefStop, config.FailLongDowntime, config.FailSideDown)})
+		if err != nil {
+			return nil, err
+		}
+		info = fmt.Sprintf("archetype=elevator_drop seats=%d load=%s brakes=", cfg.Vehicles.SeatsPerVehicle, elevator.LoadBlock)
+		a.r, a.capacity = e, cfg.Queues.Standby.PhysicalCapacity
 		a.ll, a.single = cfg.Queues.SkipLine.Enabled, cfg.Queues.SingleRider.Enabled
 		info += runInfoTail(cfg.Preshow, cfg.Queues)
 	default:

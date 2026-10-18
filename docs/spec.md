@@ -101,6 +101,17 @@ The `config_invariants` strings in each file document checks the loader implemen
 - `party_vehicle_policy: contiguous_vehicles`: parties larger than a vehicle occupy consecutive vehicles, never interleaved with other parties.
 - A stop halts everything at once; there is no cascade stacking. The queue absorbs it.
 
+### 7a. Archetype: elevator drop (M10, Tower of Terror)
+- Mirrored `sides`; each has `show_shafts`, `drop_shafts` and `unload_doors`, and `vehicles.per_side` self-propelled cabs that stay on their side.
+- A cab's lap (`cycle`): unload door -> show shaft (lift one floor to load) -> load -> show scenes -> drop shaft -> unload door. It holds
+  each place until the next one is free; waiters are served first come, first served. Validation keeps cabs per side below the number of
+  places, so the cycle cannot gridlock.
+- Seating follows the coaster's row rule (`seats_per_row`); the load line, Lightning Lane merge and preshow are the shared queue model.
+- `ride_duration_s` = `show_s + drop_s + to_unload_s` (dispatch to the unload door). The capacity check (warn) compares sides x seats x 3600
+  over the slowest per-side resource with `listed_capacity_per_hr`.
+- A ride stop freezes every cab with its remaining time. `side_down` freezes one side only (logged as `side_down` / `side_up`, not
+  `ride_stop`), so capacity halves and the ride stays open.
+
 ## 8. Queue model
 Flow: arrival -> balk check -> standby / single rider / Lightning Lane -> preshow (if any) -> load -> ride.
 - **Standby**: FIFO of parties with size, patience, join time. Finite physical capacity; overflow spills onto the adjoining walkway in the park model.

@@ -10,6 +10,7 @@ import (
 const (
 	fxCoaster    = "testdata/test-fx-coaster.yaml"
 	fxOmnimover  = "testdata/test-fx-omnimover.yaml"
+	fxElevator   = "testdata/test-fx-elevator.yaml"
 	fxPark       = "testdata/test-fx-park.yaml"
 	realDataRoot = "../../data"
 )
@@ -107,6 +108,19 @@ func TestErrorChecksFailOnBrokenFixtures(t *testing.T) {
 		{"continuous.party_policy", fxOmnimover, "", "party_vehicle_policy: contiguous_vehicles", "party_vehicle_policy: interleave"},
 		{"preshow.throughput", fxOmnimover, "", "batch_size: 100", "batch_size: 10"},
 
+		// elevator_drop
+		{"elevator.sides", fxElevator, "", "drop_shafts: 1", "drop_shafts: 0"},
+		{"elevator.sides", fxElevator, "", "names: [left, right]", "names: [left]"},
+		{"elevator.sides", fxElevator, "", "names: [left, right]", "names: [left, left]"},
+		{"elevator.sides", fxElevator, "", "names: [left, right]", "names: [left, \"\"]"},
+		{"elevator.sides", fxElevator, "", "names: [left, right]", "names: [left, \"a b\"]"},
+		{"elevator.fleet", fxElevator, "", "fleet_size: 6", "fleet_size: 5"},
+		{"elevator.no_gridlock", fxElevator, "", "fleet_size: 6, per_side: 3", "fleet_size: 10, per_side: 5"},
+		{"elevator.seat_rows", fxElevator, "", "seats_per_row: 1", "seats_per_row: 3"},
+		{"elevator.times", fxElevator, "", "drop_s: { mean: 40, sd: 2 }", "drop_s: { mean: 0, sd: 2 }"},
+		{"elevator.times", fxElevator, "", "max_wait_after_ready_s: 5", "max_wait_after_ready_s: -1"},
+		{"elevator.duration_sum", fxElevator, "", "ride_duration_s: 100", "ride_duration_s: 120"},
+
 		// park (file-local)
 		{"park.node_ids", fxPark, "", "{ id: filler, kind", "{ id: hub, kind"},
 		{"park.edge_refs", fxPark, "", "to: dining", "to: diner"},
@@ -153,6 +167,7 @@ func TestWarnChecksWarnButDoNotBlock(t *testing.T) {
 	cases := []struct{ check, fixture, old, new string }{
 		{"continuous.spacing_vs_route", fxOmnimover, "spacing_s: 3.0", "spacing_s: 4.0"},
 		{"continuous.loop_time", fxOmnimover, "total_experience_s: 100", "total_experience_s: 300"},
+		{"elevator.capacity", fxElevator, "listed_capacity_per_hr: 1400", "listed_capacity_per_hr: 1680"},
 	}
 	for _, c := range cases {
 		t.Run(c.check, func(t *testing.T) {
@@ -234,8 +249,8 @@ func TestRealData(t *testing.T) {
 	for _, le := range ds.LoadErrors {
 		t.Errorf("load error %s: %v", le.Path, le.Err)
 	}
-	if len(ds.Files) != 25 {
-		t.Fatalf("loaded %d files, want 25 (4 rides, 2 parks, 16 scenarios, 3 studies)", len(ds.Files))
+	if len(ds.Files) != 26 {
+		t.Fatalf("loaded %d files, want 26 (5 rides, 2 parks, 16 scenarios, 3 studies)", len(ds.Files))
 	}
 	rep := Validate(ds)
 	for _, fr := range rep.Files {

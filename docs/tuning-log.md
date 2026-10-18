@@ -55,3 +55,4 @@ avg / busiest hour vs Queue-Times 2026 avg / avg daily max: Slinky 60.2 / 76.6 (
 
 Slinky full-model result (10 seeds, medium, as above): Slinky 60.8 / 85.6 (63 / 83), turn-aways 4,569 a day (4,911 as a simple ride);
 every other ride within 0.8 min of the M9 result (all slightly up), meets within 1.2 min (Olaf 15.1 -> 16.3 against 15).
+| 2026-10-18 | wdw-dhs-tower-of-terror.yaml | (new file) | — | — | Full elevator_drop model for Tower of Terror (M10, approved archetype). Every cycle time is [assumed], fitted to the forum's 90 s per side (1,680/hr) with the drop shaft as the bottleneck; preshow rooms [user], group size 60 [assumed]. Fixed times 1,680/hr; random times with failures ~1,540/hr. No park re-fit: medium posted 31.3 / 49.0 min against 30 / 53 (was 28.8 / 44.0 as a simple ride), appeal unchanged at 1.07. |

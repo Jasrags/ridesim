@@ -69,6 +69,7 @@ type Failures struct {
 	CascadeStop  *CascadeStop  `yaml:"cascade_stop"`
 	BriefStop    *RateStop     `yaml:"brief_stop"`
 	ChainStop    *RateStop     `yaml:"chain_stop"`
+	SideDown     *RateStop     `yaml:"side_down"` // elevator_drop: one side out, the other keeps running
 	LongDowntime *LongDowntime `yaml:"long_downtime"`
 	WeatherHold  string        `yaml:"weather_hold"`
 }

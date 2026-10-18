@@ -1,0 +1,31 @@
+# Minimal valid elevator_drop fixture. Broken variants are produced by one-line patches in invariants_test.go.
+# Per side: show shafts 5 + 5 + 25 + 50 = 85 s / 2 = 42.5 s, drop 40 s, doors 15 s, lap 155 s / 3 cabs = 51.7 s,
+# so 2 sides x 10 seats x 3600 / 51.7 = 1,393/hr against the listed 1,400.
+schema_version: "1.0"
+ride:
+  id: test.fx.elevator
+  family: fixture_elevator
+  name: "Fixture Elevator"
+  location: { resort: test, park: fx, land: none }
+  archetype: elevator_drop
+  ride_duration_s: 100
+  listed_capacity_per_hr: 1400
+vehicles: { fleet_size: 6, per_side: 3, seats_per_vehicle: 10, seats_per_row: 1 }
+sides: { count: 2, names: [left, right], show_shafts: 2, drop_shafts: 1, unload_doors: 2 }
+cycle:
+  unload_s: { mean: 20, sd: 2 }
+  to_show_shaft_s: { mean: 5, sd: 1 }
+  lift_to_load_s: { mean: 5, sd: 1 }
+  load_s: { mean: 20, sd: 2 }
+  restraint_check_s: { mean: 3, sd: 1 }
+  dispatch_clearance_s: { mean: 2, sd: 1 }
+  max_wait_after_ready_s: 5
+  show_s: { mean: 50, sd: 2 }
+  drop_s: { mean: 40, sd: 2 }
+  to_unload_s: { mean: 10, sd: 1 }
+failures:
+  brief_stop: { rate_per_hr: 0.1, duration_s: { mean: 100, sd: 10 } }
+  side_down: { rate_per_hr: 0.1, duration_s: { mean: 600, sd: 60 } }
+queues:
+  party_split_policy: never
+  standby: { physical_capacity: 500 }

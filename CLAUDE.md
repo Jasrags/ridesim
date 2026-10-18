@@ -176,3 +176,13 @@ numbers come from `data/`. Read both before changing simulation logic.
 - Slinky Dog Dash full model (Jason, 2026-10-18): `data/rides/wdw-dhs-slinky-dog-dash.yaml`, 4 trains x 18 seats, no barn, no single
   rider line. Station times [assumed] for 50 s / 1,296/hr (90% of 1,440 listed). In the park it carries ~1,031/hr (odd parties leave
   seats empty, dispatch variance), so its appeal was re-fit 1.25 -> 1.15 (approved). Results in docs/m9-report.md.
+
+## Decisions log (M10, Tower of Terror, 2026-10-18)
+- New archetype `elevator_drop` (Jason; spec §7a, `internal/ride/elevator`): sides of show shafts, a drop shaft and unload doors, with
+  cabs that hold each place until the next is free. Reuses the shared lines, the coaster seating rule and the stop model; adds
+  `side_down` (one side out, capacity halves). `side_down` is not enabled in the DHS day scenarios: its rate is [assumed] and the
+  halving is an unverified lead.
+- Tower of Terror: 2 sides x (2 show shafts, 1 drop shaft, 2 doors), 4 cabs of 21 per side [wiki][fan]; cycle times [assumed], fitted
+  to the forum's 90 s per side (1,680/hr) with the drop shaft as the bottleneck. Library preshow [user]: two rooms off the lobby that open
+  into the boiler room, sized like Haunted Mansion's (60 a show, [assumed]).
+- Seats are modeled one by one (`seats_per_row: 1`): parties share the 7-seat benches [assumed].
