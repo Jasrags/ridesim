@@ -19,24 +19,24 @@ nodes:
   # exit
   - { id: exit, kind: exit, x: 1702, y: 1409 }   # [osm] r3919136 · Main entrance · entrance
   # ride_simple
-  - { id: runaway_railway, kind: ride_simple, x: 1075, y: 1972, capacity_per_hr: 2160, duration_s: 300, queue_capacity: 3200, lightning_lane: tier1, appeal: 0.85, thrill: 0.20 }
+  - { id: runaway_railway, kind: ride_simple, x: 1075, y: 1972, capacity_per_hr: 2160, duration_s: 300, queue_capacity: 3200, lightning_lane: tier1, appeal: 1.10, thrill: 0.20 }
       # capacity 90% of 2,400 [fan crooksinwdw, darkridedatabase]; duration 5 min [fan TouringPlans]; tier [fan resortsgal 2026-09-23]; queue, appeal, thrill [assumed]. Position [osm] w294898804 · Mickey & Minnie's Runaway Railway · hollywood_boulevard · map 1
-  - { id: star_tours, kind: ride_simple, x: 1615, y: 2359, capacity_per_hr: 1620, duration_s: 270, queue_capacity: 2400, lightning_lane: tier2, appeal: 0.55, thrill: 0.60 }
+  - { id: star_tours, kind: ride_simple, x: 1615, y: 2359, capacity_per_hr: 1620, duration_s: 270, queue_capacity: 2400, lightning_lane: tier2, appeal: 0.50, thrill: 0.60 }
       # capacity 90% of 1,800 [fan crooksinwdw, darkridedatabase]; duration 4:30 [wiki]; tier [fan]; rest [assumed]. Position [osm] w294899629 · Star Tours – The Adventures Continue · echo_lake · map 13
-  - { id: rise_of_the_resistance, kind: ride_simple, x: 913, y: 2778, capacity_per_hr: 1530, duration_s: 1080, queue_capacity: 2300, lightning_lane: single_pass, appeal: 0.95, thrill: 0.55 }
+  - { id: rise_of_the_resistance, kind: ride_simple, x: 913, y: 2778, capacity_per_hr: 1530, duration_s: 1080, queue_capacity: 2300, lightning_lane: single_pass, appeal: 1.09, thrill: 0.55 }
       # capacity 90% of ~1,700 [fan darkridedatabase, disneyblog]; 18 min experience incl. preshows [wiki]; Single Pass [wiki][fan]; rest [assumed]. Position [osm] w751722737 · Star Wars: Rise of the Resistance · galaxys_edge · map 28
-  - { id: smugglers_run, kind: ride_simple, x: 662, y: 2974, capacity_per_hr: 1620, duration_s: 300, queue_capacity: 2400, lightning_lane: tier1, appeal: 0.80, thrill: 0.55 }
+  - { id: smugglers_run, kind: ride_simple, x: 662, y: 2974, capacity_per_hr: 1620, duration_s: 300, queue_capacity: 2400, lightning_lane: tier1, appeal: 0.90, thrill: 0.55 }
       # capacity 90% of 1,800 [fan crooksinwdw]; ride 5 min [fan TouringPlans]; tier [fan]; rest [assumed]. Position [osm] w688502132 · Millennium Falcon: Smugglers Run · galaxys_edge · map 29
-  - { id: alien_saucers, kind: ride_simple, x: 341, y: 2412, capacity_per_hr: 600, duration_s: 90, queue_capacity: 900, lightning_lane: tier2, appeal: 0.60, thrill: 0.30 }
+  - { id: alien_saucers, kind: ride_simple, x: 341, y: 2412, capacity_per_hr: 600, duration_s: 90, queue_capacity: 900, lightning_lane: tier2, appeal: 0.49, thrill: 0.30 }
       # capacity ~600 derived from TouringPlans line speed [fan] (no listed figure found); ride ~90 s [fan BlogMickey]; tier [fan]; rest [assumed]. Position [osm] w685092734 · Alien Swirling Saucers · toy_story_land · map 41
-  - { id: slinky_dog_dash, kind: ride_simple, x: 214, y: 2098, capacity_per_hr: 1296, duration_s: 120, queue_capacity: 1900, lightning_lane: tier1, appeal: 0.95, thrill: 0.60 }
+  - { id: slinky_dog_dash, kind: ride_simple, x: 214, y: 2098, capacity_per_hr: 1296, duration_s: 120, queue_capacity: 1900, lightning_lane: tier1, appeal: 1.25, thrill: 0.60 }
       # capacity 90% of 1,440 [fan crooksinwdw]; ride 2 min [wiki]; tier [fan]; rest [assumed]; full coaster model later (M9 decision). Position [osm] w685092736 · Slinky Dog Dash · toy_story_land · map 42
-  - { id: toy_story_mania, kind: ride_simple, x: 684, y: 2060, capacity_per_hr: 2160, duration_s: 330, queue_capacity: 3200, lightning_lane: tier2, appeal: 0.80, thrill: 0.20 }
+  - { id: toy_story_mania, kind: ride_simple, x: 684, y: 2060, capacity_per_hr: 2160, duration_s: 330, queue_capacity: 3200, lightning_lane: tier2, appeal: 1.07, thrill: 0.20 }
       # capacity 90% of 2,400 with 3 tracks [fan crooksinwdw, darkridedatabase]; ride 5-6 min [wiki]; tier [fan]; rest [assumed]. Position [osm] w294905178 · Toy Story Mania! · toy_story_land · map 43
-  - { id: tower_of_terror, kind: ride_simple, x: 1290, y: 848, capacity_per_hr: 1680, duration_s: 214, queue_capacity: 2500, lightning_lane: tier2, appeal: 0.85, thrill: 0.90 }
+  - { id: tower_of_terror, kind: ride_simple, x: 1290, y: 848, capacity_per_hr: 1680, duration_s: 214, queue_capacity: 2500, lightning_lane: tier2, appeal: 1.07, thrill: 0.90 }
       # capacity 1,680 forum calculation (2 load shafts, 90 s, 21 seats) [fan wdwmagic]; ride 3:34 [wiki]; tier [fan]; rest [assumed]. Position [osm] w530750421 · The Twilight Zone Tower of Terror · sunset_boulevard · map 56
   # ride
-  - { id: rock_n_roller_coaster, kind: ride, x: 886, y: 821, ride_id: wdw.dhs.rock_n_roller_coaster, lightning_lane: tier1, appeal: 0.90, thrill: 1.00 }
+  - { id: rock_n_roller_coaster, kind: ride, x: 886, y: 821, ride_id: wdw.dhs.rock_n_roller_coaster, lightning_lane: tier1, appeal: 1.31, thrill: 1.00 }
       # full ride model (ride file); Muppets retheme kept the hardware [wiki]; tier [fan]; appeal, thrill [assumed]. Position [osm] w357021885 · Rock 'n' Roller Coaster Starring The Muppets · sunset_boulevard · map 57
   # show
   - { id: frozen_sing_along, kind: show, x: 1335, y: 2124, capacity_guests: 1000, duration_min: 30, schedule: ['09:30', '10:30', '11:30', '12:30', '13:30', '14:30', '15:30', '16:30', '17:30', '18:30'], appeal: 0.65, thrill: 0.05 }
@@ -64,9 +64,9 @@ nodes:
   # meet
   - { id: meet_olaf, kind: meet, x: 1429, y: 2053, meet_s: { mean: 120, sd: 30 }, appeal: 0.50, thrill: 0.0 }
       # 120 s per party: ~100 guests/hr derived from TouringPlans line speed [fan] / ~3.3 guests per party; sd, appeal [assumed]. Position [osm] n2985424030 · Meet Olaf at Celebrity Spotlight (stand-in: Frozen Fractal Gifts) · echo_lake · map 11
-  - { id: meet_mickey_minnie, kind: meet, x: 1352, y: 2193, meet_s: { mean: 150, sd: 40 }, appeal: 0.65, thrill: 0.0 }
+  - { id: meet_mickey_minnie, kind: meet, x: 1352, y: 2193, meet_s: { mean: 150, sd: 40 }, appeal: 0.66, thrill: 0.0 }
       # meet time [assumed] (two characters; TouringPlans lists 3 min) ; appeal [assumed]. Position [osm] w294899619 · Meet Mickey and Minnie at Red Carpet Dreams (stand-in: ABC Commissary) · commissary_lane · map 23
-  - { id: meet_edna, kind: meet, x: 862, y: 2026, meet_s: { mean: 90, sd: 25 }, appeal: 0.40, thrill: 0.0 }
+  - { id: meet_edna, kind: meet, x: 862, y: 2026, meet_s: { mean: 90, sd: 25 }, appeal: 0.49, thrill: 0.0 }
       # meet time [assumed] (TouringPlans lists 2 min); appeal [assumed]. Position [osm] w294905178 · Meet Edna Mode (stand-in: Toy Story Mania!, Pixar Place) · pixar_place · map 47
   # dining
   - { id: trolley_car_cafe, kind: dining, x: 1328, y: 1523, seats: 40, service_time_min: { mean: 15, sd: 5 }, appeal: 0.45 }
@@ -531,7 +531,7 @@ guests:
     "18": 0.03
   party_size: { 1: 0.08, 2: 0.32, 3: 0.20, 4: 0.25, 5: 0.10, 6: 0.05 }   # [assumed]
   stay_hours: { mean: 8, sd: 2 }     # [assumed]
-  patience_min: { mean: 40, sd: 15 } # [assumed] standby wait tolerance
+  patience_min: { mean: 75, sd: 30 } # [assumed] standby wait tolerance (calibrated M9, was 40 +- 15; tuning-log)
   thrill_tolerance: { mean: 0.55, sd: 0.25 }   # [assumed]
   ll_passes_per_guest: { mean: 4.0, sd: 1.5 }   # [assumed] Multi Pass bookings per buying party per day, incl. the 3 in advance
 
@@ -543,7 +543,7 @@ decision:                            # as the synthetic park's calibrated values
   utility:
     appeal: 1.0
     thrill_match: 0.6
-    wait_penalty_per_min: 0.03
+    wait_penalty_per_min: 0.012      # calibrated M9, was 0.03 (tuning-log)
     walk_penalty_per_min: 0.05
     repeat_penalty: 0.8
     ll_return_window_bonus: 0.5
@@ -564,6 +564,8 @@ lightning_lane:                      # tiers and Single Pass (decision 2026-10-1
   elsewhere_share: 0.15              # [assumed] Multi Pass bookings for Tier 2 shows (shows are not LL nodes)
 
 calibration_targets:                 # [fan] Queue-Times 2026 (Jan-mid Oct): average posted / average daily maximum
+                                     # ride and meet appeals are fitted to these (M9, tuning-log); vacation_fun is not
+                                     # (Disney posts a fixed 10 min for the continuous film)
   rides:                             # (the report compares the daily-max figure with the busiest clock hour)
     alien_saucers: { avg_standby_min: 16, peak_standby_min: 30 }
     meet_edna: { avg_standby_min: 14, peak_standby_min: 15 }

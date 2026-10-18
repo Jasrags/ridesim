@@ -39,3 +39,14 @@ stats with 15 min recovery, Jason's decision; after the code-review stream fixes
 (21.2 / 35.6 without the seed-6 cascade storm; target 19 / 35), HM 29.2 / 56.0 (target 26 / 42). Realized LL share Everest / RnR / HM:
 low 12.4 / 16.4 / 14.3%, medium 23.2 / 29.1 / 26.1%, high 30.1 / 33.7 / 37.0% (bands 13 / 26 / 33). HM's peak hour runs high on posted-wait spikes after chain stops and accessibility holds (docs/m7-report.md).
 | 2026-10-17 | park-synthetic.yaml | nodes.*.x / y | (new) | mockup layout | New [assumed] map positions for the M8 front end (Jason's decision); synthetic park, no real map. Not simulation inputs. |
+| 2026-10-18 | wdw-dhs.yaml | (new file) | — | — | Hollywood Studios park (M9, approved). Every [assumed] value there is a first placeholder; changes from here on are logged below. |
+| 2026-10-18 | wdw-dhs.yaml | guests.patience_min | mean 40, sd 15 | mean 75, sd 30 | M9 calibration (approved). With 40 min most guests turn away from lines that average 63 min (Slinky, Queue-Times 2026). |
+| 2026-10-18 | wdw-dhs.yaml | decision.utility.wait_penalty_per_min | 0.03 | 0.012 | M9 calibration (approved). At 0.03 a 60-min line loses to a snack, capping headliner waits near 25 min; 0.03 fit the synthetic park's 19-26 min targets. |
+| 2026-10-18 | wdw-dhs.yaml | ride appeal: slinky_dog_dash, rock_n_roller_coaster, runaway_railway, rise_of_the_resistance, tower_of_terror, toy_story_mania, smugglers_run, alien_saucers, star_tours | 0.95, 0.90, 0.85, 0.95, 0.85, 0.80, 0.80, 0.60, 0.55 | 1.25, 1.31, 1.10, 1.09, 1.07, 1.07, 0.90, 0.49, 0.50 | M9 calibration (approved): six rounds of 5 seeds, each moving appeal by 0.5 x 0.012 x (target - sim avg posted min). Rock 'n' Roller's thrill 1.0 vs the guests' mean tolerance 0.55 costs ~0.27 utility, hence the highest appeal. |
+| 2026-10-18 | wdw-dhs.yaml | meet appeal: meet_mickey_minnie, meet_edna | 0.65, 0.40 | 0.66, 0.49 | Same fit (Olaf unchanged at 0.50). |
+
+M9 calibration result (10 seeds, medium, failures on, congestion walking with the 100 ft capacity floor and 5-min rerouting): posted
+avg / busiest hour vs Queue-Times 2026 avg / avg daily max: Slinky 60.2 / 76.6 (63 / 83), Rise 45.1 / 60.3 (47 / 65), Rock 'n' Roller
+43.6 / 58.5 (45 / 63), Runaway Railway 31.6 / 48.2 (34 / 45), Tower of Terror 28.2 / 43.5 (30 / 53), Toy Story Mania 27.8 / 43.2
+(30 / 51), Smugglers Run 27.6 / 40.9 (29 / 47), Saucers 15.4 / 24.5 (16 / 30), Star Tours 6.5 / 16.4 (7 / 13), meets Mickey & Minnie
+29.4, Olaf 15.1, Edna 13.8 avg (31, 15, 14). Vacation Fun is not fitted (Disney posts a fixed 10 min). Details in docs/m9-report.md.
