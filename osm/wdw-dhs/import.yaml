@@ -1,0 +1,93 @@
+# Disney's Hollywood Studios — OSM import mapping for `ridesim osm-import` (M9, 2026-10-18).
+# Names, lands and map numbers come from the 2026 guide map [map]; positions and walkway geometry from
+# the OSM extract [osm] (© OpenStreetMap contributors, ODbL 1.0).
+#   go run ./cmd/ridesim osm-import -config osm/wdw-dhs/import.yaml -out <draft.yaml> -svg <map.svg>
+# Where OSM has no element for a guide-map location, a nearby element stands in ("stand-in" below);
+# those positions are approximate until checked.
+
+park:
+  id: wdw_dhs
+  name: "Disney's Hollywood Studios"
+  extract: extract-2026-10-18.json
+  boundary: w806728401                # tourism=theme_park outline; its north-west corner is the origin
+
+walk:
+  highways: [footway, pedestrian, steps, path, living_street]
+  exclude_access: [private, "no"]     # backstage
+  exclude_name_contains: [Queue]      # queue lines belong to the ride models, not the walkway graph
+  snap_ft: 45                         # OSM paths often stop short of the path or plaza they meet
+  cluster_ft: 25                      # one junction for a messy crossing
+  exclude_inside: [w295048237]        # Fantasmic seating aisles: the show node holds its own audience
+  widths_ft:                          # [assumed] defaults by path type; chokepoints to be measured [user]
+    pedestrian: 40
+    living_street: 30
+    footway: 15
+    steps: 10
+    path: 8
+
+nodes:
+  - { id: gate, kind: entrance, name: "Main entrance", land: entrance, osm: [r3919136] }
+  - { id: exit, kind: exit, name: "Main entrance", land: entrance, osm: [r3919136] }
+
+  # rides
+  - { id: runaway_railway, kind: ride_simple, name: "Mickey & Minnie's Runaway Railway", land: hollywood_boulevard, map_no: [1], osm: [w294898804] }
+  - { id: star_tours, kind: ride_simple, name: "Star Tours – The Adventures Continue", land: echo_lake, map_no: [13], osm: [w294899629] }
+  - { id: rise_of_the_resistance, kind: ride_simple, name: "Star Wars: Rise of the Resistance", land: galaxys_edge, map_no: [28], osm: [w751722737] }
+  - { id: smugglers_run, kind: ride_simple, name: "Millennium Falcon: Smugglers Run", land: galaxys_edge, map_no: [29], osm: [w688502132] }
+  - { id: alien_saucers, kind: ride_simple, name: "Alien Swirling Saucers", land: toy_story_land, map_no: [41], osm: [w685092734] }
+  - { id: slinky_dog_dash, kind: ride_simple, name: "Slinky Dog Dash", land: toy_story_land, map_no: [42], osm: [w685092736] }
+  - { id: toy_story_mania, kind: ride_simple, name: "Toy Story Mania!", land: toy_story_land, map_no: [43], osm: [w294905178] }
+  - { id: tower_of_terror, kind: ride_simple, name: "The Twilight Zone Tower of Terror", land: sunset_boulevard, map_no: [56], osm: [w530750421] }
+  - { id: rock_n_roller_coaster, kind: ride, name: "Rock 'n' Roller Coaster Starring The Muppets", land: sunset_boulevard, map_no: [57], osm: [w357021885] }
+
+  # shows
+  - { id: frozen_sing_along, kind: show, name: "For the First Time in Forever: A Frozen Sing-Along Celebration (Hyperion Theater)", land: echo_lake, map_no: [9], osm: [w235996925] }
+  - { id: vacation_fun, kind: show, name: "Vacation Fun (Mickey Shorts Theater)", land: echo_lake, map_no: [10], osm: [w530251994] }
+  - { id: indiana_jones, kind: show, name: "Indiana Jones Epic Stunt Spectacular!", land: echo_lake, map_no: [12], osm: [w42910942] }
+  - { id: walt_disney_presents, kind: ride_simple, name: "Walt Disney Presents (walk-through)", land: animation_courtyard, map_no: [50], osm: [w412885186] }
+  - { id: little_mermaid, kind: show, name: "The Little Mermaid – A Musical Adventure (OSM: Voyage of the Little Mermaid)", land: animation_courtyard, map_no: [51], osm: [w294905186] }
+  - { id: disney_jr, kind: show, name: "Disney Jr. Mickey Mouse Clubhouse Live!", land: animation_courtyard, map_no: [52], osm: [w294898783] }
+  - { id: beauty_and_the_beast, kind: show, name: "Beauty and the Beast – Live on Stage (Theater of the Stars)", land: sunset_boulevard, map_no: [54], osm: [w294883724] }
+  - { id: fantasmic, kind: show, name: "Fantasmic! (Hollywood Hills Amphitheater)", land: sunset_boulevard, map_no: [55], osm: [w295048237] }
+  - { id: villains, kind: show, name: "Disney Villains: Unfairly Ever After", land: sunset_boulevard, map_no: [58], osm: [w454132294] }
+
+  # character meets (none are in OSM; stand-ins are the nearest mapped building)
+  - { id: meet_olaf, kind: ride_simple, name: "Meet Olaf at Celebrity Spotlight (stand-in: Frozen Fractal Gifts)", land: echo_lake, map_no: [11], osm: [n2985424030] }
+  - { id: meet_mickey_minnie, kind: ride_simple, name: "Meet Mickey and Minnie at Red Carpet Dreams (stand-in: ABC Commissary)", land: commissary_lane, map_no: [23], osm: [w294899619] }
+  - { id: meet_edna, kind: ride_simple, name: "Meet Edna Mode (stand-in: Toy Story Mania!, Pixar Place)", land: pixar_place, map_no: [47], osm: [w294905178] }
+
+  # dining
+  - { id: trolley_car_cafe, kind: dining, name: "The Trolley Car Café (OSM: Starbucks)", land: hollywood_boulevard, map_no: [2], osm: [w294883718] }
+  - { id: brown_derby, kind: dining, name: "The Hollywood Brown Derby and Lounge", land: hollywood_boulevard, map_no: [3], osm: [n2417938562] }
+  - { id: dockside_diner, kind: dining, name: "Dockside Diner", land: echo_lake, map_no: [14], osm: [w294898561] }
+  - { id: hollywood_and_vine, kind: dining, name: "Hollywood & Vine", land: echo_lake, map_no: [15], osm: [n1588975532] }
+  - { id: prime_time_cafe, kind: dining, name: "50's Prime Time Café and Tune-In Lounge", land: echo_lake, map_no: [16], osm: [n598613161] }
+  - { id: dinosaur_gerties, kind: dining, name: "Dinosaur Gertie's Ice Cream of Extinction", land: echo_lake, map_no: [17], osm: [w294899929] }
+  - { id: oasis_canteen, kind: dining, name: "Oasis Canteen", land: echo_lake, map_no: [19], osm: [w324053559] }
+  - { id: backlot_express, kind: dining, name: "Backlot Express", land: echo_lake, map_no: [20], osm: [r12215890] }
+  - { id: abc_commissary, kind: dining, name: "ABC Commissary", land: commissary_lane, map_no: [24], osm: [w294899619] }
+  - { id: sci_fi_dine_in, kind: dining, name: "Sci-Fi Dine-In Theater Restaurant", land: commissary_lane, map_no: [25], osm: [w823992574] }
+  - { id: kat_sakas_kettle, kind: dining, name: "Kat Saka's Kettle", land: galaxys_edge, map_no: [30], osm: [n6562275882] }
+  - { id: ronto_roasters, kind: dining, name: "Ronto Roasters", land: galaxys_edge, map_no: [31], osm: [n6562275876] }
+  - { id: docking_bay_7, kind: dining, name: "Docking Bay 7 Food and Cargo", land: galaxys_edge, map_no: [32], osm: [n6562275883] }
+  - { id: ogas_cantina, kind: dining, name: "Oga's Cantina", land: galaxys_edge, map_no: [33], osm: [n6562275878] }
+  - { id: milk_stand, kind: dining, name: "Milk Stand", land: galaxys_edge, map_no: [34], osm: [w805936659] }
+  - { id: woodys_lunch_box, kind: dining, name: "Woody's Lunch Box", land: toy_story_land, map_no: [44], osm: [n6419360167] }
+  - { id: roundup_rodeo_bbq, kind: dining, name: "Roundup Rodeo BBQ", land: toy_story_land, map_no: [45], osm: [w806342587] }
+  - { id: sunset_ranch_market, kind: dining, name: "Sunset Ranch Market (Rosie's, Catalina Eddie's, Fairfax Fare, Anaheim Produce, Hollywood Scoops)", land: sunset_boulevard, map_no: [60], osm: [w294897949, w294897948, w46886170, w46886157, w46886169] }
+
+  # shops, one node per land (map-listed shops that OSM has)
+  - { id: shops_hollywood_boulevard, kind: shop, name: "Hollywood Boulevard shops", land: hollywood_boulevard, map_no: [4, 5, 6, 7, 8], osm: [w161485377, n2985065673, n2985065692, n2985376955] }
+  - { id: shops_echo_lake, kind: shop, name: "Echo Lake shops", land: echo_lake, map_no: [21, 22], osm: [n2985424030, n2985424634] }
+  - { id: shops_galaxys_edge, kind: shop, name: "Galaxy's Edge shops", land: galaxys_edge, map_no: [35, 36, 37, 38, 39, 40], osm: [n6562275884, n6562303386, n6562303391, n6562275881, n6562275877, n6562303385, n6562303387, n6562275880, n6562303388] }
+  - { id: shops_animation_courtyard, kind: shop, name: "In Character", land: animation_courtyard, map_no: [53], osm: [n2985502160] }
+  - { id: shops_sunset_boulevard, kind: shop, name: "Sunset Boulevard shops", land: sunset_boulevard, map_no: [63, 64, 65], osm: [n2985358728, n2985065934, w46886154] }
+
+# Not imported (add by hand or find in OSM): BaseLine Tap House (26), Ice Cold Hydraulics (27; OSM's "Ice Cold" w294877079
+# is a stand by the entrance, not on Grand Avenue), Epic Eats (18), Market (49), Sunshine Day Bar (59),
+# Joffrey's on Sunset (61), Food & Beverage near Rock 'n' Roller (62), Oscar's Super Service (4), Jessie's Trading Post (46),
+# Commissary Lane, Grand Avenue and Pixar Place have no shops on the guide map.
+
+links:                                # hand-reviewed fixes for paths OSM is missing
+  - { from: n1362090477, note: "the Fantasmic walkway stops about 190 ft short of the Sunset Boulevard stub that leads to it" }
+  - { from: n3624207776, note: "the short path between that stub and the Fantasmic walkway stops about 90 ft short of the stub" }
