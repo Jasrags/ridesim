@@ -55,7 +55,7 @@ Principles:
 
 ### 5.2 Provenance tags
 Values carry a trailing YAML comment tag. Tags are comments, not parsed fields:
-`[wiki]` Wikipedia/infobox, `[rcdb]` RCDB, `[fan]` forums and aggregators, `[map]` Park Lore ride maps, `[user]` observed or confirmed by Jason, `[assumed]` our placeholder, tune later.
+`[wiki]` Wikipedia/infobox, `[rcdb]` RCDB, `[fan]` forums and aggregators, `[map]` Park Lore ride maps and official park guide maps (names, lands, what exists), `[osm]` OpenStreetMap geometry (positions, path lengths; ODbL, © OpenStreetMap contributors), `[user]` observed or confirmed by Jason, `[assumed]` our placeholder, tune later.
 - Never change a sourced value to make a test pass. `[assumed]` values may be tuned; record each change in `docs/tuning-log.md`.
 - If tooling rewrites a YAML file it must preserve comments (use the yaml.v3 Node API).
 - `ride.data_conflicts` records disagreeing sources, the values, and which one was chosen.

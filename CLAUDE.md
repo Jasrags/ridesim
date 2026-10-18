@@ -19,7 +19,7 @@ numbers come from `data/`. Read both before changing simulation logic.
 - A test must keep showing that two runs with the same seed produce byte-identical event logs.
 
 ## Data files and provenance
-- Values carry trailing comment tags: `[wiki] [rcdb] [fan] [map] [user] [assumed]`.
+- Values carry trailing comment tags: `[wiki] [rcdb] [fan] [map] [osm] [user] [assumed]`.
 - Never change a sourced value to make a test pass. `[assumed]` values may be tuned, and every
   change goes in `docs/tuning-log.md` with before, after, and reason.
 - Explain any validation miss before tuning anything.
@@ -73,6 +73,7 @@ numbers come from `data/`. Read both before changing simulation logic.
 - `go run ./cmd/ridesim study -file data/studies/everest-operations.yaml -json out/study.json`
 - `go run ./cmd/ridesim run -scenario data/scenarios/park-medium-day.yaml -log out/park.jsonl` (park day, M7)
 - `go run ./cmd/ridesim serve -scenario data/scenarios/park-medium-day.yaml` (web control room, M8; http://127.0.0.1:8080/)
+- `go run ./cmd/ridesim osm-import -config osm/wdw-dhs/import.yaml -out out/dhs-draft.yaml -svg out/dhs-draft.svg` (draft park from OSM, M9)
 
 ## Decisions log (M3 kickoff, 2026-10-17)
 - Rock 'n' Roller max_in_service 5 -> 4 [fan] (web summary: a 5th train stacks). The spec's "five give
@@ -141,3 +142,18 @@ numbers come from `data/`. Read both before changing simulation logic.
   (later ops are discarded).
 - Crowd scale thins a day drawn at 2x attendance: each party keeps a fixed uniform draw and arrives only while it is
   below scale / 2, so changing the scale never shifts other draws.
+
+## Decisions log (M9 kickoff, 2026-10-18)
+- M9 builds a real park, Disney's Hollywood Studios, before any game features (Jason). Sources: the 2026 guide map
+  (names, lands, what exists today) and OpenStreetMap (real-scale positions and path lengths).
+- New provenance tag `[osm]` for OpenStreetMap geometry. OSM data is ODbL: park files derived from it carry
+  "© OpenStreetMap contributors", and the derived data stays ODbL if the repo is ever published.
+- Rides go in as `ride_simple` with sourced capacity and duration first, so the whole park runs and calibrates; headliners
+  then get full models one at a time (Slinky Dog Dash first, it fits multi_train_coaster). Rock 'n' Roller keeps its model.
+- Nodes: every ride, show, character meet and dining location; shops grouped one node per land; `elsewhere` shrinks to
+  resting and wandering.
+- Import: a dated raw OSM extract is committed under `osm/<park>/` (outside `data/`, so the loader skips it), and a
+  stdlib-only `ridesim osm-import` writes a draft park YAML from it plus a hand-edited mapping file. The draft is reviewed, then edited by hand; the tool never rewrites an existing file.
+- Path graph: keep junctions where three or more paths meet plus attraction nodes; straight-through segments merge into one
+  edge with the summed length.
+- Widths: OSM has none, so widths default by path type `[assumed]`; known chokepoints get measured later `[user]`.
