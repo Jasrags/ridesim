@@ -121,6 +121,7 @@ func TestErrorChecksFailOnBrokenFixtures(t *testing.T) {
 		{"park.walking_mode", fxPark, "", "walking_mode: congestion", "walking_mode: teleport"},
 		{"park.hours", fxPark, "", "close_hour: 18", "close_hour: 10"},
 		{"park.node_fields", fxPark, "", "visit_min: { mean: 40, sd: 10 }, ", ""},
+		{"park.node_fields", fxPark, "", "kind: plaza, comfortable_guests: 100", "kind: shop"},
 		{"park.edge_refs", fxPark, "", "applies_to: [hub_coaster]", "applies_to: [gate_hub]"},
 		{"park.lightning_lane", fxPark, "", "inventory_share: 0.3", "inventory_share: 1.3"},
 		{"park.lightning_lane", fxPark, "", "window_min: 60", "window_min: 0"},
@@ -250,5 +251,12 @@ func TestRealData(t *testing.T) {
 	}
 	if r := resultFor(t, hm.Results, "continuous.spacing_vs_route"); r.Status != StatusWarn {
 		t.Errorf("Haunted Mansion spacing check = %v, want WARN (known ~22%% miss)", r.Status)
+	}
+}
+
+func TestParkJunctionNeedsNoFields(t *testing.T) {
+	f := patched(t, fxPark, "", "kind: plaza, comfortable_guests: 100", "kind: junction")
+	if r := resultFor(t, CheckFile(f), "park.node_fields"); r.Status != StatusPass {
+		t.Fatalf("junction hub: %s", r.Detail)
 	}
 }

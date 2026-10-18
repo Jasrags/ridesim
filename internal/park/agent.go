@@ -37,7 +37,7 @@ type agent struct {
 }
 
 // Agent states for park snapshots, in report order.
-var agentStates = []string{"walking", "edge_wait", config.NodeRide, config.NodeRideSimple, config.NodeShow, config.NodeDining, config.NodeElsewhere}
+var agentStates = []string{"walking", "edge_wait", config.NodeRide, config.NodeRideSimple, config.NodeShow, config.NodeDining, config.NodeElsewhere, config.NodeShop}
 
 func (a *agent) drop(b *booking) bool {
 	for i, h := range a.held {

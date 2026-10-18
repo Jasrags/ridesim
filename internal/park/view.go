@@ -62,7 +62,7 @@ func (p *Park) View() View {
 		}
 		v.Nodes = append(v.Nodes, nv)
 		a := p.acts[n.Idx]
-		if a == nil || n.Kind == config.NodeElsewhere || n.Kind == config.NodeShow {
+		if a == nil || n.Kind == config.NodeElsewhere || n.Kind == config.NodeShop || n.Kind == config.NodeShow {
 			continue
 		}
 		rv := RideView{Node: n.ID, Label: nv.Label, Kind: n.Kind, Status: "open", Posted: a.posted(), Waiting: a.queueGuests()}

@@ -91,7 +91,7 @@ func New(root *engine.Sim, ds *config.Dataset, cfg *config.ParkFile, opts Option
 				return nil, err
 			}
 			p.acts[n.Idx] = a
-		case config.NodeRideSimple, config.NodeShow, config.NodeDining, config.NodeElsewhere:
+		case config.NodeRideSimple, config.NodeShow, config.NodeDining, config.NodeElsewhere, config.NodeShop:
 			// Every activity scope opens with run_start, so per-node metrics work on its events.
 			exitTo := ""
 			if e := g.Edge(n.ExitEdge); e != nil {
@@ -111,6 +111,8 @@ func New(root *engine.Sim, ds *config.Dataset, cfg *config.ParkFile, opts Option
 			p.acts[n.Idx] = newDining(scope, n, opts.FixedTimes)
 		case config.NodeElsewhere:
 			p.acts[n.Idx], p.elsewhere = &elsewhere{n: n, sim: scope, fixed: opts.FixedTimes}, n.Idx
+		case config.NodeShop:
+			p.acts[n.Idx] = &elsewhere{n: n, sim: scope, fixed: opts.FixedTimes}
 		}
 	}
 	for _, id := range cfg.Congestion.Spillback.AppliesTo {

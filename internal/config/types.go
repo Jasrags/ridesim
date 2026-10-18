@@ -396,6 +396,8 @@ const (
 	NodeDining     = "dining"
 	NodeExit       = "exit"
 	NodeElsewhere  = "elsewhere" // the rest of the park: unlimited capacity, a visit-length distribution
+	NodeJunction   = "junction"  // a walkway junction: routing only, no activity
+	NodeShop       = "shop"      // shops at a place: unlimited capacity, a visit-length distribution
 
 	WalkingFixedDelay = "fixed_delay"
 	WalkingCongestion = "congestion"

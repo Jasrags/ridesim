@@ -278,7 +278,7 @@ func (d *dining) seat() {
 	}
 }
 
-// elsewhere is the rest of the park: no queue, a sampled visit length.
+// elsewhere is the rest of the park, or a land's shops: no queue, a sampled visit length.
 type elsewhere struct {
 	n     *Node
 	sim   *engine.Sim

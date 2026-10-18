@@ -268,3 +268,37 @@ func TestNoLapseAfterLeaving(t *testing.T) {
 		}
 	}
 }
+
+// Junctions are plain walkway nodes; shops are visits at a place, like elsewhere but not the
+// Lightning Lane sink.
+func TestJunctionsRouteAndShopsAreVisited(t *testing.T) {
+	ds, pf := fixtureDataset(t)
+	for i := range pf.Nodes {
+		if pf.Nodes[i].ID == "hub" {
+			pf.Nodes[i].Kind, pf.Nodes[i].ComfortableGuests = config.NodeJunction, 0
+		}
+	}
+	x, y := 220.0, 260.0
+	pf.Nodes = append(pf.Nodes, config.ParkNode{ID: "shop", Kind: config.NodeShop, Appeal: 0.9, Thrill: 0.5,
+		VisitMin: &config.Dist{Mean: 10, SD: 3}, X: &x, Y: &y})
+	pf.Edges = append(pf.Edges, config.ParkEdge{ID: "hub_shop", From: "hub", To: "shop", LengthFt: 80, WidthFt: 12})
+	sim := engine.New(3)
+	p, err := New(sim, ds, pf, Options{Attendance: 600})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if p.elsewhere < 0 || p.g.Nodes[p.elsewhere].ID != "elsewhere" {
+		t.Fatalf("the elsewhere sink must stay the elsewhere node, got %d", p.elsewhere)
+	}
+	p.Start()
+	sim.RunUntil(p.CloseAt())
+	if n, _ := count(sim, engine.EvUnload, "shop"); n == 0 {
+		t.Error("no party finished a shop visit")
+	}
+	if n, _ := count(sim, engine.EvUnload, "coaster"); n == 0 {
+		t.Error("no coaster riders: guests must still route through the junction hub")
+	}
+	if n, _ := count(sim, engine.EvRunStart, "hub"); n != 0 {
+		t.Error("a junction is not an activity and logs no run_start")
+	}
+}

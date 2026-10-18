@@ -244,7 +244,7 @@ func (s *Study) resolvePark(ds *Dataset, base *File) ([]ResolvedVariant, error) 
 	}
 	found := false
 	for _, n := range pf.Nodes {
-		if n.ID == s.ReportNode && n.Kind != NodeEntrance && n.Kind != NodeExit && n.Kind != NodePlaza {
+		if n.ID == s.ReportNode && n.Kind != NodeEntrance && n.Kind != NodeExit && n.Kind != NodePlaza && n.Kind != NodeJunction {
 			found = true
 		}
 	}

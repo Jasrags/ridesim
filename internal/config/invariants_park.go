@@ -110,7 +110,8 @@ func checkNodeFields(p *ParkFile) (bool, string) {
 			if len(n.Schedule) == 0 {
 				miss = append(miss, "schedule")
 			}
-		case NodeElsewhere:
+		case NodeJunction:
+		case NodeElsewhere, NodeShop:
 			if n.VisitMin == nil || n.VisitMin.Mean <= 0 {
 				miss = append(miss, "visit_min")
 			}
