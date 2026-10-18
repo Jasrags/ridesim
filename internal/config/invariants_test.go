@@ -107,6 +107,9 @@ func TestErrorChecksFailOnBrokenFixtures(t *testing.T) {
 		{"continuous.seats", fxOmnimover, "", "seats_nominal: 2", "seats_nominal: 4"},
 		{"continuous.party_policy", fxOmnimover, "", "party_vehicle_policy: contiguous_vehicles", "party_vehicle_policy: interleave"},
 		{"preshow.throughput", fxOmnimover, "", "batch_size: 100", "batch_size: 10"},
+		{"continuous.capacity_ceiling", fxOmnimover, "", "topology: closed_loop }", "topology: closed_loop, chains: -1 }"},
+		{"continuous.party_policy", fxOmnimover, "", "chain_stop: { rate_per_hr: 0.1, duration_s: { mean: 100, sd: 10 } }", "chain_stop: { rate_per_hr: 0.1, duration_s: { mean: 100, sd: 10 } }\n  side_down: { rate_per_hr: 0.1, duration_s: { mean: 100, sd: 10 } }"}, // side_down on one chain
+		{"continuous.stages", fxOmnimover, "", "queues:\n  party_split_policy: contiguous_vehicles", "stages:\n  - { enabled: true, rooms: 2, batch_size: 50, duration_s: { mean: 30, sd: 1 }, turnover_s: { mean: 10, sd: 1 } }\nqueues:\n  party_split_policy: contiguous_vehicles"},
 
 		// coaster further stages (M11)
 		{"coaster.stages", fxCoaster, "", "queues:\n  party_split_policy: never", "stages:\n  - { id: cell, enabled: true, rooms: 1, batch_size: 10, duration_s: { mean: 60, sd: 1 }, turnover_s: { mean: 10, sd: 1 } }\nqueues:\n  party_split_policy: never"},                    // below listed
@@ -254,8 +257,8 @@ func TestRealData(t *testing.T) {
 	for _, le := range ds.LoadErrors {
 		t.Errorf("load error %s: %v", le.Path, le.Err)
 	}
-	if len(ds.Files) != 28 {
-		t.Fatalf("loaded %d files, want 28 (7 rides, 2 parks, 16 scenarios, 3 studies)", len(ds.Files))
+	if len(ds.Files) != 29 {
+		t.Fatalf("loaded %d files, want 29 (8 rides, 2 parks, 16 scenarios, 3 studies)", len(ds.Files))
 	}
 	rep := Validate(ds)
 	for _, fr := range rep.Files {
@@ -371,5 +374,18 @@ func TestStagesValidAndNeedPreshow(t *testing.T) {
 	f.Coaster.Preshow.Enabled = false
 	if r := resultFor(t, CheckFile(f), "coaster.stages"); r.Status != StatusFail {
 		t.Fatalf("stage without preshow: %s %s", r.Status, r.Detail)
+	}
+}
+
+// Shared vehicles are a valid party policy, and chains multiply the capacity ceiling.
+func TestContinuousSharedPolicyAndChains(t *testing.T) {
+	f := patched(t, fxOmnimover, "", "party_vehicle_policy: contiguous_vehicles", "party_vehicle_policy: shared")
+	if r := resultFor(t, CheckFile(f), "continuous.party_policy"); r.Status != StatusPass {
+		t.Fatalf("shared policy: %s %s", r.Status, r.Detail)
+	}
+	f = patched(t, fxOmnimover, "", "listed_capacity_per_hr: 2000", "listed_capacity_per_hr: 4000")
+	f.Continuous.Conveyor.Chains = 2
+	if r := resultFor(t, CheckFile(f), "continuous.capacity_ceiling"); r.Status != StatusPass {
+		t.Fatalf("2 chains, listed 4,000: %s %s", r.Status, r.Detail)
 	}
 }

@@ -1,0 +1,138 @@
+# Millennium Falcon: Smugglers Run (Disney's Hollywood Studios) — ride config, schema 1.0, continuous_load with chains (M12)
+# Confidence tags: [wiki] = Wikipedia, [fan] = forum/fan sources, [assumed] = our placeholder
+# Research pass 2026-10-18 (pages fetched):
+#   wiki  https://en.wikipedia.org/wiki/Millennium_Falcon:_Smugglers_Run
+#   drd   https://darkridedatabase.com/rides/millennium-falcon-smugglers-run/
+#   tp    https://touringplans.com/hollywood-studios/attractions/millennium-falcon-smugglers-run
+#   tpb   https://touringplans.com/blog/five-things-to-know-about-millennium-falcon-smugglers-run/ (2025-08-07)
+#   wdwnt https://wdwnt.com/?p=1198858 (2025-03-10)
+#   bm    https://blogmickey.com/2025/01/double-rider-no-longer-offered-smugglers-run/
+#
+# Ride system [wiki][fan drd][fan wdwnt]: four independent 90 ft turntables, each with seven cockpit simulators that "rotate
+# approximately every 45 seconds" [wiki]; while one crew flies, the turntable indexes the next cockpit to the load door [fan tpb].
+# Modeled as continuous_load with 4 chains of 7 vehicles spaced 45 s (Jason, 2026-10-18): each chain brings a cockpit to its door
+# every 45 s; chains are staggered. Crews of 6 are made of several parties and single riders [fan] (party_vehicle_policy shared).
+# Capacity emerges from crew fill (Jason): full cockpits give 4 x 6 x 3600 / 45 = 1,920/hr; Disney's figure is 1,800/hr.
+
+schema_version: "1.0"
+
+ride:
+  id: wdw.dhs.smugglers_run            # <resort>.<park>.<ride>, unique across all parks
+  family: smugglers_run
+  name: "Millennium Falcon: Smugglers Run"
+  location:
+    resort: walt_disney_world
+    park: disneys_hollywood_studios
+    land: galaxys_edge                 # [wiki]
+  other_versions:
+    - { resort: disneyland_resort, park: disneyland, status: operating }
+  archetype: continuous_load
+  ride_duration_s: 300                 # [fan drd] 5 min; flight 4.5 min [fan tpb] plus load and unload at the cockpit door
+  total_experience_s: 540              # [fan tp] "5 min plus 4 min Pre-Show"
+  height_restriction_in: 38            # [wiki]
+  listed_capacity_per_hr: 1800         # [fan drd][fan BlogMickey] ~1,800/hr, Disney via a NYT reporter (SlashFilm 2018)
+  data_conflicts:
+    - field: ride_duration_s
+      values: { fan_drd: 300, fan_tpb_flight: 270, fan_guide2wdw: 270 }
+      chosen: fan_drd
+      note: "Modeled as 270 s of flight plus 15 s load and 15 s unload at the door [assumed]."
+
+conveyor:
+  speed_fps: 0                         # not used: a turntable indexes rather than moves continuously
+  continuous: false                    # [wiki] indexes "approximately every 45 seconds"
+  topology: turntable
+  chains: 4                            # [wiki] four turntables; [fan wdwnt] "independent, so if one goes down, the other three can continue"
+
+# One cockpit's trip round its turntable: 7 positions x 45 s = 315 s. Split [assumed]: 15 s boarding at the door, the 270 s flight
+# [fan tpb], 15 s unloading, 15 s back to the load position.
+route:
+  - { id: load_zone,   kind: load,   est_s: 15 }
+  - { id: flight,      kind: scene,  est_s: 270 }   # [fan tpb] "about 4 1/2 minutes"
+  - { id: unload_zone, kind: unload, est_s: 15 }
+  - { id: return_run,  kind: return, est_s: 15 }
+
+vehicles:
+  count: 7                             # per turntable [wiki][fan drd]: 28 cockpits in all
+  seats_nominal: 6                     # [wiki] 2 pilots, 2 gunners, 2 engineers in 3 rows of 2
+  seats_max: 6
+  spacing_s: 45                        # [wiki] rotates approximately every 45 seconds
+  occupancy_target: { mean: 5.6, sd: 0.4 }   # [assumed] posted-wait fallback only; occupancy emerges from parties
+
+load_zone: { type: turntable_door, load_window_s: { mean: 15, sd: 3 }, loaders: 2, board_fail_rate: 0 }   # [assumed]
+unload_zone: { type: turntable_door, unload_window_s: { mean: 15, sd: 3 }, unloaders: 2 }                 # [assumed]
+
+loading_shared:
+  accessibility_freeze_zones: []
+  accessibility_hold: { rate_per_hr: 0, duration_s: { mean: 0, sd: 0 } }   # not modeled: a wedge can stop alone [fan wdwnt]
+  party_vehicle_policy: shared         # [fan] crews are formed from parties sharing a color card; single riders fill spare seats
+  party_seats: 4                       # [user] the grouper fills the first four positions (pilots, gunners) from Lightning Lane and standby
+                                       # and the engineer seats with others (Jason, 2026-10-18: one observation); [fan] single riders often get engineer
+  callout_parties: 10                  # [assumed] how far back the grouper looks for a party that fits (as Tower of Terror's callouts)
+
+failures:
+  chain_stop:                          # the whole ride stops [assumed]
+    rate_per_hr: 0.4
+    duration_s: { mean: 180, sd: 60 }
+  long_downtime:
+    mtbf_hr: 30                        # [assumed] as the other rides; TouringPlans counts it among the reliable attractions [fan]
+    mttr_min: { mean: 40, sd: 15 }
+  side_down:                           # one turntable out, the other three keep running [fan wdwnt]; rate [assumed]
+    rate_per_hr: 0.1
+    duration_s: { mean: 1800, sd: 900 }
+  weather_hold: scripted
+
+preshow:                               # Hondo Ohnaka in the Falcon's hold [wiki]
+  enabled: true
+  rooms: 1                             # [fan tpb] "Everyone starts out in one room for the preshow with Hondo"
+  batch_size: 84                       # [assumed] two chess rooms' groups
+  duration_s: { mean: 120, sd: 10 }    # [assumed] part of TouringPlans' 4 min preshow; the chess room takes the rest
+  turnover_s: { mean: 20, sd: 4 }      # [assumed]
+  fill_rule: full_or_max_wait
+  max_fill_wait_s: 45                  # [assumed]
+  release_rule: when_load_area_has_room
+  load_area_capacity: 84               # [assumed] the hallway to the two chess rooms
+  party_integrity: true
+  merge_point: true                    # [assumed] Lightning Lane merges before Hondo
+  bypass_for_single_rider: true        # [fan] single riders skip the preshow
+
+stages:
+  - id: chess_room                     # [fan tpb] "groups proceed into one of two chess rooms. Each chess room leads to three different loading stations"
+    enabled: true
+    rooms: 2                           # [fan tpb]
+    batch_size: 42                     # [assumed] seven crews
+    duration_s: { mean: 90, sd: 10 }   # [assumed] photos at the Dejarik table, waiting for the color call [fan]
+    turnover_s: { mean: 15, sd: 3 }    # [assumed]
+    fill_rule: full_or_max_wait
+    max_fill_wait_s: 45                # [assumed]
+    release_rule: when_load_area_has_room
+    load_area_capacity: 36             # [assumed] six loading stations [fan tpb] x one crew each
+    party_integrity: true
+
+queues:
+  party_split_policy: never            # parties fly together; a party of 7+ takes consecutive cockpits
+  standby: { physical_capacity: 2400 } # [assumed] as the M9 simple ride
+  single_rider: { enabled: true, fill_only_empty_seats: true }   # [wiki][fan] fills empty seats, often engineers
+  skip_line:
+    enabled: true                      # [fan tp] Lightning Lane Multi Pass, first group (tier 1)
+    merge_point: preshow_entrance      # [assumed]
+    merge:
+      unit: guests
+      empty_lane_rule: pull_other
+      phase_hysteresis_guests: 20      # [assumed]
+      phases:                          # [assumed] same fan-reported placeholders as the other rides
+        - { name: normal,   when_ll_queue_guests_below: 60,  ll_per_standby: 2 }
+        - { name: elevated, when_ll_queue_guests_below: 200, ll_per_standby: 4 }
+        - { name: recovery, when_ll_queue_guests_below: null, ll_per_standby: 10 }
+  posted_wait: { algorithm: queue_len_over_throughput, padding_pct: 0 }
+
+validation_targets:
+  listed_capacity_per_hr: 1800
+  theoretical_riders_per_hr_at_target: 1920   # 4 turntables x 6 seats x 3600 / 45 s, every seat filled
+  hard_ceiling_per_hr: 1920
+  avg_standby_wait_min_2026: 29               # [fan] Queue-Times 2026 (park calibration target)
+
+config_invariants:
+  - "sum(route.est_s for kinds load, scene, unload) == ride.ride_duration_s (+/- 5 s)"
+  - "vehicles.count * vehicles.spacing_s ~= sum(route.est_s) (+/- 15%), per chain"
+  - "ride.listed_capacity_per_hr <= chains x 3600 / vehicles.spacing_s x vehicles.seats_max"
+  - "every stage (preshow and stages) has throughput >= ride.listed_capacity_per_hr; holding areas fit the next stage's batch"

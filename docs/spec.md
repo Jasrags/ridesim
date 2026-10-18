@@ -101,6 +101,10 @@ The `config_invariants` strings in each file document checks the loader implemen
 - `party_vehicle_policy: contiguous_vehicles`: parties larger than a vehicle occupy consecutive vehicles, never interleaved with other parties.
 - A stop halts everything at once; there is no cascade stacking. The queue absorbs it.
 
+- Chains (M12): `conveyor.chains` identical independent loops (Smugglers Run's turntables), staggered, each with its own load point;
+  `side_down` freezes one. `party_vehicle_policy: shared`: parties fill `party_seats` front seats, single riders the rest, then parties,
+  with grouper callouts from up to `callout_parties` back.
+
 ### 7a. Archetype: elevator drop (M10, Tower of Terror)
 - Mirrored `sides`; each has `show_shafts`, `drop_shafts` and `unload_doors`, and `vehicles.per_side` self-propelled cabs that stay on their side.
 - A cab's lap (`cycle`): unload door -> show shaft (lift one floor to load) -> load -> show scenes -> drop shaft -> unload door. It holds

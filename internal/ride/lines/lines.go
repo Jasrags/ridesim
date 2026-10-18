@@ -121,6 +121,13 @@ func (l *Lines) Arrive(p *guest.Party, lane guest.Lane) {
 	line := l.standby
 	if lane == guest.SingleRider {
 		line = l.single
+		if l.stage != nil && l.preshow.BypassForSingleRider {
+			// Single riders skip the preshow ([fan] Smugglers Run) and wait in the load-area line, in
+			// arrival order with released parties.
+			line = l.loadSingle
+			l.releaseSeq++
+			p.LineSeq = l.releaseSeq
+		}
 	}
 	line.Push(p)
 	if p.Patience > 0 {
@@ -185,6 +192,15 @@ func (l *Lines) Pop(line *queue.FIFO) *guest.Party {
 		l.merge.Update(l.ll.Guests())
 	}
 	return p
+}
+
+// HeadParty is Head without single riders: the next standby or Lightning Lane party (the grouper's
+// party seats, [user] Smugglers Run). Without a preshow it is Head.
+func (l *Lines) HeadParty() (*guest.Party, *queue.FIFO) {
+	if l.stage == nil {
+		return l.Head()
+	}
+	return l.loadStandby.Peek(), l.loadStandby
 }
 
 // CallOut takes the first party of at most max guests among the next window standby-side parties in the
@@ -335,7 +351,11 @@ func free(limit, used int) int {
 }
 
 func (l *Lines) loadLineFree(last *config.Preshow) int {
-	return free(last.LoadAreaCapacity, l.loadStandby.Guests()+l.loadSingle.Guests())
+	used := l.loadStandby.Guests() + l.loadSingle.Guests()
+	if l.preshow.BypassForSingleRider {
+		used = l.loadStandby.Guests() // single riders who skipped the preshow wait outside the stage flow
+	}
+	return free(last.LoadAreaCapacity, used)
 }
 
 func (h stageHost) Release(p *guest.Party) {

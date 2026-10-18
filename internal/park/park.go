@@ -179,7 +179,7 @@ func (p *Park) hostRide(ds *config.Dataset, sim *engine.Sim, n *Node) (*rideAct,
 	case config.KindContinuous:
 		cfg := rf.Continuous
 		c, err := continuous.New(sim, cfg, continuous.Options{FixedTimes: p.opts.FixedTimes,
-			Failures: failures(config.FailChainStop, config.FailLongDowntime)})
+			Failures: failures(config.FailChainStop, config.FailLongDowntime, config.FailSideDown)})
 		if err != nil {
 			return nil, err
 		}

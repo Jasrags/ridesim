@@ -25,8 +25,8 @@ nodes:
       # capacity 90% of 1,800 [fan crooksinwdw, darkridedatabase]; duration 4:30 [wiki]; tier [fan]; rest [assumed]. Position [osm] w294899629 · Star Tours – The Adventures Continue · echo_lake · map 13
   - { id: rise_of_the_resistance, kind: ride, x: 913, y: 2778, ride_id: wdw.dhs.rise_of_the_resistance, lightning_lane: single_pass, appeal: 1.02, thrill: 0.55 }
       # full ride model (stage chain + vehicle pairs, ride file 2026-10-18; was ride_simple 1,530/hr, 1,080 s, queue 2,300); Single Pass [wiki][fan]; appeal [assumed] (1.09 -> 1.02 with the full model, tuning-log 2026-10-18), thrill [assumed]. Position [osm] w751722737 · Star Wars: Rise of the Resistance · galaxys_edge · map 28
-  - { id: smugglers_run, kind: ride_simple, x: 662, y: 2974, capacity_per_hr: 1620, duration_s: 300, queue_capacity: 2400, lightning_lane: tier1, appeal: 0.90, thrill: 0.55 }
-      # capacity 90% of 1,800 [fan crooksinwdw]; ride 5 min [fan TouringPlans]; tier [fan]; rest [assumed]. Position [osm] w688502132 · Millennium Falcon: Smugglers Run · galaxys_edge · map 29
+  - { id: smugglers_run, kind: ride, x: 662, y: 2974, ride_id: wdw.dhs.smugglers_run, lightning_lane: tier1, appeal: 0.96, thrill: 0.55 }
+      # full ride model (continuous_load with 4 turntable chains, ride file 2026-10-18; was ride_simple 1,620/hr, 300 s, queue 2,400); tier [fan]; appeal [assumed] (0.90 -> 0.96 with the full model, tuning-log 2026-10-18), thrill [assumed]. Position [osm] w688502132 · Millennium Falcon: Smugglers Run · galaxys_edge · map 29
   - { id: alien_saucers, kind: ride_simple, x: 341, y: 2412, capacity_per_hr: 600, duration_s: 90, queue_capacity: 900, lightning_lane: tier2, appeal: 0.49, thrill: 0.30 }
       # capacity ~600 derived from TouringPlans line speed [fan] (no listed figure found); ride ~90 s [fan BlogMickey]; tier [fan]; rest [assumed]. Position [osm] w685092734 · Alien Swirling Saucers · toy_story_land · map 41
   - { id: slinky_dog_dash, kind: ride, x: 214, y: 2098, ride_id: wdw.dhs.slinky_dog_dash, lightning_lane: tier1, appeal: 1.15, thrill: 0.60 }

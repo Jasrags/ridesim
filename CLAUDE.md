@@ -198,3 +198,10 @@ numbers come from `data/`. Read both before changing simulation logic.
   Railway.
 - Tower of Terror seating [user] (Jason): five boarding groups of 3/4/3/4/7; a party sits in one group if any fits, else it is split;
   spare seats go to the next party, single riders, then a party called forward from up to `callout_parties` (10, [assumed]) back.
+
+## Decisions log (M12, Smugglers Run, 2026-10-18)
+- continuous_load extended (Jason): `conveyor.chains` (independent loops, staggered), `party_vehicle_policy: shared` with
+  `party_seats` and grouper `callout_parties`, `side_down` per chain, `stages`, and the single-rider preshow bypass. Haunted Mansion
+  unchanged.
+- Smugglers capacity emerges from the sourced 45 s rotation (Jason): ~1,800/hr with the park mix. Crew rule [user] (one observation):
+  parties fill the four front seats, single riders the engineers. Appeal re-fit 0.90 -> 0.96 (approved). Results in docs/m12-report.md.

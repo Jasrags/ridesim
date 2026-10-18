@@ -214,7 +214,7 @@ func checkContinuousScenario(ds *Dataset, rf *File, f *ScenarioFile) Result {
 	}
 	for _, k := range s.Failures {
 		if (k == FailChainStop && c.Failures.ChainStop == nil) || (k == FailLongDowntime && c.Failures.LongDowntime == nil) ||
-			k == FailBriefStop || k == FailCascadeStop {
+			(k == FailSideDown && (c.Failures.SideDown == nil || c.Conveyor.ChainCount() < 2)) || k == FailBriefStop || k == FailCascadeStop {
 			r.Detail = fmt.Sprintf("failure %s not configured for continuous_load ride %s", k, s.RideID)
 			return r
 		}

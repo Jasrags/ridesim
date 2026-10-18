@@ -20,6 +20,9 @@ var continuousChecks = []check[*ContinuousFile]{
 	{"continuous.capacity_ceiling", SevError, checkCapacityCeiling},
 	{"continuous.seats", SevError, checkSeats},
 	{"continuous.party_policy", SevError, checkPartyPolicy},
+	{"continuous.stages", SevError, func(c *ContinuousFile) (bool, string) {
+		return checkStageChain(c.Preshow, c.Stages, c.Ride.ListedCapacityPerHr)
+	}},
 }
 
 var validRouteKinds = map[string]bool{RouteLoad: true, RouteScene: true, RouteUnload: true, RouteReturn: true}
@@ -104,9 +107,13 @@ func checkCapacityCeiling(c *ContinuousFile) (bool, string) {
 	if c.Vehicles.SpacingS <= 0 {
 		return false, "vehicles.spacing_s must be > 0"
 	}
-	ceiling := 3600 / c.Vehicles.SpacingS * float64(c.Vehicles.SeatsMax)
+	if c.Conveyor.Chains < 0 {
+		return false, fmt.Sprintf("conveyor.chains %d must be >= 0", c.Conveyor.Chains)
+	}
+	n := c.Conveyor.ChainCount()
+	ceiling := float64(n) * 3600 / c.Vehicles.SpacingS * float64(c.Vehicles.SeatsMax)
 	return c.Ride.ListedCapacityPerHr <= ceiling,
-		fmt.Sprintf("listed %.0f/hr <= 3600 / %g s x %d seats = %.0f/hr", c.Ride.ListedCapacityPerHr, c.Vehicles.SpacingS, c.Vehicles.SeatsMax, ceiling)
+		fmt.Sprintf("listed %.0f/hr <= %d chain(s) x 3600 / %g s x %d seats = %.0f/hr", c.Ride.ListedCapacityPerHr, n, c.Vehicles.SpacingS, c.Vehicles.SeatsMax, ceiling)
 }
 
 func checkSeats(c *ContinuousFile) (bool, string) {
@@ -115,9 +122,21 @@ func checkSeats(c *ContinuousFile) (bool, string) {
 	return ok, fmt.Sprintf("count %d, seats %d nominal / %d max, occupancy %.1f", v.Count, v.SeatsNominal, v.SeatsMax, v.OccupancyTarget.Mean)
 }
 
-// Parties larger than a vehicle must use contiguous vehicles. The ride file does not know party
-// sizes, so the policy is required outright.
+// Parties larger than a vehicle must use contiguous vehicles (both policies do). The ride file does not
+// know party sizes, so a policy is required outright.
 func checkPartyPolicy(c *ContinuousFile) (bool, string) {
-	p := c.LoadingShared.PartyVehiclePolicy
-	return p == ContiguousVehicles, fmt.Sprintf("party_vehicle_policy %q (want %q)", p, ContiguousVehicles)
+	p, ls := c.LoadingShared.PartyVehiclePolicy, c.LoadingShared
+	if ls.PartySeats < 0 || ls.PartySeats > c.Vehicles.SeatsMax || ls.CalloutParties < 0 {
+		return false, fmt.Sprintf("party_seats %d must be 0..seats_max %d and callout_parties %d >= 0", ls.PartySeats, c.Vehicles.SeatsMax, ls.CalloutParties)
+	}
+	if sd := c.Failures.SideDown; sd != nil && (c.Conveyor.ChainCount() < 2 || sd.RatePerHr < 0 || sd.DurationS.Mean <= 0) {
+		return false, "failures.side_down needs conveyor.chains >= 2, rate_per_hr >= 0 and a positive duration_s"
+	}
+	if ps := c.Preshow; ps != nil && ps.BypassForSingleRider && !c.Queues.SingleRider.Enabled {
+		return false, "preshow.bypass_for_single_rider needs an enabled single_rider line"
+	}
+	if p != SharedVehicles && (ls.PartySeats > 0 || ls.CalloutParties > 0) {
+		return false, "party_seats and callout_parties apply only to party_vehicle_policy shared"
+	}
+	return p == ContiguousVehicles || p == SharedVehicles, fmt.Sprintf("party_vehicle_policy %q (want %q or %q)", p, ContiguousVehicles, SharedVehicles)
 }

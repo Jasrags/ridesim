@@ -339,6 +339,7 @@ type ContinuousFile struct {
 	LoadingShared     LoadingShared     `yaml:"loading_shared"`
 	Failures          Failures          `yaml:"failures"`
 	Preshow           *Preshow          `yaml:"preshow"`
+	Stages            []Preshow         `yaml:"stages"` // further batch stages after the preshow (M11)
 	Queues            Queues            `yaml:"queues"`
 	ValidationTargets ValidationTargets `yaml:"validation_targets"`
 	ConfigInvariants  []string          `yaml:"config_invariants"`
@@ -348,7 +349,13 @@ type Conveyor struct {
 	SpeedFps   float64 `yaml:"speed_fps"`
 	Continuous bool    `yaml:"continuous"`
 	Topology   string  `yaml:"topology"`
+	// Chains is how many identical independent loops run side by side, each with its own load point and
+	// vehicles.count vehicles (Smugglers Run: 4 turntables of 7 cockpits). 0 or 1 = one chain.
+	Chains int `yaml:"chains"`
 }
+
+// ChainCount is Chains with the default of one.
+func (c Conveyor) ChainCount() int { return max(1, c.Chains) }
 
 type RouteStep struct {
 	ID    string  `yaml:"id"`
@@ -382,6 +389,11 @@ type LoadingShared struct {
 	AccessibilityFreezeZones []string          `yaml:"accessibility_freeze_zones"`
 	AccessibilityHold        AccessibilityHold `yaml:"accessibility_hold"`
 	PartyVehiclePolicy       string            `yaml:"party_vehicle_policy"`
+	// Shared vehicles only ([user] Smugglers Run): parties fill the first PartySeats seats, single riders
+	// the rest, then parties again; when the next party does not fit, cast call one that does from up to
+	// CalloutParties back. 0 = parties may take every seat / no callouts.
+	PartySeats     int `yaml:"party_seats"`
+	CalloutParties int `yaml:"callout_parties"`
 }
 
 type AccessibilityHold struct {
@@ -389,8 +401,13 @@ type AccessibilityHold struct {
 	DurationS Dist    `yaml:"duration_s"`
 }
 
-// Party vehicle policies.
-const ContiguousVehicles = "contiguous_vehicles"
+// Party vehicle policies. ContiguousVehicles: strangers never share; a large party takes consecutive
+// vehicles. SharedVehicles (Smugglers Run): parties in line order share a vehicle up to seats_max, single
+// riders fill spare seats; a party larger than a vehicle still takes consecutive ones.
+const (
+	ContiguousVehicles = "contiguous_vehicles"
+	SharedVehicles     = "shared"
+)
 
 // ---------------------------------------------------------------------------------------------------
 // park
