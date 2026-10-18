@@ -3,6 +3,7 @@ package park
 import (
 	"fmt"
 	"math"
+	"math/rand/v2"
 
 	"github.com/jasrags/ridesim/internal/config"
 	"github.com/jasrags/ridesim/internal/engine"
@@ -13,9 +14,14 @@ import (
 // or after their arrival; afterwards one more each time a pass is used or lapses. A party books each
 // modeled ride at most once a day. elsewhere_share of bookings are for attractions outside the modeled
 // rides: unlimited inventory, redeemed as an elsewhere visit.
+//
+// With tiers (M9, Jason): rides declare tier1, tier2 or single_pass. Multi Pass buyers book
+// advance_by_tier passes per tier before the day, then rebook any Multi Pass ride after each use or
+// lapse. single_pass_share of parties also buy each Single Pass ride: one booking, never rebooked.
 type lightningLane struct {
 	p      *Park
 	cfg    *config.ParkLightningLane
+	tiers  bool
 	window engine.Duration
 	grace  engine.Duration
 	rides  []*llRide // node order
@@ -23,6 +29,7 @@ type lightningLane struct {
 
 type llRide struct {
 	node   int
+	tier   string // "" in an untiered park
 	appeal float64
 	inv    []int // guests still sellable per window
 }
@@ -30,48 +37,100 @@ type llRide struct {
 type booking struct {
 	node       int
 	start, end engine.Time
+	single     bool // a Single Pass: does not use up a Multi Pass and is not rebooked
 }
 
-func newLightningLane(p *Park, cfg *config.ParkLightningLane) *lightningLane {
-	ll := &lightningLane{p: p, cfg: cfg, window: engine.Seconds(cfg.WindowMin * 60), grace: engine.Seconds(cfg.GraceMin * 60)}
+func newLightningLane(p *Park, cfg *config.ParkLightningLane) (*lightningLane, error) {
+	ll := &lightningLane{p: p, cfg: cfg, tiers: p.cfg.HasLLTiers(), window: engine.Seconds(cfg.WindowMin * 60), grace: engine.Seconds(cfg.GraceMin * 60)}
 	windows := int(math.Ceil(float64(p.closeAt) / float64(ll.window)))
 	for _, a := range p.acts {
-		ra, ok := a.(*rideAct)
-		if !ok || !ra.ll {
+		var n *Node
+		var capacity float64
+		switch act := a.(type) {
+		case *rideAct:
+			if ll.tiers && act.n.LightningLane == "" || !ll.tiers && !act.ll {
+				continue
+			}
+			if !act.ll {
+				return nil, fmt.Errorf("%s: lightning_lane %s but its ride has no Lightning Lane line", act.n.ID, act.n.LightningLane)
+			}
+			n, capacity = act.n, act.info.ListedCapacityPerHr
+		case *simpleRide:
+			if !ll.tiers || act.n.LightningLane == "" {
+				continue
+			}
+			n, capacity = act.n, act.n.CapacityPerHr
+		default:
 			continue
 		}
-		per := int(math.Round(cfg.InventoryShare * ra.info.ListedCapacityPerHr * ll.window.Seconds() / 3600))
-		r := &llRide{node: ra.n.Idx, appeal: ra.n.Appeal, inv: make([]int, windows)}
+		per := int(math.Round(cfg.InventoryShare * capacity * ll.window.Seconds() / 3600))
+		r := &llRide{node: n.Idx, tier: n.LightningLane, appeal: n.Appeal, inv: make([]int, windows)}
 		for i := range r.inv {
 			r.inv[i] = per
 		}
 		ll.rides = append(ll.rides, r)
 	}
-	return ll
+	return ll, nil
 }
 
 // advance runs the before-the-day bookings in a random party order.
 func (ll *lightningLane) advance(agents []*agent) {
 	var buyers []*agent
 	for _, a := range agents {
-		if a.passes > 0 {
+		if a.passes > 0 || len(a.singles) > 0 {
 			buyers = append(buyers, a)
 		}
 	}
 	rng := ll.p.sim.Stream(engine.StreamLLChoice)
 	rng.Shuffle(len(buyers), func(i, j int) { buyers[i], buyers[j] = buyers[j], buyers[i] })
 	for _, a := range buyers {
-		a.advanced = true
+		ll.advanceFor(a, a.arrive)
+	}
+}
+
+// advanceFor makes a party's before-the-day bookings, starting at or after from.
+func (ll *lightningLane) advanceFor(a *agent, from engine.Time) {
+	a.advanced = true
+	if !ll.tiers {
 		for i := 0; i < ll.cfg.AdvanceBookings && a.passes > 0; i++ {
-			if !ll.book(a, a.arrive) {
+			if !ll.book(a, from, "") {
+				break
+			}
+		}
+		return
+	}
+	for _, node := range a.singles {
+		ll.bookSingle(a, from, node)
+	}
+	for _, tier := range []string{config.LLTier1, config.LLTier2} {
+		for i := 0; i < ll.cfg.AdvanceByTier[tier] && a.passes > 0; i++ {
+			if !ll.book(a, from, tier) {
 				break
 			}
 		}
 	}
 }
 
-// book makes one booking for a starting at or after from; false when nothing is available.
-func (ll *lightningLane) book(a *agent, from engine.Time) bool {
+// bookSingle books the Single Pass ride node in its earliest window with room at or after from.
+func (ll *lightningLane) bookSingle(a *agent, from engine.Time, node int) {
+	for _, r := range ll.rides {
+		if r.node != node || a.llBooked[node] {
+			continue
+		}
+		for w := ll.windowAt(from); w < len(r.inv); w++ {
+			if r.inv[w] >= a.size {
+				r.inv[w] -= a.size
+				a.llBooked[node] = true
+				ll.take(a, &booking{node: node, start: engine.Time(w) * engine.Time(ll.window), single: true})
+				return
+			}
+		}
+	}
+}
+
+// book makes one Multi Pass booking for a starting at or after from, from rides of the given tier ("" =
+// any Multi Pass ride); false when nothing is available.
+func (ll *lightningLane) book(a *agent, from engine.Time, tier string) bool {
 	if a.passes <= 0 {
 		return false
 	}
@@ -79,7 +138,8 @@ func (ll *lightningLane) book(a *agent, from engine.Time) bool {
 	// shifts another party's draws (common random numbers across variants).
 	rng := ll.p.sim.Stream(fmt.Sprintf("%s/%d", engine.StreamLLChoice, a.id))
 	toElsewhere, x0 := rng.Float64() < ll.cfg.ElsewhereShare, rng.Float64()
-	if ll.p.elsewhere >= 0 && toElsewhere {
+	// In a tiered park the elsewhere share stands for Tier 2 shows: Tier 1 advance bookings skip it.
+	if ll.p.elsewhere >= 0 && toElsewhere && tier != config.LLTier1 {
 		w := ll.windowAt(from)
 		if engine.Time(w)*engine.Time(ll.window) >= ll.p.closeAt {
 			return false
@@ -91,7 +151,7 @@ func (ll *lightningLane) book(a *agent, from engine.Time) bool {
 	var cands []*llRide
 	weight := 0.0
 	for _, r := range ll.rides {
-		if !a.llBooked[r.node] {
+		if !a.llBooked[r.node] && r.tier != config.LLSinglePass && (tier == "" || r.tier == tier) {
 			cands = append(cands, r)
 			weight += r.appeal
 		}
@@ -126,7 +186,9 @@ func (ll *lightningLane) windowAt(t engine.Time) int {
 
 func (ll *lightningLane) take(a *agent, b *booking) {
 	b.end = b.start.Add(ll.window)
-	a.passes--
+	if !b.single {
+		a.passes--
+	}
 	a.held = append(a.held, b)
 	ll.p.sim.Emit(engine.Event{Type: EvLLBook, Guest: a.id, N: int(b.start / engine.Time(engine.Second)), Block: ll.p.g.Nodes[b.node].ID})
 	lapse := b.end.Add(ll.grace)
@@ -136,8 +198,8 @@ func (ll *lightningLane) take(a *agent, b *booking) {
 	ll.p.sim.At(lapse, func() {
 		if a.drop(b) {
 			ll.p.sim.Emit(engine.Event{Type: EvLLLapse, Guest: a.id, Block: ll.p.g.Nodes[b.node].ID})
-			if !a.gone {
-				ll.book(a, ll.p.sim.Now())
+			if !a.gone && !b.single {
+				ll.book(a, ll.p.sim.Now(), "")
 			}
 		}
 	})
@@ -152,5 +214,26 @@ func (ll *lightningLane) valid(b *booking, t engine.Time) bool {
 func (ll *lightningLane) redeem(a *agent, b *booking) {
 	a.drop(b)
 	ll.p.sim.Emit(engine.Event{Type: EvLLRedeem, Guest: a.id, Block: ll.p.g.Nodes[b.node].ID})
-	ll.book(a, ll.p.sim.Now())
+	if !b.single {
+		ll.book(a, ll.p.sim.Now(), "")
+	}
+}
+
+// streamSinglePass is the park-scope stream for Single Pass purchases: one draw per party per Single
+// Pass ride, only in tiered parks, so it never shifts other draws.
+const streamSinglePass = "ll_single_pass"
+
+// drawSinglePasses decides which Single Pass rides a party buys.
+func (p *Park) drawSinglePasses(a *agent, rng *rand.Rand) {
+	if p.cfg.LightningLane == nil || !p.cfg.HasLLTiers() {
+		return
+	}
+	for _, n := range p.g.Nodes {
+		if n.LightningLane != config.LLSinglePass {
+			continue
+		}
+		if rng.Float64() < p.cfg.LightningLane.SinglePassShare && p.ll != nil {
+			a.singles = append(a.singles, n.Idx)
+		}
+	}
 }

@@ -34,6 +34,7 @@ type agent struct {
 	passes   int // bookings still to make today
 	held     []*booking
 	llBooked []bool // per node: booked today
+	singles  []int  // Single Pass rides bought (node indices)
 }
 
 // Agent states for park snapshots, in report order.
@@ -79,12 +80,7 @@ func (p *Park) enter(a *agent) {
 	}
 	if p.ll != nil && !a.advanced {
 		// A party admitted by a raised crowd scale books on arrival what others booked before the day.
-		for i := 0; i < p.ll.cfg.AdvanceBookings && a.passes > 0; i++ {
-			if !p.ll.book(a, p.sim.Now()) {
-				break
-			}
-		}
-		a.advanced = true
+		p.ll.advanceFor(a, p.sim.Now())
 	}
 	p.inPark += a.size
 	a.at = p.entrance

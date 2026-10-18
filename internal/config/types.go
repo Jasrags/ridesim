@@ -426,6 +426,28 @@ type ParkLightningLane struct {
 	GraceMin        float64 `yaml:"grace_min"`
 	InventoryShare  float64 `yaml:"inventory_share"`
 	ElsewhereShare  float64 `yaml:"elsewhere_share"`
+	// Tiers (M9): when any node declares lightning_lane, Multi Pass buyers book AdvanceByTier passes per
+	// tier before the day instead of AdvanceBookings on any ride, and SinglePassShare of parties also buy
+	// each Single Pass ride.
+	AdvanceByTier   map[string]int `yaml:"advance_by_tier"`
+	SinglePassShare float64        `yaml:"single_pass_share"`
+}
+
+// Lightning Lane tiers a park node can declare.
+const (
+	LLTier1      = "tier1"
+	LLTier2      = "tier2"
+	LLSinglePass = "single_pass"
+)
+
+// HasLLTiers reports whether any node declares a Lightning Lane tier.
+func (p *ParkFile) HasLLTiers() bool {
+	for _, n := range p.Nodes {
+		if n.LightningLane != "" {
+			return true
+		}
+	}
+	return false
 }
 
 type ParkInfo struct {
@@ -453,6 +475,7 @@ type ParkNode struct {
 	ServiceTimeMin    *Dist    `yaml:"service_time_min"`
 	VisitMin          *Dist    `yaml:"visit_min"`      // elsewhere: time spent per visit
 	QueueCapacity     int      `yaml:"queue_capacity"` // ride_simple: physical queue; overflow spills (0 = never)
+	LightningLane     string   `yaml:"lightning_lane"` // tier1 | tier2 | single_pass (rides only; empty = none)
 	X                 *float64 `yaml:"x"`              // map position (front end); all nodes or none
 	Y                 *float64 `yaml:"y"`
 }

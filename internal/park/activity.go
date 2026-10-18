@@ -78,18 +78,26 @@ func (a *rideAct) queueGuests() int   { return a.r.WaitingGuests() }
 func (a *rideAct) queueCapacity() int { return a.capacity }
 
 // simpleRide is a ride_simple node: a vehicle every simpleInterval takes capacity x interval guests in
-// line order (parties never split, nobody skips), rides duration_s and unloads. Guests balk on the
+// line order (parties never split, nobody skips), rides duration_s and unloads. Lightning Lane guests
+// board first, up to simpleLLShare of the seats, so standby always moves (M9). Standby guests balk on the
 // posted wait; there is no reneging.
 type simpleRide struct {
-	n     *Node
-	sim   *engine.Sim
-	line  queue.FIFO
-	seats int
-	trip  int
+	n      *Node
+	sim    *engine.Sim
+	line   queue.FIFO // standby
+	llLine queue.FIFO // Lightning Lane
+	seats  int
+	trip   int
+	llHist [simpleLLWindow]int // Lightning Lane riders on each of the last simpleLLWindow vehicles
 }
 
 // simpleInterval is the ride_simple dispatch interval; validation checks a vehicle fits the largest party.
 const simpleInterval = config.RideSimpleIntervalS * engine.Second
+
+const (
+	simpleLLNum, simpleLLDen = 2, 3 // Lightning Lane takes at most 2/3 of a vehicle (spec normal 2:1 merge) [fan, assumed]
+	simpleLLWindow           = 15   // vehicles (15 min) of Lightning Lane use behind the posted wait
+)
 
 func newSimpleRide(sim *engine.Sim, n *Node) *simpleRide {
 	s := &simpleRide{n: n, sim: sim, seats: int(math.Max(1, math.Round(n.CapacityPerHr*simpleInterval.Seconds()/3600)))}
@@ -106,35 +114,59 @@ func (s *simpleRide) start() {
 }
 
 func (s *simpleRide) node() *Node { return s.n }
+
+// posted is standby guests over the standby share of capacity: capacity less the Lightning Lane riders
+// of the last 15 vehicles, never below the share Lightning Lane must leave to standby.
 func (s *simpleRide) posted() engine.Duration {
-	return engine.Seconds(float64(s.line.Guests()) / (s.n.CapacityPerHr / 3600))
+	ll := 0
+	for _, n := range s.llHist {
+		ll += n
+	}
+	standby := math.Max(1-float64(ll)/simpleLLWindow/float64(s.seats), float64(simpleLLDen-simpleLLNum)/simpleLLDen)
+	return engine.Seconds(float64(s.line.Guests()) / (s.n.CapacityPerHr / 3600 * standby))
 }
-func (s *simpleRide) queueGuests() int   { return s.line.Guests() }
+func (s *simpleRide) queueGuests() int   { return s.line.Guests() + s.llLine.Guests() }
 func (s *simpleRide) queueCapacity() int { return s.n.QueueCapacity }
 
 func (s *simpleRide) visit(p *guest.Party, lane guest.Lane) {
 	p.Lane = guest.Standby
-	if p.Patience > 0 && s.posted() > p.Patience {
+	if lane == guest.LightningLane {
+		p.Lane = guest.LightningLane // Lightning Lane guests never balk
+	} else if p.Patience > 0 && s.posted() > p.Patience {
 		s.sim.Emit(engine.Event{Type: engine.EvBalk, Guest: p.ID, N: p.Size, Info: p.Lane.String()})
 		p.Exited(guest.Balked)
 		return
 	}
 	p.JoinedAt = s.sim.Now()
 	s.sim.Emit(engine.Event{Type: engine.EvQueueJoin, Guest: p.ID, N: p.Size, Info: p.Lane.String()})
-	s.line.Push(p)
+	if p.Lane == guest.LightningLane {
+		s.llLine.Push(p)
+	} else {
+		s.line.Push(p)
+	}
 }
 
 func (s *simpleRide) dispatch() {
 	s.trip++
-	free, riders := s.seats, 0
+	free, riders, llRiders := s.seats, 0, 0
 	var aboard []*guest.Party
-	for p := s.line.Peek(); p != nil && p.Size <= free; p = s.line.Peek() {
-		s.line.Pop()
-		free -= p.Size
-		riders += p.Size
-		aboard = append(aboard, p)
-		s.sim.Emit(engine.Event{Type: engine.EvBoard, Train: s.trip, Guest: p.ID, N: p.Size, Info: p.Lane.String()})
+	board := func(q *queue.FIFO, limit int) {
+		for p := q.Peek(); p != nil && p.Size <= free && p.Size <= limit; p = q.Peek() {
+			q.Pop()
+			free -= p.Size
+			limit -= p.Size
+			riders += p.Size
+			if p.Lane == guest.LightningLane {
+				llRiders += p.Size
+			}
+			aboard = append(aboard, p)
+			s.sim.Emit(engine.Event{Type: engine.EvBoard, Train: s.trip, Guest: p.ID, N: p.Size, Info: p.Lane.String()})
+		}
 	}
+	board(&s.llLine, s.seats*simpleLLNum/simpleLLDen)
+	board(&s.line, s.seats)
+	board(&s.llLine, s.seats) // seats standby could not use
+	s.llHist[s.trip%simpleLLWindow] = llRiders
 	if riders == 0 {
 		return // empty vehicles are not logged
 	}

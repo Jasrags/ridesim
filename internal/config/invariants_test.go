@@ -260,3 +260,46 @@ func TestParkJunctionNeedsNoFields(t *testing.T) {
 		t.Fatalf("junction hub: %s", r.Detail)
 	}
 }
+
+// tiered patches the park fixture into a tiered Lightning Lane park: the coaster is Tier 1, the filler
+// ride a Single Pass.
+func tiered(t *testing.T, extra ...[2]string) *File {
+	t.Helper()
+	b, err := os.ReadFile(fxPark)
+	if err != nil {
+		t.Fatal(err)
+	}
+	s := string(b)
+	for _, r := range append([][2]string{
+		{"ride_id: test.fx.coaster, appeal", "ride_id: test.fx.coaster, lightning_lane: tier1, appeal"},
+		{"duration_s: 60, appeal: 0.1", "duration_s: 60, lightning_lane: single_pass, appeal: 0.1"},
+		{"  elsewhere_share: 0.5", "  elsewhere_share: 0.5\n  advance_by_tier: { tier1: 1, tier2: 2 }\n  single_pass_share: 0.2"},
+	}, extra...) {
+		if !strings.Contains(s, r[0]) {
+			t.Fatalf("fixture lacks %q", r[0])
+		}
+		s = strings.Replace(s, r[0], r[1], 1)
+	}
+	f, err := LoadBytes(fxPark, []byte(s))
+	if err != nil {
+		t.Fatal(err)
+	}
+	return f
+}
+
+func TestParkLightningLaneTiers(t *testing.T) {
+	if r := resultFor(t, CheckFile(tiered(t)), "park.lightning_lane"); r.Status != StatusPass {
+		t.Fatalf("tiered fixture: %s", r.Detail)
+	}
+	for name, patch := range map[string][2]string{
+		"tier on dining":       {"seats: 10, service", "seats: 10, lightning_lane: tier2, service"},
+		"unknown tier":         {"lightning_lane: tier1", "lightning_lane: tier9"},
+		"no advance_by_tier":   {"  advance_by_tier: { tier1: 1, tier2: 2 }\n", ""},
+		"bad advance tier key": {"advance_by_tier: { tier1: 1, tier2: 2 }", "advance_by_tier: { tier1: 1, gold: 2 }"},
+		"single pass share":    {"single_pass_share: 0.2", "single_pass_share: 1.5"},
+	} {
+		if r := resultFor(t, CheckFile(tiered(t, patch)), "park.lightning_lane"); r.Status != StatusFail {
+			t.Errorf("%s: got %v (%s), want FAIL", name, r.Status, r.Detail)
+		}
+	}
+}

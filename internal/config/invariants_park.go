@@ -338,6 +338,9 @@ func ParseClock(s string) (float64, error) {
 func checkParkLightningLane(p *ParkFile) (bool, string) {
 	ll := p.LightningLane
 	if ll == nil {
+		if p.HasLLTiers() {
+			return false, "nodes declare lightning_lane tiers but there is no lightning_lane section"
+		}
 		return true, "no lightning_lane section: park runs have no Lightning Lane"
 	}
 	var bad []string
@@ -349,9 +352,42 @@ func checkParkLightningLane(p *ParkFile) (bool, string) {
 	if ll.WindowMin <= 0 || ll.GraceMin < 0 || ll.AdvanceBookings < 0 {
 		bad = append(bad, fmt.Sprintf("window_min %g > 0, grace_min %g >= 0, advance_bookings %d >= 0", ll.WindowMin, ll.GraceMin, ll.AdvanceBookings))
 	}
+	bad = append(bad, checkLLTiers(p)...)
 	if len(bad) > 0 {
 		sort.Strings(bad)
 		return false, strings.Join(bad, "; ")
 	}
 	return true, fmt.Sprintf("%.0f%% buy, %d in advance, %g-min windows, %.0f%% of capacity sold", ll.PurchaseShare*100, ll.AdvanceBookings, ll.WindowMin, ll.InventoryShare*100)
+}
+
+// checkLLTiers checks node tiers and the tier settings they need.
+func checkLLTiers(p *ParkFile) []string {
+	if !p.HasLLTiers() {
+		return nil
+	}
+	var bad []string
+	for _, n := range p.Nodes {
+		switch n.LightningLane {
+		case "":
+		case LLTier1, LLTier2, LLSinglePass:
+			if n.Kind != NodeRide && n.Kind != NodeRideSimple {
+				bad = append(bad, fmt.Sprintf("%s: lightning_lane on a %s node (rides only)", n.ID, n.Kind))
+			}
+		default:
+			bad = append(bad, fmt.Sprintf("%s: lightning_lane %q (want tier1, tier2 or single_pass)", n.ID, n.LightningLane))
+		}
+	}
+	ll := p.LightningLane
+	if len(ll.AdvanceByTier) == 0 {
+		bad = append(bad, "nodes declare tiers: advance_by_tier is required")
+	}
+	for k, v := range ll.AdvanceByTier {
+		if (k != LLTier1 && k != LLTier2) || v < 0 {
+			bad = append(bad, fmt.Sprintf("advance_by_tier %s: %d (keys tier1, tier2; counts >= 0)", k, v))
+		}
+	}
+	if ll.SinglePassShare < 0 || ll.SinglePassShare > 1 {
+		bad = append(bad, fmt.Sprintf("single_pass_share %g must be in [0, 1]", ll.SinglePassShare))
+	}
+	return bad
 }

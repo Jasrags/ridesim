@@ -126,7 +126,11 @@ func New(root *engine.Sim, ds *config.Dataset, cfg *config.ParkFile, opts Option
 		}
 	}
 	if cfg.LightningLane != nil && !opts.NoLightningLane {
-		p.ll = newLightningLane(p, cfg.LightningLane)
+		ll, err := newLightningLane(p, cfg.LightningLane)
+		if err != nil {
+			return nil, err
+		}
+		p.ll = ll
 	}
 	return p, nil
 }
@@ -282,6 +286,7 @@ func (p *Park) drawParties() {
 	// The day is drawn at MaxCrowdScale x attendance; each party keeps a uniform thin draw and arrives only
 	// while thin < crowd / MaxCrowdScale, so the live crowd lever never shifts any other draw.
 	attendance := float64(p.opts.Attendance) * scale * config.MaxCrowdScale
+	singles := p.sim.Stream(streamSinglePass)
 	times := p.sim.Stream(engine.StreamArrivals)
 	traits := p.sim.Stream(engine.StreamGuestChoice)
 	norm := func(d config.Dist, lo float64) float64 {
@@ -327,6 +332,7 @@ func (p *Park) drawParties() {
 			if p.ll != nil && buy < p.cfg.LightningLane.PurchaseShare {
 				a.passes = passes
 			}
+			p.drawSinglePasses(a, singles)
 			p.agents = append(p.agents, a)
 		}
 	}
