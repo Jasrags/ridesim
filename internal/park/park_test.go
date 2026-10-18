@@ -302,3 +302,23 @@ func TestJunctionsRouteAndShopsAreVisited(t *testing.T) {
 		t.Error("a junction is not an activity and logs no run_start")
 	}
 }
+
+// A character meet sees one party at a time; the posted wait is parties ahead x the mean meet time.
+func TestMeetServesOnePartyAtATime(t *testing.T) {
+	sim := engine.New(1)
+	m := newMeet(sim, &Node{ParkNode: config.ParkNode{ID: "m", Kind: config.NodeMeet, MeetS: &config.Dist{Mean: 120}}}, true)
+	for i := int64(1); i <= 3; i++ {
+		m.visit(&guest.Party{ID: i, Size: 4}, guest.Standby)
+	}
+	if got := m.posted(); got != 2*120*engine.Second {
+		t.Errorf("posted with two parties waiting = %v, want 4m0s", got)
+	}
+	sim.RunUntil(engine.Time(119 * engine.Second))
+	if n, _ := count(sim, engine.EvUnload, ""); n != 0 {
+		t.Fatalf("a meet ended early")
+	}
+	sim.RunUntil(engine.Time(361 * engine.Second))
+	if n, _ := count(sim, engine.EvUnload, ""); n != 3 {
+		t.Errorf("after 6 min, %d meets done, want 3 in sequence", n)
+	}
+}

@@ -310,6 +310,59 @@ func (d *dining) seat() {
 	}
 }
 
+// meet is a character meet: parties wait in one line and meet the characters one party at a time,
+// for meet_s each. Guests balk on the posted wait like any standby line.
+type meet struct {
+	n     *Node
+	sim   *engine.Sim
+	line  queue.FIFO
+	busy  bool
+	fixed bool
+}
+
+func newMeet(sim *engine.Sim, n *Node, fixed bool) *meet { return &meet{n: n, sim: sim, fixed: fixed} }
+
+func (m *meet) node() *Node { return m.n }
+
+// posted is the parties waiting times the mean meet time.
+func (m *meet) posted() engine.Duration {
+	return engine.Seconds(float64(m.line.Parties()) * m.n.MeetS.Mean)
+}
+func (m *meet) queueGuests() int   { return m.line.Guests() }
+func (m *meet) queueCapacity() int { return 0 }
+
+func (m *meet) visit(p *guest.Party, lane guest.Lane) {
+	p.Lane = guest.Standby
+	if p.Patience > 0 && m.posted() > p.Patience {
+		m.sim.Emit(engine.Event{Type: engine.EvBalk, Guest: p.ID, N: p.Size, Info: p.Lane.String()})
+		p.Exited(guest.Balked)
+		return
+	}
+	p.JoinedAt = m.sim.Now()
+	m.sim.Emit(engine.Event{Type: engine.EvQueueJoin, Guest: p.ID, N: p.Size, Info: p.Lane.String()})
+	m.line.Push(p)
+	m.next()
+}
+
+func (m *meet) next() {
+	if m.busy {
+		return
+	}
+	p := m.line.Pop()
+	if p == nil {
+		return
+	}
+	m.busy = true
+	m.sim.Emit(engine.Event{Type: engine.EvBoard, Guest: p.ID, N: p.Size, Info: p.Lane.String()})
+	m.sim.Emit(engine.Event{Type: engine.EvDispatch, N: p.Size})
+	m.sim.After(sampleDist(m.sim, *m.n.MeetS, 1, m.fixed), func() {
+		m.busy = false
+		m.sim.Emit(engine.Event{Type: engine.EvUnload, Guest: p.ID, N: p.Size})
+		p.Exited(guest.Rode)
+		m.next()
+	})
+}
+
 // elsewhere is the rest of the park, or a land's shops: no queue, a sampled visit length.
 type elsewhere struct {
 	n     *Node

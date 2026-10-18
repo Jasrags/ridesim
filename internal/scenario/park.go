@@ -90,12 +90,10 @@ func (r ParkRun) EmitStart(sim *engine.Sim) {
 	if id == "" {
 		id = "adhoc"
 	}
-	ct := r.Park.CalibrationTargets
 	sim.Emit(engine.Event{Type: engine.EvRunStart, Info: fmt.Sprintf(
-		"scenario=%s park=%s attendance=%d scale=%g walking=%s lightning_lane=%t seed=%d fixed_times=%t length_s=%.0f warmup_s=%.0f failures=%s targets=everest:%g:%g,haunted_mansion:%g:%g",
+		"scenario=%s park=%s attendance=%d scale=%g walking=%s lightning_lane=%t seed=%d fixed_times=%t length_s=%.0f warmup_s=%.0f failures=%s targets=%s",
 		id, r.Park.Park.ID, r.Options.Attendance, scale, mode, r.Park.LightningLane != nil && !r.Options.NoLightningLane, r.Seed,
-		r.Options.FixedTimes, r.Length.Seconds(), r.Warmup.Seconds(), failures,
-		ct.EverestAvgStandbyMin, ct.EverestPeakStandbyMin, ct.HauntedMansionAvgStandbyMin, ct.HauntedMansionPeakStandbyMin)})
+		r.Options.FixedTimes, r.Length.Seconds(), r.Warmup.Seconds(), failures, r.Park.CalibrationTargets.RunInfo())})
 }
 
 // Start builds and opens the park in sim (after EmitStart).

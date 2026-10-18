@@ -303,3 +303,25 @@ func TestParkLightningLaneTiers(t *testing.T) {
 		}
 	}
 }
+
+func TestParkMeetNode(t *testing.T) {
+	meet := patched(t, fxPark, "", "kind: ride_simple, capacity_per_hr: 100, duration_s: 60,", "kind: meet, meet_s: { mean: 120, sd: 30 },")
+	if r := resultFor(t, CheckFile(meet), "park.node_fields"); r.Status != StatusPass {
+		t.Fatalf("meet node: %s", r.Detail)
+	}
+	bad := patched(t, fxPark, "", "kind: ride_simple, capacity_per_hr: 100, duration_s: 60,", "kind: meet,")
+	if r := resultFor(t, CheckFile(bad), "park.node_fields"); r.Status != StatusFail {
+		t.Fatalf("meet without meet_s: got %v", r.Status)
+	}
+}
+
+func TestCalibrationTargetsRunInfo(t *testing.T) {
+	ct := CalibrationTargets{EverestAvgStandbyMin: 19, EverestPeakStandbyMin: 35, HauntedMansionAvgStandbyMin: 26, HauntedMansionPeakStandbyMin: 42}
+	if got, want := ct.RunInfo(), "everest:19:35,haunted_mansion:26:42"; got != want {
+		t.Errorf("legacy targets = %q, want %q", got, want)
+	}
+	ct = CalibrationTargets{Rides: map[string]StandbyTarget{"slinky_dog_dash": {AvgMin: 63, PeakMin: 83}, "rise_of_the_resistance": {AvgMin: 47, PeakMin: 65}}}
+	if got, want := ct.RunInfo(), "rise_of_the_resistance:47:65,slinky_dog_dash:63:83"; got != want {
+		t.Errorf("ride targets = %q, want %q (sorted by node)", got, want)
+	}
+}

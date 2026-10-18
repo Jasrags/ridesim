@@ -2,7 +2,13 @@
 // invariant checks. Struct fields mirror the YAML exactly; decoding is strict (unknown fields fail).
 package config
 
-import "gopkg.in/yaml.v3"
+import (
+	"fmt"
+	"sort"
+	"strings"
+
+	"gopkg.in/yaml.v3"
+)
 
 // SchemaVersion is the only version the loader accepts.
 const SchemaVersion = "1.0"
@@ -398,6 +404,7 @@ const (
 	NodeElsewhere  = "elsewhere" // the rest of the park: unlimited capacity, a visit-length distribution
 	NodeJunction   = "junction"  // a walkway junction: routing only, no activity
 	NodeShop       = "shop"      // shops at a place: unlimited capacity, a visit-length distribution
+	NodeMeet       = "meet"      // a character meet: one party at a time, meet_s per party
 
 	WalkingFixedDelay = "fixed_delay"
 	WalkingCongestion = "congestion"
@@ -474,6 +481,7 @@ type ParkNode struct {
 	Seats             int      `yaml:"seats"`
 	ServiceTimeMin    *Dist    `yaml:"service_time_min"`
 	VisitMin          *Dist    `yaml:"visit_min"`      // elsewhere: time spent per visit
+	MeetS             *Dist    `yaml:"meet_s"`         // meet: seconds per party
 	QueueCapacity     int      `yaml:"queue_capacity"` // ride_simple: physical queue; overflow spills (0 = never)
 	LightningLane     string   `yaml:"lightning_lane"` // tier1 | tier2 | single_pass (rides only; empty = none)
 	X                 *float64 `yaml:"x"`              // map position (front end); all nodes or none
@@ -541,9 +549,36 @@ type Utility struct {
 }
 
 type CalibrationTargets struct {
-	EverestAvgStandbyMin         float64 `yaml:"everest_avg_standby_min"`
-	EverestPeakStandbyMin        float64 `yaml:"everest_peak_standby_min"`
-	HauntedMansionAvgStandbyMin  float64 `yaml:"haunted_mansion_avg_standby_min"`
-	HauntedMansionPeakStandbyMin float64 `yaml:"haunted_mansion_peak_standby_min"`
-	ExpectWaitSpikeAfterTheater  bool    `yaml:"expect_wait_spike_after_theater_shows"`
+	EverestAvgStandbyMin         float64                  `yaml:"everest_avg_standby_min"`
+	EverestPeakStandbyMin        float64                  `yaml:"everest_peak_standby_min"`
+	HauntedMansionAvgStandbyMin  float64                  `yaml:"haunted_mansion_avg_standby_min"`
+	HauntedMansionPeakStandbyMin float64                  `yaml:"haunted_mansion_peak_standby_min"`
+	ExpectWaitSpikeAfterTheater  bool                     `yaml:"expect_wait_spike_after_theater_shows"`
+	Rides                        map[string]StandbyTarget `yaml:"rides"` // by park node id (M9)
+}
+
+// StandbyTarget is a ride's Queue-Times posted-wait target.
+type StandbyTarget struct {
+	AvgMin  float64 `yaml:"avg_standby_min"`
+	PeakMin float64 `yaml:"peak_standby_min"`
+}
+
+// RunInfo lists the targets as node:avg:peak for the run_start event: the legacy Everest and Haunted
+// Mansion fields (always, unless only the rides map is used), then the rides map in node order.
+func (c CalibrationTargets) RunInfo() string {
+	var parts []string
+	legacy := c.EverestAvgStandbyMin != 0 || c.EverestPeakStandbyMin != 0 || c.HauntedMansionAvgStandbyMin != 0 || c.HauntedMansionPeakStandbyMin != 0
+	if legacy || len(c.Rides) == 0 {
+		parts = append(parts, fmt.Sprintf("everest:%g:%g", c.EverestAvgStandbyMin, c.EverestPeakStandbyMin),
+			fmt.Sprintf("haunted_mansion:%g:%g", c.HauntedMansionAvgStandbyMin, c.HauntedMansionPeakStandbyMin))
+	}
+	ids := make([]string, 0, len(c.Rides))
+	for id := range c.Rides {
+		ids = append(ids, id)
+	}
+	sort.Strings(ids)
+	for _, id := range ids {
+		parts = append(parts, fmt.Sprintf("%s:%g:%g", id, c.Rides[id].AvgMin, c.Rides[id].PeakMin))
+	}
+	return strings.Join(parts, ",")
 }
