@@ -191,42 +191,55 @@ a.btn { font: 500 .8rem var(--f-mono); color: var(--ink); border: 1px solid var(
     const nodes = s.nodes, byId = {};
     nodes.forEach(n => byId[n.id] = n);
     const xs = nodes.map(n => n.x), ys = nodes.map(n => n.y);
+    // k scales marks and text with the map: the synthetic park is ~500 units across, a real park
+    // in feet several thousand.
+    const k = Math.max(1, Math.max(Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys)) / 560);
     // Room for labels: they extend outward from each node by up to ~24 characters.
-    const minX = Math.min(...xs) - 190, maxX = Math.max(...xs) + 190, minY = Math.min(...ys) - 50, maxY = Math.max(...ys) + 50;
+    const minX = Math.min(...xs) - 190 * k, maxX = Math.max(...xs) + 190 * k, minY = Math.min(...ys) - 50 * k, maxY = Math.max(...ys) + 50 * k;
     const root = svg("svg", { viewBox: `${minX} ${minY} ${maxX - minX} ${maxY - minY}`, role: "img", "aria-label": "Park map" });
     const rides = {};
     s.rides.forEach(r => rides[r.node] = r);
     const maxC = Math.max(...s.edges.map(e => e.comfortable));
     const hub = nodes.find(n => n.kind === "plaza");
     const cx = hub ? hub.x : (minX + maxX) / 2;
+    // A big park labels only what guests choose by name; the rest show their name on hover.
+    const crowded = nodes.filter(n => n.kind !== "junction").length > 30;
+    const labelled = n => !crowded || ["ride", "ride_simple", "show", "entrance"].includes(n.kind);
     for (const e of s.edges) {
       const a = byId[e.from], b = byId[e.to];
       const ratio = e.comfortable ? e.guests / e.comfortable : 0;
       const line = svg("line", { x1: a.x, y1: a.y, x2: b.x, y2: b.y, stroke: loadColor(ratio),
-        "stroke-width": 3 + 9 * Math.sqrt(e.comfortable / maxC), "stroke-linecap": "round", opacity: e.guests ? 1 : 0.45 });
+        "stroke-width": k * (3 + 9 * Math.sqrt(e.comfortable / maxC)), "stroke-linecap": "round", opacity: e.guests ? 1 : 0.45 });
       const title = svg("title", {}); title.textContent = `${e.id}: ${e.guests} guests, comfortable ${e.comfortable}` + (e.spill ? `, queue spill ${e.spill}` : "");
       line.appendChild(title);
       root.appendChild(line);
       if (e.spill > 0) {
         const ride = rides[e.from] ? a : b;
-        root.appendChild(svg("circle", { cx: ride.x, cy: ride.y, r: 16 + Math.min(40, Math.sqrt(e.spill)), fill: "var(--bad)", opacity: 0.16 }));
+        root.appendChild(svg("circle", { cx: ride.x, cy: ride.y, r: k * (16 + Math.min(40, Math.sqrt(e.spill))), fill: "var(--bad)", opacity: 0.16 }));
       }
     }
     for (const n of nodes) {
+      if (n.kind === "junction") continue;
       const r = rides[n.id];
       const g = svg("g", {});
-      if (n.kind === "plaza") g.appendChild(svg("circle", { cx: n.x, cy: n.y, r: 9, fill: "var(--ink)" }));
-      else if (n.kind === "entrance" || n.kind === "exit") g.appendChild(svg("rect", { x: n.x - 11, y: n.y - 8, width: 22, height: 16, rx: 3, fill: "var(--muted)" }));
-      else if (n.kind === "show") g.appendChild(svg("rect", { x: n.x - 13, y: n.y - 13, width: 26, height: 26, rx: 4, fill: "var(--accent)" }));
-      else if (n.kind === "elsewhere") g.appendChild(svg("rect", { x: n.x - 15, y: n.y - 12, width: 30, height: 24, rx: 4, fill: "var(--panel)", stroke: "var(--muted)", "stroke-width": 2, "stroke-dasharray": "4 3" }));
-      else g.appendChild(svg("circle", { cx: n.x, cy: n.y, r: n.kind === "ride" ? 14 : 11, fill: "var(--panel)", stroke: r ? statusColor(r.status) : "var(--muted)", "stroke-width": 3 }));
-      // Labels sit on the side away from the hub so they do not cross the spokes.
-      const left = n.x < cx;
-      const t = svg("text", { x: n.x + (left ? -18 : 18), y: n.y - 16, "text-anchor": left ? "end" : "start",
-        "font-family": "IBM Plex Mono, monospace", "font-size": 12, fill: "var(--ink)" });
+      if (n.kind === "plaza") g.appendChild(svg("circle", { cx: n.x, cy: n.y, r: 9 * k, fill: "var(--ink)" }));
+      else if (n.kind === "entrance" || n.kind === "exit") g.appendChild(svg("rect", { x: n.x - 11 * k, y: n.y - 8 * k, width: 22 * k, height: 16 * k, rx: 3 * k, fill: "var(--muted)" }));
+      else if (n.kind === "show") g.appendChild(svg("rect", { x: n.x - 13 * k, y: n.y - 13 * k, width: 26 * k, height: 26 * k, rx: 4 * k, fill: "var(--accent)" }));
+      else if (n.kind === "elsewhere" || n.kind === "shop") g.appendChild(svg("rect", { x: n.x - 15 * k, y: n.y - 12 * k, width: 30 * k, height: 24 * k, rx: 4 * k, fill: "var(--panel)", stroke: "var(--muted)", "stroke-width": 2 * k, "stroke-dasharray": `${4 * k} ${3 * k}` }));
+      else g.appendChild(svg("circle", { cx: n.x, cy: n.y, r: k * (n.kind === "ride" ? 14 : 11), fill: "var(--panel)", stroke: r ? statusColor(r.status) : "var(--muted)", "stroke-width": 3 * k }));
       const short = shortName(n.label);
-      t.textContent = r ? `${short} ${r.status === "closed" ? "closed" : Math.round(r.posted_min) + "m"}` : short;
-      g.appendChild(t);
+      const text = r ? `${short} ${r.status === "closed" ? "closed" : Math.round(r.posted_min) + "m"}` : short;
+      if (labelled(n)) {
+        // Labels sit on the side away from the hub so they do not cross the spokes.
+        const left = n.x < cx;
+        const t = svg("text", { x: n.x + (left ? -18 : 18) * k, y: n.y - 16 * k, "text-anchor": left ? "end" : "start",
+          "font-family": "IBM Plex Mono, monospace", "font-size": 12 * k, fill: "var(--ink)" });
+        t.textContent = text;
+        g.appendChild(t);
+      } else {
+        const t = svg("title", {}); t.textContent = text;
+        g.appendChild(t);
+      }
       root.appendChild(g);
     }
     $("map").replaceChildren(root);
