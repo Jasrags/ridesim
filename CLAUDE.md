@@ -157,3 +157,12 @@ numbers come from `data/`. Read both before changing simulation logic.
 - Path graph: keep junctions where three or more paths meet plus attraction nodes; straight-through segments merge into one
   edge with the summed length.
 - Widths: OSM has none, so widths default by path type `[assumed]`; known chokepoints get measured later `[user]`.
+- Simple-ride capacity is the operational figure, ~90% of the fan-listed capacity (crooksinwdw OHRC; Tower of Terror uses
+  the 1,680/hr forum calculation) (Jason). It serves standby and Lightning Lane together; appeal is then calibrated.
+- Lightning Lane at Hollywood Studios has tiers (Jason): Multi Pass books 1 Tier 1 + 2 Tier 2 before the day, then rebooks
+  any Multi Pass ride after each use or lapse; Rise of the Resistance is a separate Single Pass with its own purchase
+  share. Nodes declare `lightning_lane: tier1 | tier2 | single_pass`; a park with no tiers keeps the M7 model.
+- Simple rides get a Lightning Lane line: each vehicle boards LL guests first, up to 2/3 of its seats (the spec's normal
+  2:1 merge ratio), so standby always moves.
+- Attendance (Jason): medium 28,300 a day (TEA 2024 average, derived), low 18,500 and high 38,000 [assumed]. Calibrate the
+  medium day against Queue-Times 2026 averages.
