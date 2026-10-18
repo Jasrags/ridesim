@@ -23,6 +23,7 @@ var commands = []command{
 	{"report", "recompute metrics from a saved event log", runReport},
 	{"study", "run an A/B study: base scenario vs variants on paired seeds", runStudy},
 	{"serve", "play a park scenario live in the browser (control room)", runServe},
+	{"osm-import", "write a draft park file from a saved OpenStreetMap extract", runOSMImport},
 }
 
 func main() {
@@ -51,6 +52,6 @@ func dispatch(args []string, stdout io.Writer) error {
 func usage(w io.Writer) {
 	fmt.Fprintln(w, "usage: ridesim <command> [flags]")
 	for _, c := range commands {
-		fmt.Fprintf(w, "  %-9s %s\n", c.name, c.summary)
+		fmt.Fprintf(w, "  %-10s %s\n", c.name, c.summary)
 	}
 }
