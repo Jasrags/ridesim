@@ -37,13 +37,15 @@ func (e *Edge) Other(n int) int {
 	return e.from
 }
 
-// Graph is the park layout with static free-flow routes between every pair of nodes.
+// Graph is the park layout with shortest routes between every pair of nodes: free-flow at first, and
+// rerouted from current walking times when the park asks (decision.reroute_s).
 type Graph struct {
 	Nodes []*Node
 	Edges []*Edge
 	byID  map[string]int // node id -> index; lookup only, never iterated
 	adj   [][]*Edge      // per node, in file order
-	// next[a][b] is the first edge on the free-flow shortest route from a to b; dist is its length in ft.
+	// next[a][b] is the first edge on the shortest route from a to b; dist is its cost in ft (length, or
+	// walking time at free speed after a reroute).
 	next [][]*Edge
 	dist [][]float64
 }
@@ -67,7 +69,7 @@ func NewGraph(p *config.ParkFile) (*Graph, error) {
 		g.adj[from] = append(g.adj[from], ed)
 		g.adj[to] = append(g.adj[to], ed)
 	}
-	g.routes()
+	g.routes(func(e *Edge) float64 { return e.LengthFt })
 	return g, nil
 }
 
@@ -89,7 +91,7 @@ func (g *Graph) Edge(id string) *Edge {
 	return nil
 }
 
-// Route is the free-flow shortest path from a to b as a list of edges (empty when a == b).
+// Route is the current shortest path from a to b as a list of edges (empty when a == b).
 func (g *Graph) Route(a, b int) []*Edge {
 	var out []*Edge
 	for a != b {
@@ -103,11 +105,14 @@ func (g *Graph) Route(a, b int) []*Edge {
 	return out
 }
 
-// Distance is the free-flow route length from a to b in ft.
+// Distance is the current route cost from a to b in ft (walking time at free speed after a reroute).
 func (g *Graph) Distance(a, b int) float64 { return g.dist[a][b] }
 
+// Reroute recomputes every route with the given edge cost (in ft).
+func (g *Graph) Reroute(cost func(*Edge) float64) { g.routes(cost) }
+
 // routes runs Dijkstra from every node. Ties break on edge file order, so routes are deterministic.
-func (g *Graph) routes() {
+func (g *Graph) routes(cost func(*Edge) float64) {
 	n := len(g.Nodes)
 	g.next = make([][]*Edge, n)
 	g.dist = make([][]float64, n)
@@ -127,7 +132,7 @@ func (g *Graph) routes() {
 			}
 			for _, e := range g.adj[cur.n] {
 				o := e.Other(cur.n)
-				if d := cur.d + e.LengthFt; d < dist[o] {
+				if d := cur.d + cost(e); d < dist[o] {
 					dist[o], via[o] = d, e
 					heap.Push(pq, nodeDist{o, d})
 				}

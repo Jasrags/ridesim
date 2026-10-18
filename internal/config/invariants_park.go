@@ -301,6 +301,9 @@ func checkDecision(p *ParkFile) (bool, string) {
 	if d.Method != DecisionSoftmaxUtility || d.ChoiceSet != ChoiceTopK {
 		bad = append(bad, fmt.Sprintf("method %q / choice_set %q (supported: %s / %s)", d.Method, d.ChoiceSet, DecisionSoftmaxUtility, ChoiceTopK))
 	}
+	if d.RerouteS < 0 || p.Congestion.MinCapacityLengthFt < 0 {
+		bad = append(bad, fmt.Sprintf("reroute_s %g and congestion.min_capacity_length_ft %g must be >= 0", d.RerouteS, p.Congestion.MinCapacityLengthFt))
+	}
 	if d.Temperature <= 0 || d.K < 1 || d.PostedWaitRefreshS <= 0 {
 		bad = append(bad, fmt.Sprintf("temperature %g, k %d, posted_wait_refresh_s %g must all be > 0", d.Temperature, d.K, d.PostedWaitRefreshS))
 	}

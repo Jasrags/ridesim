@@ -125,7 +125,19 @@ func (s *simpleRide) posted() engine.Duration {
 	standby := math.Max(1-float64(ll)/simpleLLWindow/float64(s.seats), float64(simpleLLDen-simpleLLNum)/simpleLLDen)
 	return engine.Seconds(float64(s.line.Guests()) / (s.n.CapacityPerHr / 3600 * standby))
 }
-func (s *simpleRide) queueGuests() int   { return s.line.Guests() + s.llLine.Guests() }
+func (s *simpleRide) queueGuests() int { return s.line.Guests() + s.llLine.Guests() }
+
+// postLogger is an activity whose posted wait the park logs at each board refresh (full ride models log
+// their own).
+type postLogger interface{ logPosted(engine.Duration) }
+
+func (s *simpleRide) logPosted(d engine.Duration) {
+	s.sim.Emit(engine.Event{Type: engine.EvPostedWait, N: int(d / engine.Second), Info: config.PostedQueueLenOverThroughput})
+}
+
+func (m *meet) logPosted(d engine.Duration) {
+	m.sim.Emit(engine.Event{Type: engine.EvPostedWait, N: int(d / engine.Second), Info: config.PostedQueueLenOverThroughput})
+}
 func (s *simpleRide) queueCapacity() int { return s.n.QueueCapacity }
 
 func (s *simpleRide) visit(p *guest.Party, lane guest.Lane) {

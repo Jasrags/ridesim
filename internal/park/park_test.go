@@ -322,3 +322,11 @@ func TestMeetServesOnePartyAtATime(t *testing.T) {
 		t.Errorf("after 6 min, %d meets done, want 3 in sequence", n)
 	}
 }
+
+// Simple rides and meets log their posted wait at each board refresh, so park metrics can report it.
+func TestSimpleRidesLogPostedWaits(t *testing.T) {
+	_, sim := runPark(t, 1, Options{Attendance: 600}, 0)
+	if n, _ := count(sim, engine.EvPostedWait, "filler"); n < 10 {
+		t.Errorf("filler logged %d posted waits, want one per board refresh", n)
+	}
+}

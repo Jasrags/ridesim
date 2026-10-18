@@ -233,6 +233,9 @@ func (p *Park) Start() {
 			if a != nil {
 				p.board[i] = a.posted()
 			}
+			if lp, ok := a.(postLogger); ok {
+				lp.logPosted(p.board[i])
+			}
 			if ra, ok := a.(*rideAct); ok {
 				p.closed[i] = ra.closed()
 			}
@@ -240,6 +243,15 @@ func (p *Park) Start() {
 		p.sim.After(engine.Seconds(p.cfg.Decision.PostedWaitRefreshS), refresh)
 	}
 	refresh()
+	if every := p.cfg.Decision.RerouteS; every > 0 {
+		speed := p.cfg.Congestion.FreeSpeedFps
+		var reroute func()
+		reroute = func() {
+			p.g.Reroute(func(e *Edge) float64 { return p.tt.Estimate(e).Seconds() * speed })
+			p.sim.After(engine.Seconds(every), reroute)
+		}
+		p.sim.After(engine.Seconds(every), reroute)
+	}
 	p.drawParties()
 	if p.ll != nil {
 		var expected []*agent // advance bookings only for parties expected at the opening crowd scale

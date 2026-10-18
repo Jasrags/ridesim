@@ -502,6 +502,7 @@ type Congestion struct {
 	Alpha                     float64   `yaml:"alpha"`
 	Beta                      float64   `yaml:"beta"`
 	JamDensityPerSqft         float64   `yaml:"jam_density_per_sqft"`
+	MinCapacityLengthFt       float64   `yaml:"min_capacity_length_ft"` // capacity and jam use at least this length (0 = off; M9)
 	Spillback                 Spillback `yaml:"spillback"`
 }
 
@@ -537,6 +538,7 @@ type Decision struct {
 	FatiguePerHour     float64  `yaml:"fatigue_per_hour"`
 	MealWindows        []string `yaml:"meal_windows"`
 	MealWindowBonus    float64  `yaml:"meal_window_bonus"` // added to dining utility inside a meal window
+	RerouteS           float64  `yaml:"reroute_s"`         // recompute routes from current walking times this often (0 = static; M9)
 }
 
 type Utility struct {
