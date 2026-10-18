@@ -42,7 +42,7 @@ nodes:
 
   # shows
   - { id: frozen_sing_along, kind: show, name: "For the First Time in Forever: A Frozen Sing-Along Celebration (Hyperion Theater)", land: echo_lake, map_no: [9], osm: [w235996925] }
-  - { id: vacation_fun, kind: show, name: "Vacation Fun (Mickey Shorts Theater)", land: echo_lake, map_no: [10], osm: [w530251994] }
+  - { id: vacation_fun, kind: ride_simple, name: "Vacation Fun (Mickey Shorts Theater)", land: echo_lake, map_no: [10], osm: [w530251994] }
   - { id: indiana_jones, kind: show, name: "Indiana Jones Epic Stunt Spectacular!", land: echo_lake, map_no: [12], osm: [w42910942] }
   - { id: walt_disney_presents, kind: ride_simple, name: "Walt Disney Presents (walk-through)", land: animation_courtyard, map_no: [50], osm: [w412885186] }
   - { id: little_mermaid, kind: show, name: "The Little Mermaid – A Musical Adventure (OSM: Voyage of the Little Mermaid)", land: animation_courtyard, map_no: [51], osm: [w294905186] }
@@ -52,9 +52,9 @@ nodes:
   - { id: villains, kind: show, name: "Disney Villains: Unfairly Ever After", land: sunset_boulevard, map_no: [58], osm: [w454132294] }
 
   # character meets (none are in OSM; stand-ins are the nearest mapped building)
-  - { id: meet_olaf, kind: ride_simple, name: "Meet Olaf at Celebrity Spotlight (stand-in: Frozen Fractal Gifts)", land: echo_lake, map_no: [11], osm: [n2985424030] }
-  - { id: meet_mickey_minnie, kind: ride_simple, name: "Meet Mickey and Minnie at Red Carpet Dreams (stand-in: ABC Commissary)", land: commissary_lane, map_no: [23], osm: [w294899619] }
-  - { id: meet_edna, kind: ride_simple, name: "Meet Edna Mode (stand-in: Toy Story Mania!, Pixar Place)", land: pixar_place, map_no: [47], osm: [w294905178] }
+  - { id: meet_olaf, kind: meet, name: "Meet Olaf at Celebrity Spotlight (stand-in: Frozen Fractal Gifts)", land: echo_lake, map_no: [11], osm: [n2985424030] }
+  - { id: meet_mickey_minnie, kind: meet, name: "Meet Mickey and Minnie at Red Carpet Dreams (stand-in: ABC Commissary)", land: commissary_lane, map_no: [23], osm: [w294899619] }
+  - { id: meet_edna, kind: meet, name: "Meet Edna Mode (stand-in: Toy Story Mania!, Pixar Place)", land: pixar_place, map_no: [47], osm: [w294905178] }
 
   # dining
   - { id: trolley_car_cafe, kind: dining, name: "The Trolley Car Café (OSM: Starbucks)", land: hollywood_boulevard, map_no: [2], osm: [w294883718] }

@@ -223,8 +223,8 @@ func (p *Park) Start() {
 		s()
 	}
 	for _, e := range p.g.Edges {
-		// N = comfortable capacity C in guests (length x width x comfortable density), for congestion metrics.
-		c := int(math.Round(e.LengthFt * e.WidthFt * p.cfg.Congestion.ComfortableDensityPerSqft))
+		// N = comfortable capacity C in guests (length, or the capacity floor, x width x comfortable density).
+		c := int(math.Round(math.Max(e.LengthFt, p.cfg.Congestion.MinCapacityLengthFt) * e.WidthFt * p.cfg.Congestion.ComfortableDensityPerSqft))
 		p.sim.Emit(engine.Event{Type: EvParkEdge, Block: e.ID, N: c, Info: p.g.Nodes[e.from].ID + "-" + p.g.Nodes[e.to].ID})
 	}
 	var refresh func()
