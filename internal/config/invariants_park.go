@@ -380,6 +380,10 @@ func checkLLTiers(p *ParkFile) []string {
 			if n.Kind != NodeRide && n.Kind != NodeRideSimple {
 				bad = append(bad, fmt.Sprintf("%s: lightning_lane on a %s node (rides only)", n.ID, n.Kind))
 			}
+			// Lightning Lane takes at most 2/3 of a simple ride's vehicle; the largest party must fit in that.
+			if seats := int(math.Max(1, math.Round(n.CapacityPerHr*RideSimpleIntervalS/3600))); n.Kind == NodeRideSimple && seats*2/3 < maxPartySize(p) {
+				bad = append(bad, fmt.Sprintf("%s: Lightning Lane may take %d of %d seats per vehicle, less than the largest party (%d)", n.ID, seats*2/3, seats, maxPartySize(p)))
+			}
 		default:
 			bad = append(bad, fmt.Sprintf("%s: lightning_lane %q (want tier1, tier2 or single_pass)", n.ID, n.LightningLane))
 		}
@@ -397,4 +401,12 @@ func checkLLTiers(p *ParkFile) []string {
 		bad = append(bad, fmt.Sprintf("single_pass_share %g must be in [0, 1]", ll.SinglePassShare))
 	}
 	return bad
+}
+
+func maxPartySize(p *ParkFile) int {
+	m := 0
+	for s := range p.Guests.PartySize {
+		m = max(m, s)
+	}
+	return m
 }

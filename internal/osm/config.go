@@ -90,6 +90,11 @@ func (c *Config) check() error {
 			return fmt.Errorf("walk.widths_ft has no positive width for highway %q", h)
 		}
 	}
+	for _, r := range c.Walk.ExcludeInside {
+		if _, err := ParseRef(r); err != nil {
+			return fmt.Errorf("walk.exclude_inside: %w", err)
+		}
+	}
 	seen := map[string]bool{}
 	for _, n := range c.Nodes {
 		if n.ID == "" || n.Kind == "" {

@@ -81,13 +81,15 @@ func checkParkRideRefs(ds *Dataset, p *ParkFile) Result {
 		}
 		if rf := ds.Ride(n.RideID); rf == nil {
 			bad = append(bad, fmt.Sprintf("%s -> %s", n.ID, n.RideID))
+		} else if n.LightningLane != "" && !rf.RideInfoQueues().SkipLine.Enabled {
+			bad = append(bad, fmt.Sprintf("%s: lightning_lane %s but %s has no Lightning Lane line (queues.skip_line)", n.ID, n.LightningLane, rf.Path))
 		} else {
 			good = append(good, fmt.Sprintf("%s -> %s", n.ID, rf.Path))
 		}
 	}
 	r := Result{CheckID: "park.ride_refs", Severity: SevError, Status: passFail(len(bad) == 0)}
 	if len(bad) > 0 {
-		r.Detail = "unresolved ride_id: " + strings.Join(bad, ", ")
+		r.Detail = "unresolved ride_id or Lightning Lane line: " + strings.Join(bad, ", ")
 	} else {
 		r.Detail = strings.Join(good, ", ")
 	}

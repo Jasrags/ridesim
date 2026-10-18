@@ -366,3 +366,29 @@ func TestParseRef(t *testing.T) {
 		}
 	}
 }
+
+// Overpass can list a way twice (out skel, then out body); the tagged copy must win in both lookups.
+func TestParseKeepsTaggedDuplicateWay(t *testing.T) {
+	js := `{"elements":[
+		{"type":"way","id":7,"nodes":[1,2]},
+		{"type":"way","id":7,"nodes":[1,2],"tags":{"highway":"footway"}}]}`
+	x, err := Parse(strings.NewReader(js))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if ws := x.WaysInOrder(); len(ws) != 1 || ws[0].Tags["highway"] != "footway" || x.Ways[7] != ws[0] {
+		t.Fatalf("ways in order %+v, by id %+v; want the one tagged copy in both", ws, x.Ways[7])
+	}
+}
+
+func TestExcludeInsideRefsAreChecked(t *testing.T) {
+	cfg := testConfig(NodeSpec{ID: "gate", Kind: "entrance", OSM: []string{"n90"}})
+	cfg.Walk.ExcludeInside = []string{"x40"}
+	if err := cfg.check(); err == nil {
+		t.Error("a malformed exclude_inside ref passed the config check")
+	}
+	cfg.Walk.ExcludeInside = []string{"w404"}
+	if _, err := Build(chainFixture().x, cfg); err == nil {
+		t.Error("an exclude_inside outline missing from the extract was ignored")
+	}
+}

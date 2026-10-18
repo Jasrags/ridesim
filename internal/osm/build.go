@@ -49,7 +49,10 @@ func Build(x *Extract, c *Config) (*Draft, error) {
 	}
 	d := &Draft{ParkID: c.Park.ID, Name: c.Park.Name, Timestamp: x.Timestamp, Origin: proj.Origin}
 	g := newGraph()
-	plazas := addWalkways(g, x, c, proj)
+	plazas, err := addWalkways(g, x, c, proj)
+	if err != nil {
+		return nil, err
+	}
 	d.Notes = append(d.Notes, bridgeDeadEnds(g, c.Walk.SnapFt)...)
 	plazaCentres := addPlazas(g, plazas, c)
 	d.Notes = append(d.Notes, joinPieces(g, c.Walk.SnapFt)...)
@@ -169,15 +172,19 @@ func (c *Config) isWalkway(t map[string]string) bool {
 }
 
 // addWalkways adds every selected way and returns the closed pedestrian areas (plazas).
-func addWalkways(g *graph, x *Extract, c *Config, proj Projection) []*Element {
+func addWalkways(g *graph, x *Extract, c *Config, proj Projection) ([]*Element, error) {
 	var plazas []*Element
 	var outlines [][]Pt
 	for _, ref := range c.Walk.ExcludeInside {
-		if r, err := ParseRef(ref); err == nil {
-			if e := x.Element(r); e != nil {
-				outlines = append(outlines, projectAll(proj, x.Points(e)))
-			}
+		r, err := ParseRef(ref)
+		if err != nil {
+			return nil, fmt.Errorf("walk.exclude_inside: %w", err)
 		}
+		e := x.Element(r)
+		if e == nil {
+			return nil, fmt.Errorf("walk.exclude_inside: %s not in extract", r)
+		}
+		outlines = append(outlines, projectAll(proj, x.Points(e)))
 	}
 	for _, w := range x.WaysInOrder() {
 		if !c.isWalkway(w.Tags) || insideAny(x, proj, w, outlines) {
@@ -201,7 +208,7 @@ func addWalkways(g *graph, x *Extract, c *Config, proj Projection) []*Element {
 			plazas = append(plazas, w)
 		}
 	}
-	return plazas
+	return plazas, nil
 }
 
 // insideAny reports whether every node of the way lies inside one of the outlines.

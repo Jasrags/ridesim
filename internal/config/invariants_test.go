@@ -272,7 +272,7 @@ func tiered(t *testing.T, extra ...[2]string) *File {
 	s := string(b)
 	for _, r := range append([][2]string{
 		{"ride_id: test.fx.coaster, appeal", "ride_id: test.fx.coaster, lightning_lane: tier1, appeal"},
-		{"duration_s: 60, appeal: 0.1", "duration_s: 60, lightning_lane: single_pass, appeal: 0.1"},
+		{"capacity_per_hr: 100, duration_s: 60, appeal: 0.1", "capacity_per_hr: 300, duration_s: 60, lightning_lane: single_pass, appeal: 0.1"},
 		{"  elsewhere_share: 0.5", "  elsewhere_share: 0.5\n  advance_by_tier: { tier1: 1, tier2: 2 }\n  single_pass_share: 0.2"},
 	}, extra...) {
 		if !strings.Contains(s, r[0]) {
@@ -297,6 +297,7 @@ func TestParkLightningLaneTiers(t *testing.T) {
 		"no advance_by_tier":   {"  advance_by_tier: { tier1: 1, tier2: 2 }\n", ""},
 		"bad advance tier key": {"advance_by_tier: { tier1: 1, tier2: 2 }", "advance_by_tier: { tier1: 1, gold: 2 }"},
 		"single pass share":    {"single_pass_share: 0.2", "single_pass_share: 1.5"},
+		"LL share too small":   {"capacity_per_hr: 300,", "capacity_per_hr: 120,"}, // 2 seats: LL may take 1, the largest party is 2
 	} {
 		if r := resultFor(t, CheckFile(tiered(t, patch)), "park.lightning_lane"); r.Status != StatusFail {
 			t.Errorf("%s: got %v (%s), want FAIL", name, r.Status, r.Detail)
@@ -323,5 +324,14 @@ func TestCalibrationTargetsRunInfo(t *testing.T) {
 	ct = CalibrationTargets{Rides: map[string]StandbyTarget{"slinky_dog_dash": {AvgMin: 63, PeakMin: 83}, "rise_of_the_resistance": {AvgMin: 47, PeakMin: 65}}}
 	if got, want := ct.RunInfo(), "rise_of_the_resistance:47:65,slinky_dog_dash:63:83"; got != want {
 		t.Errorf("ride targets = %q, want %q (sorted by node)", got, want)
+	}
+}
+
+func TestParkTierNeedsALightningLaneLine(t *testing.T) {
+	park := tiered(t)
+	coaster := patched(t, fxCoaster, "", "  skip_line:\n    enabled: true", "  skip_line:\n    enabled: false")
+	r := checkParkRideRefs(&Dataset{Files: []*File{coaster, park}}, park.Park)
+	if r.Status != StatusFail || !strings.Contains(r.Detail, "Lightning Lane line") {
+		t.Fatalf("tier on a ride without a skip line: %v (%s), want FAIL", r.Status, r.Detail)
 	}
 }

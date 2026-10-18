@@ -61,8 +61,19 @@ func Parse(r io.Reader) (*Extract, error) {
 			}
 			x.Nodes[e.ID] = e
 		case "way":
-			if _, ok := x.Ways[e.ID]; !ok {
+			// As for nodes, a tagged copy replaces a bare one, in file order and by id alike.
+			old, ok := x.Ways[e.ID]
+			switch {
+			case !ok:
 				x.ways = append(x.ways, e)
+			case len(old.Tags) > 0:
+				continue
+			default:
+				for i := range x.ways {
+					if x.ways[i] == old {
+						x.ways[i] = e
+					}
+				}
 			}
 			x.Ways[e.ID] = e
 		case "relation":

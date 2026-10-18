@@ -73,6 +73,7 @@ numbers come from `data/`. Read both before changing simulation logic.
 - `go run ./cmd/ridesim study -file data/studies/everest-operations.yaml -json out/study.json`
 - `go run ./cmd/ridesim run -scenario data/scenarios/park-medium-day.yaml -log out/park.jsonl` (park day, M7)
 - `go run ./cmd/ridesim serve -scenario data/scenarios/park-medium-day.yaml` (web control room, M8; http://127.0.0.1:8080/)
+- `go run ./cmd/ridesim run -scenario data/scenarios/dhs-medium-day.yaml` (Hollywood Studios day, M9; serve works the same)
 - `go run ./cmd/ridesim osm-import -config osm/wdw-dhs/import.yaml -out out/dhs-draft.yaml -svg out/dhs-draft.svg` (draft park from OSM, M9)
 
 ## Decisions log (M3 kickoff, 2026-10-17)
@@ -166,3 +167,9 @@ numbers come from `data/`. Read both before changing simulation logic.
   2:1 merge ratio), so standby always moves.
 - Attendance (Jason): medium 28,300 a day (TEA 2024 average, derived), low 18,500 and high 38,000 [assumed]. Calibrate the
   medium day against Queue-Times 2026 averages.
+- Character meets are `meet` nodes (one party at a time, meet_s per party); continuous films run as simple rides.
+- Walkway gridlock fix (Jason): `congestion.min_capacity_length_ft` (100 ft at DHS) so short links carry crowds like a longer
+  walkway, and `decision.reroute_s` (300 s at DHS) so routes follow current walking times. Both default off, so the synthetic
+  park is unchanged. Simple rides and meets log their posted waits at each board refresh.
+- DHS calibration (approved): patience 75 +- 30, wait penalty 0.012, ride and meet appeals fitted to Queue-Times 2026 (appeal
+  may exceed 1.0). Results and gaps in docs/m9-report.md; changes in docs/tuning-log.md.
