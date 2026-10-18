@@ -25,12 +25,15 @@ type ElevatorFile struct {
 }
 
 type ElevatorVehicles struct {
-	FleetSize       int    `yaml:"fleet_size"`
-	PerSide         int    `yaml:"per_side"` // cabs in service on each side
-	SeatsPerVehicle int    `yaml:"seats_per_vehicle"`
-	SeatsPerRow     int    `yaml:"seats_per_row"` // parties take whole rows of this many seats
-	Layout          string `yaml:"layout"`
-	Restraints      string `yaml:"restraints"`
+	FleetSize       int `yaml:"fleet_size"`
+	PerSide         int `yaml:"per_side"` // cabs in service on each side
+	SeatsPerVehicle int `yaml:"seats_per_vehicle"`
+	SeatsPerRow     int `yaml:"seats_per_row"` // parties take whole rows of this many seats
+	// BoardingGroups replaces the row rule ([user] Tower of Terror): seats per boarding group, front to
+	// back. A party sits in one group if any has room, else it is split; parties share groups.
+	BoardingGroups []int  `yaml:"boarding_groups"`
+	Layout         string `yaml:"layout"`
+	Restraints     string `yaml:"restraints"`
 }
 
 type ElevatorSides struct {
@@ -52,9 +55,12 @@ type ElevatorCycle struct {
 	RestraintCheckS    Dist    `yaml:"restraint_check_s"`
 	DispatchClearanceS Dist    `yaml:"dispatch_clearance_s"`
 	MaxWaitAfterReadyS float64 `yaml:"max_wait_after_ready_s"` // hold an unfilled cab this long after load_s
-	ShowS              Dist    `yaml:"show_s"`                 // lift, hallway, Fifth Dimension, up to the drop shaft door
-	DropS              Dist    `yaml:"drop_s"`                 // into the drop shaft, drop sequence, down and out
-	ToUnloadS          Dist    `yaml:"to_unload_s"`            // drop shaft to an unload door
+	// CalloutParties: cast call this far into the load line (in parties) for a party that fits the spare
+	// seats when the head party does not ([user] Tower of Terror). 0 = no callouts.
+	CalloutParties int  `yaml:"callout_parties"`
+	ShowS          Dist `yaml:"show_s"`      // lift, hallway, Fifth Dimension, up to the drop shaft door
+	DropS          Dist `yaml:"drop_s"`      // into the drop shaft, drop sequence, down and out
+	ToUnloadS      Dist `yaml:"to_unload_s"` // drop shaft to an unload door
 }
 
 // SideInterval is the theoretical time between dispatches on one side: the slowest of the drop shafts,

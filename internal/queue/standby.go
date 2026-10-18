@@ -62,6 +62,31 @@ func (q *FIFO) Remove(p *guest.Party) {
 	q.count--
 }
 
+// TakeFirst removes and returns the first of the front `window` waiting parties for which ok is true,
+// or nil. The parties ahead of it keep their places (a cast member's callout for a party that fits).
+func (q *FIFO) TakeFirst(window int, ok func(*guest.Party) bool) *guest.Party {
+	seen := 0
+	for i := q.head; i < len(q.parties) && seen < window; i++ {
+		p := q.parties[i]
+		if p == nil || p.Gone {
+			continue
+		}
+		seen++
+		if !ok(p) {
+			continue
+		}
+		if i == q.head {
+			return q.Pop()
+		}
+		copy(q.parties[i:], q.parties[i+1:])
+		q.parties = q.parties[:len(q.parties)-1]
+		q.guests -= p.Size
+		q.count--
+		return p
+	}
+	return nil
+}
+
 // Parties is the number of parties waiting.
 func (q *FIFO) Parties() int { return q.count }
 

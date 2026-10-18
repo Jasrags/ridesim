@@ -45,7 +45,9 @@ vehicles:
   fleet_size: 8                        # [wiki] "Vehicles: 8"
   per_side: 4                          # [fan ts] "Each side can run 4 AGVs"; [fan forum] "max four vehicles online" per side
   seats_per_vehicle: 21                # [wiki] 21 riders
-  seats_per_row: 1                     # [wiki] 3 rows x 7 benches; [assumed] parties share a bench, so seats are modeled one by one
+  seats_per_row: 1                     # unused with boarding_groups (kept for the row rule's check)
+  boarding_groups: [3, 4, 3, 4, 7]     # [user] five boarding groups, front to back: rows 1 and 3 seat 3, rows 2 and 4 seat 4, row 5 seats 7 (Jason, 2026-10-18)
+                                       # [user] cast keep a party together when a group fits it and fill spare seats with other parties
   layout: "3 rows of 7"                # [wiki]
   restraints: individual_seat_belt     # [assumed] lap belts; not in the fetched sources
 
@@ -67,6 +69,8 @@ cycle:
   restraint_check_s:   { mean: 6, sd: 2 }    # [assumed]
   dispatch_clearance_s: { mean: 3, sd: 1 }   # [assumed]
   max_wait_after_ready_s: 8                  # [assumed]
+  callout_parties: 10                        # [user] cast call into the line for a party of a specific size; almost every cab leaves full.
+                                             # How far back a callout reaches is [assumed] (10 parties)
   show_s:              { mean: 110, sd: 3 }  # [assumed] lift to the hallway scene, lift to the Fifth Dimension, drive to the drop shaft
   drop_s:              { mean: 90, sd: 3 }   # [assumed] into the drop shaft, randomized drop sequence [wiki], down to the basement, back out
   to_unload_s:         { mean: 14, sd: 2 }   # [assumed] back out, pivot, pull up to an unload door [fan tom]

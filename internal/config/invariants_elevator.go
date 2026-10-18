@@ -51,6 +51,19 @@ func checkElevatorNoGridlock(c *ElevatorFile) (bool, string) {
 
 func checkElevatorSeatRows(c *ElevatorFile) (bool, string) {
 	v := c.Vehicles
+	if c.Cycle.CalloutParties < 0 {
+		return false, fmt.Sprintf("callout_parties %d must be >= 0", c.Cycle.CalloutParties)
+	}
+	if g := v.BoardingGroups; len(g) > 0 {
+		sum := 0
+		for _, n := range g {
+			if n < 1 {
+				return false, fmt.Sprintf("boarding_groups %v: every group needs a seat", g)
+			}
+			sum += n
+		}
+		return sum == v.SeatsPerVehicle, fmt.Sprintf("boarding_groups %v sum to %d, seats_per_vehicle %d", g, sum, v.SeatsPerVehicle)
+	}
 	ok := v.SeatsPerRow > 0 && v.SeatsPerVehicle > 0 && v.SeatsPerVehicle%v.SeatsPerRow == 0
 	return ok, fmt.Sprintf("%d seats in rows of %d", v.SeatsPerVehicle, v.SeatsPerRow)
 }

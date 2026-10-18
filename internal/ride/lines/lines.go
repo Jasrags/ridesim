@@ -187,6 +187,19 @@ func (l *Lines) Pop(line *queue.FIFO) *guest.Party {
 	return p
 }
 
+// CallOut takes the first party of at most max guests among the next window standby-side parties in the
+// load line, or nil: cast calling into the line for a party that fills the spare seats ([user] Runaway
+// Railway). Single riders are not counted here; PopSingle takes them.
+func (l *Lines) CallOut(max, window int) *guest.Party {
+	llWaiting := l.ll != nil && l.ll.Peek() != nil
+	p := l.loadStandby.TakeFirst(window, func(p *guest.Party) bool { return p.Size <= max })
+	if p != nil && l.merge != nil && l.stage == nil {
+		l.merge.Took(p, llWaiting)
+		l.merge.Update(l.ll.Guests())
+	}
+	return p
+}
+
 // PeekSingle and PopSingle give the earliest single rider anywhere in the load line (the grouper's pull).
 func (l *Lines) PeekSingle() *guest.Party { return l.loadSingle.Peek() }
 func (l *Lines) PopSingle() *guest.Party  { return l.loadSingle.Pop() }

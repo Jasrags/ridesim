@@ -76,3 +76,23 @@ A Go review of the new code found nothing critical or high. Fixed:
 - **Preshow:** the 60-guest group, 2-minute show and where Lightning Lane merges (before the library, `[assumed]`).
 - **Not modeled:** cabs crossing sides over the basement bridge, and the maintenance bay that holds a spare cab.
 - **`ridesim run -ride`** still runs coasters only. Tower of Terror runs in park days and tests, as Haunted Mansion does.
+
+## Follow-up: seating from Jason's visit (2026-10-18)
+Jason's observations, tagged `[user]`:
+- a cab has five boarding groups, front to back 3, 4, 3, 4 and 7 seats (21, matching Wikipedia);
+- cast keep a party together when a group fits it, and fill spare seats with other parties;
+- cast call into the line for a party of a specific size;
+- almost every cab leaves full.
+
+The model now seats by `vehicles.boarding_groups`:
+- **Placement:** a party takes the smallest group with room for it. If no single group has room, it is split over the groups with
+  the most free seats.
+- **Spare seats:** they go to the next party in line, then single riders, then a party called forward from up to `callout_parties`
+  back. That reach of 10 parties is `[assumed]`.
+- **No skipping otherwise:** boarding still stops at the first party that cannot be seated and is not reached by a callout.
+
+**Checks:** with a mixed crowd, a 10-seat test cab carries 9.82 riders with callouts and 9.08 without.
+
+**Hollywood Studios (medium, 10 seeds):** Tower of Terror carries ~1,598/hr (was ~1,524) and posts 30.1 / 46.9 min against
+Queue-Times' 30 / 53, so the 2-minute overshoot is gone. Other rides' logs outside Hollywood Studios are byte-identical.
+

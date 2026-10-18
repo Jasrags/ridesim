@@ -196,3 +196,5 @@ numbers come from `data/`. Read both before changing simulation logic.
 - Runaway Railway (Jason): 2,160/hr (90% of listed), two preshow rooms of 32, parties share the 4-seat rows; trains of 32 on scene
   blocks, no new code. Jason's seating observations (five boarding groups of 3/4/3/4/7, callouts) were about Tower of Terror, not
   Railway.
+- Tower of Terror seating [user] (Jason): five boarding groups of 3/4/3/4/7; a party sits in one group if any fits, else it is split;
+  spare seats go to the next party, single riders, then a party called forward from up to `callout_parties` (10, [assumed]) back.

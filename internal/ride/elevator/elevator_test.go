@@ -230,3 +230,63 @@ func TestEveryCabKeepsCyclingWithPreshow(t *testing.T) {
 		}
 	}
 }
+
+// [user] Tower of Terror: five boarding groups of 3, 4, 3, 4, 7. A party sits in the smallest group with
+// room for it; one no group can hold is split over the groups with the most free seats.
+func TestPlaceInGroups(t *testing.T) {
+	cases := []struct {
+		name       string
+		free       []int
+		size       int
+		wantFreeAt []int
+	}{
+		{"pair takes the smallest group that fits", []int{3, 4, 3, 4, 7}, 2, []int{1, 4, 3, 4, 7}},
+		{"four skips the threes", []int{3, 4, 3, 4, 7}, 4, []int{3, 0, 3, 4, 7}},
+		{"six goes to the back row", []int{3, 4, 3, 4, 7}, 6, []int{3, 4, 3, 4, 1}},
+		{"tie goes to the front", []int{3, 3}, 3, []int{0, 3}},
+		{"too big for any group: split from the fullest", []int{3, 4, 3, 2, 1}, 6, []int{1, 0, 3, 2, 1}},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			free := append([]int(nil), c.free...)
+			placeInGroups(free, c.size)
+			for i := range free {
+				if free[i] != c.wantFreeAt[i] {
+					t.Fatalf("free after seating %d: %v, want %v", c.size, free, c.wantFreeAt)
+				}
+			}
+		})
+	}
+}
+
+// Callouts [user]: with a mix of party sizes, cast call a party that fits forward when the head party
+// cannot use the spare seats, so cabs leave nearly full and fuller than without callouts.
+func TestCalloutsFillCabs(t *testing.T) {
+	seatsUsed := func(callout int) float64 {
+		cfg := *fixture(t)
+		cfg.Vehicles.SeatsPerVehicle, cfg.Vehicles.BoardingGroups = 10, []int{3, 3, 4}
+		cfg.Cycle.CalloutParties = callout
+		sim := engine.New(1)
+		r, err := New(sim, &cfg, Options{FixedTimes: true})
+		if err != nil {
+			t.Fatal(err)
+		}
+		r.Start()
+		prof := guest.Profile{PartySizes: guest.PartySizesFrom(map[int]float64{1: 0.1, 2: 0.35, 3: 0.2, 4: 0.25, 5: 0.07, 6: 0.03})}
+		guest.StartArrivalsWith(sim, guest.Curve{{RatePerHr: 4000}}, prof, r, engine.Time(4*engine.Hour))
+		sim.RunUntil(engine.Time(4 * engine.Hour))
+		riders, cabs := 0, 0
+		for _, e := range sim.Log.Events() {
+			if e.Type == engine.EvDispatch && e.T > engine.Time(engine.Hour) {
+				riders += e.N
+				cabs++
+			}
+		}
+		return float64(riders) / float64(cabs)
+	}
+	without, with := seatsUsed(0), seatsUsed(10)
+	t.Logf("riders per 10-seat cab: %.2f without callouts, %.2f with", without, with)
+	if with < 9.5 || with <= without {
+		t.Errorf("callouts: %.2f riders per cab (without %.2f); want nearly full and fuller", with, without)
+	}
+}
