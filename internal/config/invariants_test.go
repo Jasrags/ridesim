@@ -108,6 +108,11 @@ func TestErrorChecksFailOnBrokenFixtures(t *testing.T) {
 		{"continuous.party_policy", fxOmnimover, "", "party_vehicle_policy: contiguous_vehicles", "party_vehicle_policy: interleave"},
 		{"preshow.throughput", fxOmnimover, "", "batch_size: 100", "batch_size: 10"},
 
+		// coaster further stages (M11)
+		{"coaster.stages", fxCoaster, "", "queues:\n  party_split_policy: never", "stages:\n  - { id: cell, enabled: true, rooms: 1, batch_size: 10, duration_s: { mean: 60, sd: 1 }, turnover_s: { mean: 10, sd: 1 } }\nqueues:\n  party_split_policy: never"},                    // below listed
+		{"coaster.stages", fxCoaster, "", "queues:\n  party_split_policy: never", "stages:\n  - { enabled: true, rooms: 2, batch_size: 20, duration_s: { mean: 60, sd: 1 }, turnover_s: { mean: 10, sd: 1 } }\nqueues:\n  party_split_policy: never"},                              // no id
+		{"coaster.stages", fxCoaster, "", "queues:\n  party_split_policy: never", "stages:\n  - { id: cell, enabled: true, rooms: 2, batch_size: 20, merge_point: true, duration_s: { mean: 60, sd: 1 }, turnover_s: { mean: 10, sd: 1 } }\nqueues:\n  party_split_policy: never"}, // merge
+		{"coaster.stages", fxCoaster, "", "queues:\n  party_split_policy: never", "stages:\n  - { id: cell, enabled: true, rooms: 0, batch_size: 20, duration_s: { mean: 60, sd: 1 }, turnover_s: { mean: 10, sd: 1 } }\nqueues:\n  party_split_policy: never"},                    // rooms
 		// elevator_drop
 		{"elevator.sides", fxElevator, "", "drop_shafts: 1", "drop_shafts: 0"},
 		{"elevator.sides", fxElevator, "", "names: [left, right]", "names: [left]"},
@@ -249,8 +254,8 @@ func TestRealData(t *testing.T) {
 	for _, le := range ds.LoadErrors {
 		t.Errorf("load error %s: %v", le.Path, le.Err)
 	}
-	if len(ds.Files) != 26 {
-		t.Fatalf("loaded %d files, want 26 (5 rides, 2 parks, 16 scenarios, 3 studies)", len(ds.Files))
+	if len(ds.Files) != 27 {
+		t.Fatalf("loaded %d files, want 27 (6 rides, 2 parks, 16 scenarios, 3 studies)", len(ds.Files))
 	}
 	rep := Validate(ds)
 	for _, fr := range rep.Files {
@@ -348,5 +353,23 @@ func TestParkTierNeedsALightningLaneLine(t *testing.T) {
 	r := checkParkRideRefs(&Dataset{Files: []*File{coaster, park}}, park.Park)
 	if r.Status != StatusFail || !strings.Contains(r.Detail, "Lightning Lane line") {
 		t.Fatalf("tier on a ride without a skip line: %v (%s), want FAIL", r.Status, r.Detail)
+	}
+}
+
+// A valid further stage passes, and a stage without the preshow before it fails.
+func TestStagesValidAndNeedPreshow(t *testing.T) {
+	stage := "stages:\n  - { id: cell, enabled: true, rooms: 2, batch_size: 20, duration_s: { mean: 60, sd: 1 }, turnover_s: { mean: 10, sd: 1 } }\nqueues:\n  party_split_policy: never"
+	f := patched(t, fxCoaster, "", "queues:\n  party_split_policy: never", stage)
+	if r := resultFor(t, CheckFile(f), "coaster.stages"); r.Status != StatusPass {
+		t.Fatalf("valid stage: %s %s", r.Status, r.Detail)
+	}
+	f.Coaster.Preshow.LoadAreaCapacity = 10 // below the cell's batch of 20: its rooms could never fill
+	if r := resultFor(t, CheckFile(f), "coaster.stages"); r.Status != StatusFail || r.Severity != SevError {
+		t.Fatalf("holding area below the next batch: %s %s", r.Status, r.Detail)
+	}
+	f.Coaster.Preshow.LoadAreaCapacity = 0
+	f.Coaster.Preshow.Enabled = false
+	if r := resultFor(t, CheckFile(f), "coaster.stages"); r.Status != StatusFail {
+		t.Fatalf("stage without preshow: %s %s", r.Status, r.Detail)
 	}
 }

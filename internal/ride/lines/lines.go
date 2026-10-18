@@ -43,7 +43,13 @@ type Lines struct {
 	loadStandby, loadSingle *queue.FIFO // load-area line; the outdoor lines themselves without a preshow
 	ll                      *queue.FIFO // Lightning Lane up to the merge point (nil without skip_line)
 	merge                   *queue.Merge
-	stage                   *queue.Preshow
+	stage                   *queue.Preshow // the preshow: first batch stage, fed by the outdoor lines
+
+	// Further batch stages in guest order (M11, Rise of the Resistance). buffers[i] holds guests released
+	// by stage i (stages[0] is the preshow) waiting for stage i+1; the last stage releases into the load line.
+	stages   []*queue.Preshow
+	stageCfg []*config.Preshow
+	buffers  []*queue.FIFO
 
 	llInside   int   // LL guests past the merge not yet boarded
 	releaseSeq int64 // release order into the combined post-preshow line
@@ -52,8 +58,9 @@ type Lines struct {
 	standbyBoards []record // non-LL guests seated, for the standby posted wait
 }
 
-// New builds the lines for a ride's queues and optional preshow.
-func New(sim *engine.Sim, ride Ride, queues *config.Queues, preshow *config.Preshow) *Lines {
+// New builds the lines for a ride's queues, optional preshow and optional further stages (which need the
+// preshow).
+func New(sim *engine.Sim, ride Ride, queues *config.Queues, preshow *config.Preshow, more []config.Preshow) *Lines {
 	l := &Lines{sim: sim, ride: ride, queues: queues, standby: &queue.FIFO{}, single: &queue.FIFO{}}
 	l.loadStandby, l.loadSingle = l.standby, l.single
 	if sl := queues.SkipLine; sl.Enabled && len(sl.Merge.Phases) > 0 {
@@ -64,14 +71,20 @@ func New(sim *engine.Sim, ride Ride, queues *config.Queues, preshow *config.Pres
 		l.preshow = preshow
 		l.loadStandby, l.loadSingle = &queue.FIFO{}, &queue.FIFO{}
 		l.stage = queue.NewPreshow(sim, preshow, stageHost{l})
+		l.stages, l.stageCfg = []*queue.Preshow{l.stage}, []*config.Preshow{preshow}
+		for i := range more {
+			l.buffers = append(l.buffers, &queue.FIFO{})
+			l.stageCfg = append(l.stageCfg, &more[i])
+			l.stages = append(l.stages, queue.NewPreshow(sim, &more[i], laterStage{l, i + 1}))
+		}
 	}
 	return l
 }
 
 // Start opens the preshow, if any.
 func (l *Lines) Start() {
-	if l.stage != nil {
-		l.stage.Start()
+	for _, s := range l.stages {
+		s.Start()
 	}
 }
 
@@ -125,8 +138,8 @@ func (l *Lines) Arrive(p *guest.Party, lane guest.Lane) {
 
 // Flow moves guests forward after any queue change.
 func (l *Lines) Flow() {
-	if l.stage != nil {
-		l.stage.Pull()
+	for _, s := range l.stages {
+		s.Pull()
 	}
 	l.ride.Board()
 }
@@ -200,8 +213,8 @@ func (l *Lines) Seated(p *guest.Party) {
 
 // Boarded is called after a boarding pass seated anyone: load-area space freed.
 func (l *Lines) Boarded() {
-	if l.stage != nil {
-		l.stage.Drain()
+	if n := len(l.stages); n > 0 {
+		l.stages[n-1].Drain()
 	}
 }
 
@@ -223,7 +236,13 @@ func (l *Lines) Waiting() int {
 		n += l.ll.Guests()
 	}
 	if l.stage != nil {
-		n += l.stage.Guests() + l.loadStandby.Guests() + l.loadSingle.Guests()
+		n += l.loadStandby.Guests() + l.loadSingle.Guests()
+	}
+	for _, s := range l.stages {
+		n += s.Guests()
+	}
+	for _, b := range l.buffers {
+		n += b.Guests()
 	}
 	return n
 }
@@ -289,22 +308,77 @@ func (h stageHost) TakeParty() *guest.Party {
 }
 
 func (h stageHost) LoadAreaFree() int {
-	limit := h.l.preshow.LoadAreaCapacity
+	if len(h.l.buffers) > 0 {
+		return free(h.l.preshow.LoadAreaCapacity, h.l.buffers[0].Guests())
+	}
+	return h.l.loadLineFree(h.l.preshow)
+}
+
+func free(limit, used int) int {
 	if limit <= 0 {
 		return math.MaxInt
 	}
-	return limit - h.l.loadStandby.Guests() - h.l.loadSingle.Guests()
+	return limit - used
+}
+
+func (l *Lines) loadLineFree(last *config.Preshow) int {
+	return free(last.LoadAreaCapacity, l.loadStandby.Guests()+l.loadSingle.Guests())
 }
 
 func (h stageHost) Release(p *guest.Party) {
-	h.l.releaseSeq++
-	p.LineSeq = h.l.releaseSeq
-	if p.Lane == guest.SingleRider {
-		h.l.loadSingle.Push(p)
-	} else {
-		h.l.loadStandby.Push(p)
+	if len(h.l.buffers) > 0 {
+		h.l.buffers[0].Push(p)
+		h.l.Flow()
+		return
 	}
-	h.l.Flow()
+	h.l.releaseToLoad(p)
+}
+
+// releaseToLoad moves a party from the last stage into the load-area line.
+func (l *Lines) releaseToLoad(p *guest.Party) {
+	l.releaseSeq++
+	p.LineSeq = l.releaseSeq
+	if p.Lane == guest.SingleRider {
+		l.loadSingle.Push(p)
+	} else {
+		l.loadStandby.Push(p)
+	}
+	l.Flow()
 }
 
 func (h stageHost) Sample(d config.Dist) engine.Duration { return h.l.ride.Sample(d) }
+
+// laterStage adapts Lines to queue.PreshowHost for stage i >= 1, fed in release order by buffers[i-1].
+type laterStage struct {
+	l *Lines
+	i int
+}
+
+func (h laterStage) last() bool { return h.i == len(h.l.stages)-1 }
+
+func (h laterStage) NextParty() *guest.Party { return h.l.buffers[h.i-1].Peek() }
+
+// TakeParty frees space in the buffer, so the stage before may release more guests into it.
+func (h laterStage) TakeParty() *guest.Party {
+	p := h.l.buffers[h.i-1].Pop()
+	h.l.stages[h.i-1].Drain()
+	return p
+}
+
+func (h laterStage) LoadAreaFree() int {
+	if h.last() {
+		return h.l.loadLineFree(h.l.stageCfg[h.i])
+	}
+	return free(h.l.stageCfg[h.i].LoadAreaCapacity, h.l.buffers[h.i].Guests())
+}
+
+func (h laterStage) Release(p *guest.Party) {
+	if h.last() {
+		h.l.releaseToLoad(p)
+		return
+	}
+	h.l.buffers[h.i].Push(p)
+	h.l.Flow()
+}
+
+func (h laterStage) Sample(d config.Dist) engine.Duration { return h.l.ride.Sample(d) }

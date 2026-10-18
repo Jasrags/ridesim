@@ -14,7 +14,7 @@ import (
 // (decision 2026-10-17).
 
 func (c *Coaster) initQueues() {
-	c.lines = lines.New(c.sim, c, &c.cfg.Queues, c.cfg.Preshow)
+	c.lines = lines.New(c.sim, c, &c.cfg.Queues, c.cfg.Preshow, c.cfg.Stages)
 }
 
 func (c *Coaster) newTrain() *train {

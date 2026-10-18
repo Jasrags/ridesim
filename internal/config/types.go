@@ -104,6 +104,7 @@ type LongDowntime struct {
 }
 
 type Preshow struct {
+	ID                   string  `yaml:"id"` // stages only: names the stage in events (the preshow itself has none)
 	Enabled              bool    `yaml:"enabled"`
 	Rooms                int     `yaml:"rooms"`
 	BatchSize            int     `yaml:"batch_size"`
@@ -210,6 +211,7 @@ type CoasterFile struct {
 	ExitPath          []string          `yaml:"exit_path"`
 	Failures          Failures          `yaml:"failures"`
 	Preshow           *Preshow          `yaml:"preshow"`
+	Stages            []Preshow         `yaml:"stages"` // further batch stages after the preshow, in guest order (M11)
 	Queues            Queues            `yaml:"queues"`
 	ValidationTargets ValidationTargets `yaml:"validation_targets"`
 	ConfigInvariants  []string          `yaml:"config_invariants"`

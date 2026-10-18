@@ -186,3 +186,10 @@ numbers come from `data/`. Read both before changing simulation logic.
   to the forum's 90 s per side (1,680/hr) with the drop shaft as the bottleneck. Library preshow [user]: two rooms off the lobby that open
   into the boiler room, sized like Haunted Mansion's (60 a show, [assumed]).
 - Seats are modeled one by one (`seats_per_row: 1`): parties share the 7-seat benches [assumed].
+
+## Decisions log (M11, Rise of the Resistance, 2026-10-18)
+- Rise is a stage chain plus the coaster model (Jason): briefing room = preshow; transport ship and holding cells = further batch
+  `stages` (spec §8); the two vehicles boarding from one 16-guest cell run as one 16-seat train through scene blocks. Stages log under
+  their own id; report preshow stats stay first-stage only, so existing logs are unchanged.
+- Capacity built to TouringPlans' counted ~1,540/hr (Jason): one pair every 37.4 s. Failures fitted to ~11% downtime and ~3.6 stops a
+  day (Jason): long_downtime mtbf 3.33 h, mttr 19 +- 8 min. Rise appeal re-fit 1.09 -> 1.02 (approved). Results in docs/m11-report.md.

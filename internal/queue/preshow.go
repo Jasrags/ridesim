@@ -8,7 +8,7 @@ import (
 	"github.com/jasrags/ridesim/internal/guest"
 )
 
-// Preshow events. N is guests; Info is the room index.
+// Preshow events. N is guests; Info is the room index; Block is the stage id ("" for the preshow itself).
 const (
 	EvPreshowFill    = "preshow_fill"    // room started FILLING
 	EvPreshowShow    = "preshow_show"    // room started SHOWING with N guests
@@ -106,7 +106,7 @@ func (p *Preshow) Guests() int {
 }
 
 func (p *Preshow) emit(typ string, r *room, n int) {
-	p.sim.Emit(engine.Event{Type: typ, N: n, Info: fmt.Sprint(r.idx)})
+	p.sim.Emit(engine.Event{Type: typ, Block: p.cfg.ID, N: n, Info: fmt.Sprint(r.idx)})
 }
 
 func (p *Preshow) filling() *room {

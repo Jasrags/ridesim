@@ -86,7 +86,7 @@ func New(sim *engine.Sim, cfg *config.ContinuousFile, opts Options) (*Ride, erro
 	}
 	r.scale = r.loop.Seconds() / total
 	r.rideTime = engine.Seconds(onRide * r.scale)
-	r.lines = lines.New(sim, r, &cfg.Queues, cfg.Preshow)
+	r.lines = lines.New(sim, r, &cfg.Queues, cfg.Preshow, nil)
 	return r, nil
 }
 

@@ -130,7 +130,7 @@ func computeOps(events []engine.Event, r *Report) {
 				delete(postedAt, e.Guest)
 			}
 		case "preshow_show":
-			if in(e.T) {
+			if in(e.T) && e.Block == "" { // the preshow only; later stages (M11) carry their id
 				o.Preshow.Shows++
 				fill += e.N
 				if batch > 0 && e.N < batch {
@@ -138,9 +138,11 @@ func computeOps(events []engine.Event, r *Report) {
 				}
 			}
 		case "preshow_blocked":
-			blockedSince[e.Info] = e.T
+			if e.Block == "" {
+				blockedSince[e.Info] = e.T
+			}
 		case "preshow_empty":
-			if t0, ok := blockedSince[e.Info]; ok {
+			if t0, ok := blockedSince[e.Info]; ok && e.Block == "" {
 				o.Preshow.BlockedS += clip(t0, e.T)
 				delete(blockedSince, e.Info)
 			}

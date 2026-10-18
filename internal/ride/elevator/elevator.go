@@ -131,7 +131,7 @@ func New(sim *engine.Sim, cfg *config.ElevatorFile, opts Options) (*Ride, error)
 			r.cabs = append(r.cabs, &cab{id: len(r.cabs) + 1, side: sd, at: Basement})
 		}
 	}
-	r.lines = lines.New(sim, r, &cfg.Queues, cfg.Preshow)
+	r.lines = lines.New(sim, r, &cfg.Queues, cfg.Preshow, nil)
 	return r, nil
 }
 

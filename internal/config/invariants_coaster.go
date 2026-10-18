@@ -22,6 +22,46 @@ var coasterChecks = []check[*CoasterFile]{
 	{"coaster.dispatch_rule", SevError, checkDispatchRule},
 	{"coaster.cascade_scope", SevError, checkCascadeScope},
 	{"coaster.seat_rows", SevError, checkSeatRows},
+	{"coaster.stages", SevError, checkStages},
+}
+
+// checkStages: further batch stages need the preshow before them, a unique id each, and enough
+// throughput for the listed capacity; only the preshow takes Lightning Lane at a merge.
+func checkStages(c *CoasterFile) (bool, string) {
+	if len(c.Stages) == 0 {
+		return true, "no further stages"
+	}
+	if c.Preshow == nil || !c.Preshow.Enabled {
+		return false, "stages need an enabled preshow before them"
+	}
+	if c.Preshow.ID != "" {
+		return false, "the preshow must not set an id; ids name the further stages"
+	}
+	seen := map[string]bool{}
+	var parts []string
+	feed := c.Preshow // the stage whose holding area feeds the next one
+	for _, s := range c.Stages {
+		if cap := feed.LoadAreaCapacity; cap < 0 || (cap > 0 && cap < s.BatchSize) {
+			return false, fmt.Sprintf("holding area before stage %s holds %d, less than its batch_size %d: its rooms could never fill", s.ID, cap, s.BatchSize)
+		}
+		feed = &s
+		tp := preshowThroughputPerHr(&s)
+		switch {
+		case s.ID == "" || seen[s.ID]:
+			return false, fmt.Sprintf("stage id %q missing or repeated", s.ID)
+		case !s.Enabled || s.Rooms < 1 || s.BatchSize < 1:
+			return false, fmt.Sprintf("stage %s: enabled, rooms >= 1 and batch_size >= 1 required", s.ID)
+		case s.MergePoint:
+			return false, fmt.Sprintf("stage %s: only the preshow can be the Lightning Lane merge point", s.ID)
+		case s.Staging != "" && s.Staging != PreshowStagingHallway:
+			return false, fmt.Sprintf("stage %s: unknown staging %q", s.ID, s.Staging)
+		case tp < c.Ride.ListedCapacityPerHr:
+			return false, fmt.Sprintf("stage %s: %.0f/hr below listed %.0f/hr", s.ID, tp, c.Ride.ListedCapacityPerHr)
+		}
+		seen[s.ID] = true
+		parts = append(parts, fmt.Sprintf("%s %.0f/hr", s.ID, tp))
+	}
+	return true, strings.Join(parts, ", ")
 }
 
 func checkSeatRows(c *CoasterFile) (bool, string) {

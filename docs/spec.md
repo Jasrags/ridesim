@@ -113,6 +113,10 @@ The `config_invariants` strings in each file document checks the loader implemen
   `ride_stop`), so capacity halves and the ride stays open.
 
 ## 8. Queue model
+- Further batch stages (M11): a coaster ride file may list `stages:` after its `preshow`, in guest order. Each is a batch stage with
+  the preshow's fields plus an `id`; each releases into a holding area of its `load_area_capacity`, which the next stage fills from
+  in release order, and the last releases into the load line. Back-pressure runs back through the chain. Only the preshow can be the
+  Lightning Lane merge point.
 Flow: arrival -> balk check -> standby / single rider / Lightning Lane -> preshow (if any) -> load -> ride.
 - **Standby**: FIFO of parties with size, patience, join time. Finite physical capacity; overflow spills onto the adjoining walkway in the park model.
 - **Balking and reneging**: balk on arrival if posted wait > tolerance; renege mid-line if wait exceeds tolerance (lazy deletion).
