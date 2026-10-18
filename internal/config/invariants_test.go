@@ -410,3 +410,16 @@ func TestContinuousCeilingUsesTheTarget(t *testing.T) {
 		t.Fatalf("target 2,000 under the ceiling: %s %s", r.Status, r.Detail)
 	}
 }
+
+// opening_delay needs a probability in 0..1 and a positive duration.
+func TestOpeningDelayChecked(t *testing.T) {
+	f := patched(t, fxCoaster, "", "queues:\n  party_split_policy: never", "queues:\n  party_split_policy: never")
+	f.Coaster.Failures.OpeningDelay = &OpeningDelay{Probability: 0.25, DurationS: Dist{Mean: 600}}
+	if r := resultFor(t, CheckFile(f), "coaster.opening_delay"); r.Status != StatusPass {
+		t.Fatalf("valid opening_delay: %s %s", r.Status, r.Detail)
+	}
+	f.Coaster.Failures.OpeningDelay.Probability = 1.5
+	if r := resultFor(t, CheckFile(f), "coaster.opening_delay"); r.Status != StatusFail || r.Severity != SevError {
+		t.Fatalf("probability 1.5: %s %s", r.Status, r.Detail)
+	}
+}

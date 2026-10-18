@@ -69,9 +69,16 @@ type Failures struct {
 	CascadeStop  *CascadeStop  `yaml:"cascade_stop"`
 	BriefStop    *RateStop     `yaml:"brief_stop"`
 	ChainStop    *RateStop     `yaml:"chain_stop"`
-	SideDown     *RateStop     `yaml:"side_down"` // elevator_drop: one side out, the other keeps running
+	SideDown     *RateStop     `yaml:"side_down"`     // elevator_drop: one side out, the other keeps running
+	OpeningDelay *OpeningDelay `yaml:"opening_delay"` // multi_train_coaster: closed at opening on some days
 	LongDowntime *LongDowntime `yaml:"long_downtime"`
 	WeatherHold  string        `yaml:"weather_hold"`
+}
+
+// OpeningDelay: with Probability the ride is still closed when the park opens, for DurationS.
+type OpeningDelay struct {
+	Probability float64 `yaml:"probability"`
+	DurationS   Dist    `yaml:"duration_s"`
 }
 
 type CascadeStop struct {

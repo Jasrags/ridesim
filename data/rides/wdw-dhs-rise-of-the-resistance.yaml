@@ -90,14 +90,18 @@ station:
 
 failures:
   # Rise has the most downtime at Walt Disney World: ~11% (2022 ~12%, 2023 ~10%) [fan tpd]; ~3.6 breakdowns a day (stalls over
-  # 15 min, early 2020) [fan bm]. Fitted (Jason, 2026-10-18): 12 h / 3.6 = 3.33 h between long stops of ~19 min (68 min a day)
-  # plus brief stops (~14 min a day) is ~83 min, 11.5% of a 12 h day.
+  # 15 min, early 2020) [fan bm]; down at park opening ~25% of the time [fan TouringPlans]. Fitted (Jason, 2026-10-18): 12 h / 3.6 =
+  # 3.33 h between long stops of ~16 min (58 min a day) + brief stops (~14 min) + late openings (0.25 x 45 = ~11 min) = ~83 min,
+  # 11.5% of a 12 h day. (Long stops were 19 min before opening delays were modeled; see tuning-log.)
   brief_stop:
     rate_per_hr: 0.4                   # [assumed] as the other rides
     duration_s: { mean: 180, sd: 60 }  # [assumed]
   long_downtime:
     mtbf_hr: 3.33                      # fitted to [fan bm] 3.6 a day
-    mttr_min: { mean: 19, sd: 8 }      # fitted to [fan tpd] ~11% downtime
+    mttr_min: { mean: 16, sd: 7 }      # fitted to [fan tpd] ~11% downtime with opening delays (was 19 +- 8)
+  opening_delay:                       # [fan TouringPlans] "Rise is down at park opening about 25% of the time"
+    probability: 0.25
+    duration_s: { mean: 2700, sd: 1800 }   # [assumed] 45 +- 30 min
   weather_hold: scripted
 
 preshow:                               # briefing room [fan dg]: "two briefing rooms and they are mirrors of each other"

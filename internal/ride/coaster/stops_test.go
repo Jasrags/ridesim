@@ -140,3 +140,32 @@ func TestResumeWithoutStopPanics(t *testing.T) {
 	}()
 	h.c.Resume(CauseWeatherHold)
 }
+
+// Rise is down at opening on ~25% of days [fan]: with opening_delay enabled the ride starts closed with
+// the given probability, for a drawn delay, then opens.
+func TestOpeningDelay(t *testing.T) {
+	cfg := *fixture(t)
+	opens := func(p float64) (closedAtStart bool, stops int) {
+		c := cfg
+		c.Failures.OpeningDelay = &config.OpeningDelay{Probability: p, DurationS: config.Dist{Mean: 600}}
+		h := newHarness(t, &c, Options{FixedTimes: true, Failures: []string{config.FailOpeningDelay}}, 0, engine.Hour)
+		h.sim.RunUntil(engine.Time(engine.Second))
+		closedAtStart = h.c.Closed()
+		h.sim.RunUntil(engine.Time(engine.Hour))
+		for _, e := range h.sim.Log.Events() {
+			if e.Type == engine.EvRideStop && e.Info == CauseOpeningDelay {
+				stops++
+			}
+		}
+		if h.c.Closed() {
+			t.Fatal("still closed after the delay")
+		}
+		return closedAtStart, stops
+	}
+	if closed, n := opens(1); !closed || n != 1 {
+		t.Errorf("probability 1: closed at start %t, %d opening delays; want closed, 1", closed, n)
+	}
+	if closed, n := opens(0); closed || n != 0 {
+		t.Errorf("probability 0: closed at start %t, %d opening delays; want open, 0", closed, n)
+	}
+}

@@ -3,6 +3,7 @@ package park
 import (
 	"fmt"
 	"math"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -147,23 +148,12 @@ func (p *Park) hostRide(ds *config.Dataset, sim *engine.Sim, n *Node) (*rideAct,
 		return nil, fmt.Errorf("park node %s: ride %s not found", n.ID, n.RideID)
 	}
 	a := &rideAct{n: n, sim: sim, info: rf.RideInfo()}
-	failures := func(allowed ...string) []string {
-		var out []string
-		for _, f := range p.opts.Failures {
-			for _, ok := range allowed {
-				if f == ok {
-					out = append(out, f)
-				}
-			}
-		}
-		return out
-	}
 	var info string
 	switch rf.Kind {
 	case config.KindCoaster:
 		cfg := rf.Coaster
 		c, err := coaster.New(sim, cfg, coaster.Options{FixedTimes: p.opts.FixedTimes,
-			Failures: failures(config.FailBriefStop, config.FailLongDowntime, config.FailCascadeStop)})
+			Failures: rideFailures(rf.Kind, p.opts.Failures)})
 		if err != nil {
 			return nil, err
 		}
@@ -180,7 +170,7 @@ func (p *Park) hostRide(ds *config.Dataset, sim *engine.Sim, n *Node) (*rideAct,
 	case config.KindContinuous:
 		cfg := rf.Continuous
 		c, err := continuous.New(sim, cfg, continuous.Options{FixedTimes: p.opts.FixedTimes,
-			Failures: failures(config.FailChainStop, config.FailLongDowntime, config.FailSideDown)})
+			Failures: rideFailures(rf.Kind, p.opts.Failures)})
 		if err != nil {
 			return nil, err
 		}
@@ -191,7 +181,7 @@ func (p *Park) hostRide(ds *config.Dataset, sim *engine.Sim, n *Node) (*rideAct,
 	case config.KindBays:
 		cfg := rf.Bays
 		b, err := bays.New(sim, cfg, bays.Options{FixedTimes: p.opts.FixedTimes,
-			Failures: failures(config.FailBriefStop, config.FailLongDowntime, config.FailSideDown)})
+			Failures: rideFailures(rf.Kind, p.opts.Failures)})
 		if err != nil {
 			return nil, err
 		}
@@ -202,7 +192,7 @@ func (p *Park) hostRide(ds *config.Dataset, sim *engine.Sim, n *Node) (*rideAct,
 	case config.KindElevator:
 		cfg := rf.Elevator
 		e, err := elevator.New(sim, cfg, elevator.Options{FixedTimes: p.opts.FixedTimes,
-			Failures: failures(config.FailBriefStop, config.FailLongDowntime, config.FailSideDown)})
+			Failures: rideFailures(rf.Kind, p.opts.Failures)})
 		if err != nil {
 			return nil, err
 		}
@@ -378,3 +368,28 @@ func (p *Park) drawParties() {
 
 // admits reports whether a party arrives at the current crowd scale.
 func (p *Park) admits(a *agent) bool { return a.thin < p.crowd/config.MaxCrowdScale }
+
+// rideFailures is the scenario's failure kinds a ride of kind k models, in scenario order. Continuous
+// rides call their brief stop chain_stop, so brief_stop gives them chain_stop unless the scenario lists
+// it already (M14 fixes: the DHS days ask for brief_stop only).
+func rideFailures(k config.Kind, scenario []string) []string {
+	var allowed []string
+	switch k {
+	case config.KindCoaster:
+		allowed = []string{config.FailBriefStop, config.FailLongDowntime, config.FailCascadeStop, config.FailOpeningDelay}
+	case config.KindContinuous:
+		allowed = []string{config.FailChainStop, config.FailLongDowntime, config.FailSideDown}
+	default: // elevator_drop, simulator_bays
+		allowed = []string{config.FailBriefStop, config.FailLongDowntime, config.FailSideDown}
+	}
+	var out []string
+	for _, f := range scenario {
+		if k == config.KindContinuous && f == config.FailBriefStop && !slices.Contains(scenario, config.FailChainStop) {
+			f = config.FailChainStop
+		}
+		if slices.Contains(allowed, f) {
+			out = append(out, f)
+		}
+	}
+	return out
+}

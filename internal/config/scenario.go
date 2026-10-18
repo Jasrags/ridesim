@@ -11,7 +11,8 @@ const (
 	FailBriefStop    = "brief_stop"
 	FailLongDowntime = "long_downtime"
 	FailCascadeStop  = "cascade_stop"
-	FailChainStop    = "chain_stop" // continuous_load: the whole chain halts
+	FailChainStop    = "chain_stop"    // continuous_load: the whole chain halts
+	FailOpeningDelay = "opening_delay" // multi_train_coaster: the ride opens late on some days (Rise, M14 fixes)
 )
 
 // Ops actions.
@@ -36,7 +37,7 @@ const (
 var (
 	validDispatchRules = map[string]bool{DispatchHoldForFullOrMaxWait: true, DispatchWhenReady: true, DispatchHoldForFull: true}
 	validPostedWait    = map[string]bool{PostedQueueLenOverThroughput: true, PostedLastNObserved: true, PostedPadded: true}
-	validFailureKinds  = map[string]bool{FailBriefStop: true, FailLongDowntime: true, FailCascadeStop: true, FailChainStop: true}
+	validFailureKinds  = map[string]bool{FailBriefStop: true, FailLongDowntime: true, FailCascadeStop: true, FailChainStop: true, FailOpeningDelay: true}
 )
 
 // ScenarioFile is one run definition: which ride, how long, what demand, which failures, and scripted
@@ -477,7 +478,7 @@ func checkScenarioRide(ds *Dataset, f *ScenarioFile) Result {
 	}
 	for _, k := range s.Failures {
 		if (k == FailBriefStop && c.Failures.BriefStop == nil) || (k == FailLongDowntime && c.Failures.LongDowntime == nil) ||
-			(k == FailCascadeStop && c.Failures.CascadeStop == nil) {
+			(k == FailCascadeStop && c.Failures.CascadeStop == nil) || (k == FailOpeningDelay && c.Failures.OpeningDelay == nil) {
 			return fail("failure %s enabled but not configured in %s", k, rf.Path)
 		}
 	}

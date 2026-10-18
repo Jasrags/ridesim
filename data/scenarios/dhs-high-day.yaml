@@ -9,4 +9,4 @@ scenario:
   duration_h: 12
   warmup_min: 60
   crowd_level: high
-  failures: [brief_stop, long_downtime, cascade_stop]
+  failures: [brief_stop, long_downtime, cascade_stop, opening_delay]   # opening_delay: Rise only (2026-10-18)

@@ -21,6 +21,7 @@ var coasterChecks = []check[*CoasterFile]{
 	{"coaster.barn_capacity", SevError, checkBarnCapacity},
 	{"coaster.dispatch_rule", SevError, checkDispatchRule},
 	{"coaster.cascade_scope", SevError, checkCascadeScope},
+	{"coaster.opening_delay", SevError, checkOpeningDelay},
 	{"coaster.seat_rows", SevError, checkSeatRows},
 	{"coaster.stages", SevError, func(c *CoasterFile) (bool, string) {
 		return checkStageChain(c.Preshow, c.Stages, c.Ride.ListedCapacityPerHr)
@@ -73,6 +74,15 @@ func checkSeatRows(c *CoasterFile) (bool, string) {
 		return false, fmt.Sprintf("seats_per_train %d must be a positive multiple of seats_per_row %d", t.SeatsPerTrain, t.SeatsPerRow)
 	}
 	return true, fmt.Sprintf("%d rows of %d", t.SeatsPerTrain/t.SeatsPerRow, t.SeatsPerRow)
+}
+
+func checkOpeningDelay(c *CoasterFile) (bool, string) {
+	d := c.Failures.OpeningDelay
+	if d == nil {
+		return true, "no opening_delay"
+	}
+	ok := d.Probability >= 0 && d.Probability <= 1 && d.DurationS.Mean > 0 && d.DurationS.SD >= 0
+	return ok, fmt.Sprintf("probability %g, duration %g +- %g s", d.Probability, d.DurationS.Mean, d.DurationS.SD)
 }
 
 func checkCascadeScope(c *CoasterFile) (bool, string) {

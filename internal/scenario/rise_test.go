@@ -70,13 +70,14 @@ func TestRiseSlowShipCapsTheRide(t *testing.T) {
 	}
 }
 
-// Downtime fit (Jason, 2026-10-18): ~11% of the day [fan TouringPlans]. Over 20 twelve-hour days the
-// ride is stopped 9-14% of the time.
+// Downtime fit (Jason, 2026-10-18): ~11% of the day [fan TouringPlans], counting long and brief stops and
+// late openings. Over 20 twelve-hour days the ride is stopped 9-14% of the time.
 func TestRiseDowntimeNearElevenPercent(t *testing.T) {
 	var stopped, window float64
 	for seed := uint64(1); seed <= 20; seed++ {
-		run := rnrRun(loadRise(t), 12, seed, false, 13, 900)
-		run.Failures = []string{config.FailBriefStop, config.FailLongDowntime}
+		run := rnrRun(loadRise(t), 12, seed, false, 12, 900)
+		run.Failures = []string{config.FailBriefStop, config.FailLongDowntime, config.FailOpeningDelay}
+		run.Warmup = 0 // TouringPlans' share covers the whole day, opening included
 		_, m := compute(t, run)
 		stopped += m.Ops.StoppedS
 		window += m.WindowEnd.Sub(m.WindowStart).Seconds()

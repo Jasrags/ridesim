@@ -216,3 +216,6 @@ numbers come from `data/`. Read both before changing simulation logic.
 - Toy Story Mania on continuous_load chains (Jason): 3 tracks, an 8-seat tram every 40 s per track (2,160/hr, 90% rule), shared trams
   with callouts. The continuous capacity ceiling checks the build target when set. Every DHS ride except Alien Swirling Saucers now has
   a full model; whole-park results in docs/m14-report.md.
+- Fixes pass (Jason, 2026-10-18): park runs map brief_stop -> chain_stop for continuous rides; new failure `opening_delay` (Rise: 25%
+  of days, 45 +- 30 min) enabled in the DHS days, Rise long stops 19 -> 16 min and appeal 1.02 -> 1.06 (approved). Partial outages
+  stay off until data; preshow drain order unchanged.
