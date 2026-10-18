@@ -193,3 +193,6 @@ numbers come from `data/`. Read both before changing simulation logic.
   their own id; report preshow stats stay first-stage only, so existing logs are unchanged.
 - Capacity built to TouringPlans' counted ~1,540/hr (Jason): one pair every 37.4 s. Failures fitted to ~11% downtime and ~3.6 stops a
   day (Jason): long_downtime mtbf 3.33 h, mttr 19 +- 8 min. Rise appeal re-fit 1.09 -> 1.02 (approved). Results in docs/m11-report.md.
+- Runaway Railway (Jason): 2,160/hr (90% of listed), two preshow rooms of 32, parties share the 4-seat rows; trains of 32 on scene
+  blocks, no new code. Jason's seating observations (five boarding groups of 3/4/3/4/7, callouts) were about Tower of Terror, not
+  Railway.

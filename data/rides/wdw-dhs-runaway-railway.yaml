@@ -1,0 +1,141 @@
+# Mickey & Minnie's Runaway Railway (Disney's Hollywood Studios) — ride config, schema 1.0 (M12)
+# Confidence tags: [wiki] = Wikipedia, [fan] = forum/fan sources, [assumed] = our placeholder
+# Research pass 2026-10-18 (pages fetched):
+#   wiki  https://en.wikipedia.org/wiki/Mickey_%26_Minnie%27s_Runaway_Railway
+#   drd   https://darkridedatabase.com/rides/mickey-minnies-runaway-railway/
+#   tp    https://touringplans.com/hollywood-studios/attractions/mickey-minnies-runaway-railway
+#   testa https://touringplans.com/blog/mickey-and-minnies-runaway-railway-the-spoiler-free-review/ (Len Testa, 2020-03-04)
+#   bm    https://blogmickey.com/2020/02/scene-by-scene-breakdown-of-mickey-and-minnies-runaway-railway
+#
+# Guest path [wiki][fan]: the "Perfect Picnic" preshow film in a small theater, then guests "step into the screen and into the barn
+# loading area" [fan bm]; trackless trains of a locomotive and 4 cars [wiki][fan drd]; the cars split at a switch, run the scenes
+# individually and rejoin before the station [wiki][fan drd]. Modeled as whole trains on scene blocks (multi_train_coaster): the
+# split does not change how many trains the station dispatches.
+# Capacity target (Jason, 2026-10-18): 90% of the 2,400/hr listed = 2,160/hr, so the [assumed] station times give one train every 53.3 s.
+
+schema_version: "1.0"
+
+ride:
+  id: wdw.dhs.runaway_railway          # <resort>.<park>.<ride>, unique across all parks
+  family: runaway_railway
+  name: "Mickey & Minnie's Runaway Railway"
+  location:
+    resort: walt_disney_world
+    park: disneys_hollywood_studios
+    land: hollywood_boulevard          # [map] in the Chinese Theater
+  other_versions:
+    - { resort: disneyland_resort, park: disneyland, status: operating, note: "Toontown version, opened 2023" }
+  archetype: multi_train_coaster       # trackless trains on scene blocks; see header
+  ride_duration_s: 300                 # [fan tp] 5 min
+  height_restriction_in: 0             # [fan tp] none
+  listed_capacity_per_hr: 2400         # [fan drd]
+  data_conflicts:
+    - field: ride_duration_s
+      values: { fan_tp: 300, fan_drd: 360, fan_testa: 270 }
+      chosen: fan_tp
+      note: "4.5-6 min across sources; none says what is timed."
+    - field: listed_capacity_per_hr
+      values: { fan_drd: 2400, fan_orlando_weekly: 1900, fan_testa_estimate: 1550, fan_tp_implied_4min_per_100: 1500 }
+      chosen: fan_drd
+      note: "Target is 90% of listed (Jason, 2026-10-18). Testa's figure was an opening-week estimate."
+    - field: preshow.rooms
+      values: { fan_laughingplace_2019: 3, fan_blogmickey_2020: 2 }
+      chosen: fan_blogmickey_2020
+      note: "Jason chose two rooms (opening-week account). With 2 rooms of 32 the film plus turnover must cycle in <= 96 s to carry 2,400/hr."
+
+trains:
+  fleet_size: 10                       # [assumed] not found; an unverified lead says 8 trains run
+  max_in_service: 10                   # [assumed]
+  default_in_service: 8                # [assumed] lap 300 + 30 + 53.3 = 383 s needs >= 8 trains at 53.3 s (an unverified lead also says 8)
+  cars_per_train: 4                    # [wiki] "4 cars behind a locomotive"
+  seats_per_train: 32                  # [wiki] 8 rows of 4; [fan testa] "4 train cars, each with 2 rows of 4 people, so 32 people per train"
+  seats_per_row: 1                     # parties share the 4-seat rows (Jason, 2026-10-18; no source on seating), so seats are modeled one by one
+  layout: "4 cars x 2 rows of 4"       # [wiki][fan testa]
+  restraints: lap_bar                  # [assumed]
+
+# 10-11 show scenes [fan testa][fan tp]; no timings found. Ten equal scene blocks plus the run to unload, all [assumed]; each block
+# holds one train and is shorter than the 53.3 s station interval. Scene names follow BlogMickey's order [fan bm].
+blocks:
+  - { id: UNLOAD, kind: station, next: LOAD }
+  - { id: LOAD, kind: station, next: RUNNAMUCK_PARK }
+  - { id: RUNNAMUCK_PARK, kind: brake, transit_s: { mean: 27, sd: 1 }, brake: &scene { hold_capable: true, stop_policy: stop_if_next_occupied, release_delay_s: { mean: 1, sd: 0.3 } }, next: SWITCH }
+  - { id: SWITCH, kind: brake, transit_s: { mean: 27, sd: 1 }, brake: *scene, next: WILD_WEST }            # cars separate [fan bm]
+  - { id: WILD_WEST, kind: brake, transit_s: { mean: 27, sd: 1 }, brake: *scene, next: CARNIVAL }
+  - { id: CARNIVAL, kind: brake, transit_s: { mean: 27, sd: 1 }, brake: *scene, next: TORNADO }
+  - { id: TORNADO, kind: brake, transit_s: { mean: 27, sd: 1 }, brake: *scene, next: TROPICAL }
+  - { id: TROPICAL, kind: brake, transit_s: { mean: 27, sd: 1 }, brake: *scene, next: UNDERWATER }        # each car in its own room [fan bm]
+  - { id: UNDERWATER, kind: brake, transit_s: { mean: 27, sd: 1 }, brake: *scene, next: DANCE_STUDIO }
+  - { id: DANCE_STUDIO, kind: brake, transit_s: { mean: 27, sd: 1 }, brake: *scene, next: FACTORY }
+  - { id: FACTORY, kind: brake, transit_s: { mean: 27, sd: 1 }, brake: *scene, next: PICNIC }
+  - { id: PICNIC, kind: brake, transit_s: { mean: 27, sd: 1 }, brake: *scene, next: PRE_UNLOAD }           # cars rejoin for the finale [fan drd]
+  - { id: PRE_UNLOAD, kind: brake, transit_s: { mean: 30, sd: 2 }, brake: *scene, next: UNLOAD }
+  # transit sum = 10 x 27 + 30 = 300 = ride_duration_s
+
+clearance:
+  rules:
+    - { id: dispatch_to_unload, from: PRE_UNLOAD, requires_empty: [UNLOAD], conditions: [{ kind: load_clear_to_advance }] }
+
+station:
+  separate_load_unload: true           # [assumed] boarding is in Goofy's barn [fan bm]; unload after the station picnic
+  unload_s:        { mean: 30, sd: 6 } # [assumed]
+  load_s:          { mean: 42.3, sd: 8 } # [assumed] set for the 53.3 s / 2,160/hr target (42.3 + 8 + 3), decision 2026-10-18
+  restraint_check_s: { mean: 8, sd: 2 }# [assumed]
+  dispatch_clearance_s: { mean: 3, sd: 1 }   # [assumed]
+  target_dispatch_interval_s: 53.3     # derived: 3600 x 32 / 2160 (Jason, 2026-10-18)
+  min_dispatch_interval_s: 40          # [assumed]
+  staff_at_station: 6                  # [assumed]
+  dispatch_rule: hold_for_full_or_max_wait
+  max_wait_after_ready_s: 8            # [assumed]
+
+failures:                              # no frequency data found; same [assumed] placeholders as the other rides
+  brief_stop:
+    rate_per_hr: 0.4
+    duration_s: { mean: 180, sd: 60 }
+  long_downtime:
+    mtbf_hr: 30
+    mttr_min: { mean: 40, sd: 15 }
+  weather_hold: scripted
+
+preshow:                               # "Perfect Picnic" film [wiki]
+  enabled: true
+  rooms: 2                             # [fan bm] "two theaters that guests are split into"; Jason's choice over LaughingPlace's three
+  batch_size: 32                       # [fan testa] "groups of around 32 people"; one room's group fills one train
+  duration_s: { mean: 80, sd: 5 }      # [assumed] an unverified lead says 1.5 min; 80 s keeps 2 rooms at the listed 2,400/hr
+  turnover_s: { mean: 15, sd: 3 }      # [assumed] guests leave "through the screen" into the loading barn [fan bm]
+  fill_rule: full_or_max_wait
+  max_fill_wait_s: 30                  # [assumed]
+  release_rule: when_load_area_has_room
+  load_area_capacity: 64               # [assumed] the barn holds two trains' worth
+  party_integrity: true
+  merge_point: true                    # [assumed] Lightning Lane merges before the theaters
+  bypass_for_single_rider: false
+
+queues:
+  party_split_policy: never
+  standby: { physical_capacity: 3200 } # [assumed] as the M9 simple ride
+  single_rider: { enabled: false }     # no source mentions one
+  skip_line:
+    enabled: true                      # [fan tp] Lightning Lane Multi Pass, first group (tier 1)
+    merge_point: preshow_entrance      # [assumed]
+    merge:
+      unit: guests
+      empty_lane_rule: pull_other
+      phase_hysteresis_guests: 20      # [assumed]
+      phases:                          # [assumed] same fan-reported placeholders as the other rides
+        - { name: normal,   when_ll_queue_guests_below: 60,  ll_per_standby: 2 }
+        - { name: elevated, when_ll_queue_guests_below: 200, ll_per_standby: 4 }
+        - { name: recovery, when_ll_queue_guests_below: null, ll_per_standby: 10 }
+  posted_wait: { algorithm: queue_len_over_throughput, padding_pct: 0 }
+
+validation_targets:
+  listed_capacity_per_hr: 2400
+  implied_dispatch_interval_s: 53.3    # target 2,160/hr: 3600 x 32 / 2160
+  theoretical_riders_per_hr_at_target: 2160
+  avg_standby_wait_min_2026: 34        # [fan] Queue-Times 2026 (park calibration target)
+
+config_invariants:                     # enforced by the loader, applies to every ride
+  - "sum(block.transit_s.mean over non-station blocks) == ride.ride_duration_s (+/- 2 s)"
+  - "count(blocks) >= trains.max_in_service + 1"
+  - "trains.default_in_service <= trains.max_in_service <= trains.fleet_size"
+  - "every block with kind=brake defines brake.hold_capable, brake.stop_policy and brake.release_delay_s"
+  - "if preshow.enabled: preshow.rooms * preshow.batch_size * 3600 / (preshow.duration_s.mean + preshow.turnover_s.mean) >= ride.listed_capacity_per_hr"

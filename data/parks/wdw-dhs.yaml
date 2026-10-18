@@ -19,8 +19,8 @@ nodes:
   # exit
   - { id: exit, kind: exit, x: 1702, y: 1409 }   # [osm] r3919136 · Main entrance · entrance
   # ride_simple
-  - { id: runaway_railway, kind: ride_simple, x: 1075, y: 1972, capacity_per_hr: 2160, duration_s: 300, queue_capacity: 3200, lightning_lane: tier1, appeal: 1.10, thrill: 0.20 }
-      # capacity 90% of 2,400 [fan crooksinwdw, darkridedatabase]; duration 5 min [fan TouringPlans]; tier [fan resortsgal 2026-09-23]; queue, appeal, thrill [assumed]. Position [osm] w294898804 · Mickey & Minnie's Runaway Railway · hollywood_boulevard · map 1
+  - { id: runaway_railway, kind: ride, x: 1075, y: 1972, ride_id: wdw.dhs.runaway_railway, lightning_lane: tier1, appeal: 1.10, thrill: 0.20 }
+      # full ride model (ride file 2026-10-18; was ride_simple 2,160/hr, 300 s, queue 3,200); tier [fan resortsgal 2026-09-23]; appeal, thrill [assumed]. Position [osm] w294898804 · Mickey & Minnie's Runaway Railway · hollywood_boulevard · map 1
   - { id: star_tours, kind: ride_simple, x: 1615, y: 2359, capacity_per_hr: 1620, duration_s: 270, queue_capacity: 2400, lightning_lane: tier2, appeal: 0.50, thrill: 0.60 }
       # capacity 90% of 1,800 [fan crooksinwdw, darkridedatabase]; duration 4:30 [wiki]; tier [fan]; rest [assumed]. Position [osm] w294899629 · Star Tours – The Adventures Continue · echo_lake · map 13
   - { id: rise_of_the_resistance, kind: ride, x: 913, y: 2778, ride_id: wdw.dhs.rise_of_the_resistance, lightning_lane: single_pass, appeal: 1.02, thrill: 0.55 }

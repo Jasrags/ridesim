@@ -88,3 +88,29 @@ Noted, not changed:
   - time between vehicle pairs;
   - scene timings;
   - where Lightning Lane merges.
+
+## Follow-up: Runaway Railway (2026-10-18)
+Mickey & Minnie's Runaway Railway uses the same pieces as Rise: a preshow, then trains on scene blocks
+(`data/rides/wdw-dhs-runaway-railway.yaml`). It needed no new code.
+
+**Sourced:**
+- trains of a locomotive and 4 cars, 32 seats in 8 rows of 4 [wiki][fan];
+- the cars split for the scenes and rejoin before the station [wiki][fan];
+- the "Perfect Picnic" preshow, in groups of about 32 [fan].
+
+**Jason's choices:**
+- 90% of the 2,400/hr listed = 2,160/hr, so one train every 53.3 s;
+- two preshow rooms (BlogMickey; LaughingPlace said three);
+- parties share rows.
+
+**Assumed:** 10 scene blocks of 27 s plus a 30 s run to unload, 8 trains running, and the same failure placeholders as the other
+rides. The split cars are modeled as whole trains. With two rooms of 32, the film plus turnover must cycle in 96 s or less to carry
+the listed 2,400/hr. The model uses 80 + 15 s; an unverified lead says the film is 1.5 min.
+
+**Checks:**
+- fixed times give 53.3 s and 2,160/hr with the load station never idle;
+- 7 trains are lap-bound.
+
+**Medium day (10 seeds):** about 1,990/hr in the park, against 2,080 as a simple ride. Posted wait is 34.4 / 51.5 min against
+Queue-Times' 34 / 45. Appeal stays 1.10, with no re-fit.
+
