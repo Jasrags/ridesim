@@ -166,3 +166,17 @@ The busiest hour runs ~15 min high, the same pattern as Slinky. Every other attr
 - **Medium day, 10 seeds:** ~1,343/hr. It posts 15.6 / 29.1 min against 16 / 21 with no re-fit (appeal 0.62). The busiest hour runs
   high, as it did as a simple ride.
 - **Open `[user]`:** the current Orange/Green split, and how cast form crews of 4.
+
+## M23 follow-up: Spaceship Earth (2026-10-19)
+- **Model** (Jason's choices): continuous_load omnimover, as Haunted Mansion.
+  - 4-seat vehicles in 2 rows of 2 [wiki], one party per vehicle (parties of 5-6 take consecutive vehicles).
+  - Full vehicles every 6 s from the sourced 2,400/hr theoretical [fan crooksinwdw]. No vehicle count was found, so 165 vehicles
+    fill a 990 s loop [derived].
+  - Scene order [wiki], times `[assumed]` within the 15-min ride, with the backwards descent the longest.
+- **Accessibility `[user]`** (Jason): the chain sometimes only slows, and stops fully for wheelchairs. The model has full stops
+  only: 8 an hour of 75 s `[assumed]`, standing for both.
+- **Medium day, 10 seeds:** ~1,220/hr. With the approved re-fit (appeal 0.70 -> 0.58) it posts 9.3 / 20.3 min against 10 / 19.
+- **Open:**
+  - partial slowdowns in the continuous model (code);
+  - `[user]` how many stops vs slowdowns an hour;
+  - the vehicle count.

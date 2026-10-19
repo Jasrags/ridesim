@@ -28,8 +28,8 @@ nodes:
   # exit
   - { id: exit_ig, kind: exit, x: 709, y: 2398 }   # [osm] w1525709564 · International Gateway · entrance
   # ride_simple
-  - { id: spaceship_earth, kind: ride_simple, x: 1555, y: 548, capacity_per_hr: 2160, duration_s: 900, queue_capacity: 2400, lightning_lane: tier2, appeal: 0.70, thrill: 0.10 }
-      # 2,160/hr operational [fan crooksinwdw operational, 2019]; ~15 min [assumed]; tier [fan TouringPlans 2026-06-29]; appeal [assumed] (fitted 0.60 -> 0.70, tuning-log 2026-10-19), thrill [assumed]. Position [osm] w146221550 · Spaceship Earth · world_celebration · map 1
+  - { id: spaceship_earth, kind: ride, x: 1555, y: 548, ride_id: wdw.epcot.spaceship_earth, lightning_lane: tier2, appeal: 0.58, thrill: 0.10 }
+      # full ride model (continuous_load omnimover, ride file 2026-10-19, M23; was ride_simple 2,160/hr, 900 s, queue 2,400); tier [fan TouringPlans 2026-06-29]; appeal [assumed] (fitted 0.60 -> 0.70; 0.70 -> 0.58 with the full model, tuning-log 2026-10-19), thrill [assumed]. Position [osm] w146221550 · Spaceship Earth · world_celebration · map 1
   # meet
   - { id: meet_mickey_friends, kind: meet, x: 1443, y: 1028, meet_s: { mean: 90, sd: 25 }, appeal: 0.55, thrill: 0.0 }
       # Mickey, Minnie and Goofy [fan TouringPlans]; time per party [assumed]; appeal [assumed] (fitted 0.60 -> 0.55, tuning-log 2026-10-19). Position [osm] n11998956198 · Meet Mickey & Friends (CommuniCore Hall) · world_celebration · map 2

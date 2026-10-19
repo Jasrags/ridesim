@@ -289,3 +289,5 @@ numbers come from `data/`. Read both before changing simulation logic.
   first hour on 11% of days, Feb-Mar 2026 [fan]).
 - Frozen re-fit (approved): appeal 0.91 -> 0.74; ~553/hr in the park (whole rows of 4 leave boats ~68% full), 42.4 / 80.7 min vs
   42 / 57. TouringPlans' ~860/hr line speed hints boats fill better than the operator's no-shared-rows account: [user] check.
+- Spaceship Earth (M23, Jason): continuous_load, one party per vehicle, full vehicles every 6 s (2,400/hr theoretical); appeal re-fit
+  0.70 -> 0.58 (approved). [user] the chain slows for some guests and fully stops for wheelchairs; only full-stop holds are modeled.

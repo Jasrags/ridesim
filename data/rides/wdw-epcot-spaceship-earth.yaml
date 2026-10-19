@@ -1,0 +1,129 @@
+# Spaceship Earth (EPCOT, World Celebration) — ride config, schema 1.0, archetype continuous_load (M23)
+# Confidence tags: [wiki] = Wikipedia, [fan] = fan sources, [assumed] = our placeholder
+# Research pass 2026-10-19 (pages opened; notes in the EPCOT rides research file):
+#   wiki https://en.wikipedia.org/wiki/Spaceship_Earth_(Epcot) (omnimover, 4 riders per vehicle in 2 rows of 2, ~15 min)
+#   crk  crooksinwdw theoretical/operational hourly capacity (updated 2019-07-31): 2,400 / 2,160
+#   wdwm WDWMagic attraction page: "Show Time: 13:26 minutes"; speed "1.5 fps"
+#   tp   TouringPlans (2026): 16 min; Lightning Lane Multi Pass Tier 2; line speed 3 min per 100 (~2,000/hr)
+#
+# An omnimover (as Haunted Mansion): a closed chain of 4-seat vehicles moving through the geosphere past scenes of human
+# communication, then the backwards descent [wiki]. Model (Jason, 2026-10-19): one party per vehicle (strangers never share, parties of
+# 5-6 take consecutive vehicles), and full vehicles every 6 s from the sourced 2,400/hr theoretical; what it carries then emerges
+# from the party mix. No vehicle count was found (Coasterpedia's 32 is far too low), so the count fills the loop [derived].
+
+schema_version: "1.0"
+
+ride:
+  id: wdw.epcot.spaceship_earth        # <resort>.<park>.<ride>, unique across all parks
+  family: spaceship_earth
+  name: "Spaceship Earth"
+  location:
+    resort: walt_disney_world
+    park: epcot
+    land: world_celebration            # [map]
+  other_versions: []
+  archetype: continuous_load
+  ride_duration_s: 900                 # [wiki] ~15 min (WDWMagic show time 13:26, TouringPlans 16 min)
+  total_experience_s: 990              # [derived] ride plus the return run below
+  height_restriction_in: 0             # none
+  listed_capacity_per_hr: 2400         # [fan crk][fan wdwm] theoretical
+  data_conflicts:
+    - field: listed_capacity_per_hr
+      values: { fan_crk_theoretical: 2400, fan_crk_operational: 2160, fan_tp_line_speed: 2000 }
+      chosen: fan_crk_theoretical
+      note: "Full vehicles every 6 s; carried capacity emerges from one party per vehicle (Jason, 2026-10-19)."
+    - field: vehicles.count
+      values: { fan_coasterpedia: 32, derived_loop: 165 }
+      chosen: derived_loop
+
+conveyor:
+  speed_fps: 1.5                       # [fan wdwm]
+  continuous: true
+  topology: closed_loop
+
+# Scene order [wiki]; times [assumed], scaled so load + scenes + unload = 900 s. The descent (backwards, with the touch-screen
+# segment) is the longest stretch [wiki].
+route:
+  - { id: load_zone,            kind: load,   est_s: 20 }
+  - { id: time_tunnel,          kind: scene,  est_s: 40 }
+  - { id: cro_magnon,           kind: scene,  est_s: 45 }
+  - { id: egypt,                kind: scene,  est_s: 50 }
+  - { id: phoenicians_greeks,   kind: scene,  est_s: 55 }
+  - { id: rome,                 kind: scene,  est_s: 45 }
+  - { id: islamic_scholars,     kind: scene,  est_s: 45 }
+  - { id: monks,                kind: scene,  est_s: 50 }
+  - { id: printing_press,       kind: scene,  est_s: 55 }
+  - { id: renaissance,          kind: scene,  est_s: 50 }
+  - { id: industrial_telecom,   kind: scene,  est_s: 60 }
+  - { id: computer_age,         kind: scene,  est_s: 60 }
+  - { id: star_field,           kind: scene,  est_s: 80 }
+  - { id: descent,              kind: scene,  est_s: 200 }
+  - { id: unload_zone,          kind: unload, est_s: 45 }
+  - { id: return_run,           kind: return, est_s: 90 }   # [assumed] unload back to load; not part of the 900 s ride
+
+vehicles:
+  count: 165                           # [derived] 990 s loop / 6 s spacing
+  seats_nominal: 4                     # [wiki] 2 rows of 2
+  seats_max: 4
+  spacing_s: 6.0                       # [derived] 3600 x 4 / 2,400 theoretical (Jason, 2026-10-19)
+  occupancy_target: { mean: 2.7, sd: 0.5 }   # [derived] one party per vehicle with the park's party mix; posted-wait fallback only
+
+load_zone:
+  type: moving_walkway_synced          # [wiki] moving walkway
+  load_window_s: { mean: 20, sd: 4 }   # [assumed]
+  loaders: 4                           # [assumed]
+  board_fail_rate: 0.02                # [assumed] as Haunted Mansion
+
+unload_zone:
+  type: moving_walkway_synced          # [wiki]
+  unload_window_s: { mean: 45, sd: 6 } # [assumed]
+  unloaders: 3                         # [assumed]
+
+loading_shared:
+  accessibility_freeze_zones: [load_zone, unload_zone]   # as Haunted Mansion [assumed]
+  # [user] (Jason, 2026-10-19): the chain sometimes only slows (guests needing more time) and comes to a full stop for wheelchairs.
+  # Slowdowns are not modeled yet (they would need a partial-speed state); these full-stop holds stand for both, averaged.
+  accessibility_hold:
+    rate_per_hr: 8                     # [assumed] as Haunted Mansion
+    duration_s: { mean: 75, sd: 25 }   # [assumed]
+  party_vehicle_policy: contiguous_vehicles   # one party per vehicle; parties of 5-6 take consecutive vehicles (Jason)
+
+failures:
+  chain_stop:
+    rate_per_hr: 0.3                   # [assumed] as Haunted Mansion
+    duration_s: { mean: 240, sd: 120 }
+  long_downtime:
+    mtbf_hr: 30                        # [assumed]
+    mttr_min: { mean: 45, sd: 20 }
+  weather_hold: none                   # indoor
+
+queues:
+  party_split_policy: contiguous_vehicles
+  standby: { physical_capacity: 2000 } # [assumed]
+  single_rider: { enabled: false }     # none
+  skip_line:
+    enabled: true                      # [fan tp] Lightning Lane Multi Pass, Tier 2
+    merge_point: station_queue_entrance   # [assumed]
+    merge:
+      unit: guests
+      empty_lane_rule: pull_other
+      phase_hysteresis_guests: 20      # [assumed]
+      phases:                          # [assumed] same fan-reported placeholders as the other rides
+        - { name: normal,   when_ll_queue_guests_below: 60,  ll_per_standby: 2 }
+        - { name: elevated, when_ll_queue_guests_below: 200, ll_per_standby: 4 }
+        - { name: recovery, when_ll_queue_guests_below: null, ll_per_standby: 10 }
+  posted_wait: { algorithm: queue_len_over_throughput, padding_pct: 0 }
+
+validation_targets:
+  listed_capacity_per_hr: 2400
+  theoretical_riders_per_hr_at_target: 2400    # 3600 / 6 s x 4 seats
+  hard_ceiling_per_hr: 2400
+  expect_no_stacking: true
+  expect_capacity_loss_from_accessibility_holds: true
+  avg_standby_wait_min_2026: 10                # [fan] Queue-Times 2026 (park calibration target)
+
+config_invariants:
+  - "sum(route.est_s for kinds load, scene, unload) == ride.ride_duration_s (+/- 5 s); route.est_s of kind return is extra loop time"
+  - "vehicles.count * vehicles.spacing_s ~= sum(route.est_s) (+/- 15%)"
+  - "ride.listed_capacity_per_hr <= 3600 / vehicles.spacing_s * vehicles.seats_max"
+  - "party sizes > seats_max must map to contiguous vehicles (party_vehicle_policy)"
