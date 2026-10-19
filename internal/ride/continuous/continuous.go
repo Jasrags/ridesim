@@ -433,3 +433,6 @@ func (r *Ride) SetSingleRiderOpen(open bool) { r.lines.SetSingleRiderOpen(open) 
 
 // SetMergeRatio implements the park's ll_merge lever.
 func (r *Ride) SetMergeRatio(llPerStandby int) bool { return r.lines.SetMergeRatio(llPerStandby) }
+
+// HasMerge reports whether the ll_merge lever applies.
+func (r *Ride) HasMerge() bool { return r.lines.HasMerge() }

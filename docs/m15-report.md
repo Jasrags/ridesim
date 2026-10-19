@@ -19,7 +19,7 @@ play in the control room, and a local leaderboard that reruns every submitted se
   verify command.
 - **Verify and leaderboard:** `ridesim challenge -file FILE -session EXPORT -name NAME` checks that the session is the
   challenge's day with only allowed levers added, reruns it, scores the rerun and adds it to `out/leaderboard.json` (one
-  entry per session file). Without `-session` it prints the no-lever baseline.
+  entry per play: challenge, seed and ops). Without `-session` it prints the no-lever baseline.
 
 ## No-lever baselines (seed 1 unless noted)
 | Day | Score | Rides/guest | Balks | LL used / lapsed |
@@ -56,5 +56,7 @@ live score exactly (48.52), and entering the same file twice was refused.
 - **Balks are high:** about 30,000 guests at rides, shows and meets on the medium day (Little Mermaid "full" 6,852; Slinky 4,104; Rise 4,031). Another ~23,500 at dining do not score. Guests choose from a board up to 5 min old and turn away on arrival. This is an existing park-model behavior (M7/M9) that the score now makes visible; worth a look before tuning the balk weight.
 - **Lever response is uneven on the high day:** small inventory changes move the score both ways. A single seed is chaotic. That's fine for a fixed-seed challenge, but don't read small differences as strategy.
 - **Daily seeds:** they vary from day to day (47.1-47.9) by more than any lever moves the score, so daily scores are only comparable within a date.
+- **Daily dates are not limited:** a daily challenge verifies any date's seed, so a player could replay many dates and submit the
+  easiest. Entries rank per date, so the board stays consistent; limit the accepted dates if the board is ever shared.
 - **More room to play:** the whole-day score needs levers that add capacity or steer crowds (posted-wait padding, show schedules, staffing). That's the trade-off milestone, where those levers get costs the score sees.
 - **Map labels:** they overlap at Hollywood Studios (pre-existing). The train buttons show on rides without a barn, and the server refuses them.

@@ -89,8 +89,12 @@ func enterSession(stdout io.Writer, ds *config.Dataset, c *challenge.Challenge, 
 	if err := writeOutcome(stdout, c, out, fmt.Sprintf("verified session, %d lever(s)", out.Levers), logPath); err != nil {
 		return err
 	}
+	play, err := challenge.PlayHash(c.ID, f.Scenario)
+	if err != nil {
+		return err
+	}
 	e := challenge.Entry{Challenge: c.ID, Seed: seed, Name: name, Score: out.Card.Score(), GoalsMet: out.Met(),
-		Goals: len(out.Goals), Levers: out.Levers, Session: challenge.SessionHash(raw)}
+		Goals: len(out.Goals), Levers: out.Levers, Session: play}
 	if err := board.Add(e); err != nil {
 		return err
 	}

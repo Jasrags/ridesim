@@ -21,6 +21,7 @@ type singleRiderLine interface {
 }
 
 type merger interface {
+	HasMerge() bool
 	SetMergeRatio(llPerStandby int) bool
 }
 
@@ -112,13 +113,11 @@ func (p *Park) applyLL(op config.OpsEvent) error {
 		act.setMergeRatio(v)
 	case *rideAct:
 		m, ok := act.r.(merger)
-		if !ok {
+		if !ok || !m.HasMerge() {
 			return fmt.Errorf("ops ll_merge: %s has no merge to set", op.Node)
 		}
-		p.logOp(op)
-		if !m.SetMergeRatio(v) {
-			return fmt.Errorf("ops ll_merge: %s has no Lightning Lane line", op.Node)
-		}
+		p.logOp(op) // only once the lever is sure to apply, so live logs match a rerun
+		m.SetMergeRatio(v)
 		p.llMerge[n.Idx] = v
 	default:
 		return fmt.Errorf("ops ll_merge: %s has no merge to set", op.Node)

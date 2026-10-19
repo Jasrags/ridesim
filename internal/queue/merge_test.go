@@ -105,6 +105,14 @@ func TestMergeSetRatioOverridesPhases(t *testing.T) {
 			t.Errorf("queue %d, ratio set to %d: %.2f LL per standby guest", c.queue, c.set, got)
 		}
 	}
+	// Credit banked in recovery (10:1) is rescaled when the ratio drops to 1.
+	r := testMerge("guests")
+	r.Update(500)
+	r.Took(&guest.Party{Size: 4, Lane: guest.Standby}, true) // +40 credit
+	r.SetRatio(1)
+	if r.credit != 4 {
+		t.Errorf("credit after 10 -> 1: %d, want 4", r.credit)
+	}
 	m := testMerge("guests")
 	m.SetRatio(0)
 	if got := ratio(m, 1, 1, 1000); got != 0 {

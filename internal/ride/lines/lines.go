@@ -156,6 +156,9 @@ func (l *Lines) Flow() {
 func (l *Lines) SingleRiderOpen() bool { return l.queues.SingleRider.Enabled && !l.srClosed }
 
 // SetSingleRiderOpen opens or closes the single-rider line. Closing keeps the guests already in it.
+// HasMerge reports whether the ride has a Lightning Lane merge to set.
+func (l *Lines) HasMerge() bool { return l.merge != nil }
+
 // SetMergeRatio fixes the LL merge at llPerStandby LL units per standby unit (ll_merge lever, M15); false
 // when the ride has no Lightning Lane line.
 func (l *Lines) SetMergeRatio(llPerStandby int) bool {

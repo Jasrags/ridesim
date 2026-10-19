@@ -44,10 +44,13 @@ func (m *Merge) units(p *guest.Party) int {
 // SetRatio fixes LL units per standby unit for every phase from now on (the ll_merge lever). Phase
 // changes are still logged, but no longer change the ratio.
 func (m *Merge) SetRatio(llPerStandby int) {
-	m.fixed = &llPerStandby
-	if llPerStandby == 0 {
+	// Credit banked at the old ratio is rescaled, so a lower ratio takes effect at once.
+	if old := m.llPerStandby(); old > 0 {
+		m.credit = m.credit * llPerStandby / old
+	} else {
 		m.credit = 0
 	}
+	m.fixed = &llPerStandby
 }
 
 func (m *Merge) llPerStandby() int {

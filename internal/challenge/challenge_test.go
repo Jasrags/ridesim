@@ -109,6 +109,29 @@ func TestVerifyRejectsAnInvalidPlay(t *testing.T) {
 	}
 }
 
+// The same play hashes alike whatever the file's comments or time spelling; a different lever does not.
+func TestPlayHash(t *testing.T) {
+	ds, c := fixture(t)
+	a, _ := play(t, ds, c, 1, []config.OpsEvent{{Action: config.OpLLMerge, Node: "coaster", Value: val(1)}})
+	b := *a
+	b.Scenario.Ops = append([]config.OpsEvent{}, a.Scenario.Ops...)
+	for i, o := range b.Scenario.Ops {
+		if o.At == "01:00:00" {
+			b.Scenario.Ops[i].At = "01:00" // the same time, spelled as in the scenario file
+		}
+	}
+	b.Scenario.Description = "edited"
+	ha, _ := challenge.PlayHash(c.ID, a)
+	hb, _ := challenge.PlayHash(c.ID, &b)
+	if ha != hb {
+		t.Error("same play hashes differently")
+	}
+	d, _ := play(t, ds, c, 1, []config.OpsEvent{{Action: config.OpLLMerge, Node: "coaster", Value: val(2)}})
+	if hd, _ := challenge.PlayHash(c.ID, d); hd == ha {
+		t.Error("different plays hash alike")
+	}
+}
+
 func TestDailySeed(t *testing.T) {
 	if s, err := challenge.DailySeed("2026-10-19"); err != nil || s != 20261019 {
 		t.Fatalf("seed %d, %v", s, err)

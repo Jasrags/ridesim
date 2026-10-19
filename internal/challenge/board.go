@@ -11,6 +11,8 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+
+	"github.com/jasrags/ridesim/internal/config"
 )
 
 // Entry is one verified play on the local leaderboard.
@@ -22,7 +24,7 @@ type Entry struct {
 	GoalsMet  int     `json:"goals_met"`
 	Goals     int     `json:"goals"`
 	Levers    int     `json:"levers"`
-	Session   string  `json:"session_sha256"` // the submitted session file, so one play is entered once
+	Session   string  `json:"play_sha256"` // the play (challenge, seed, ops), so one play is entered once
 }
 
 // Board is the local leaderboard: verified entries in a JSON file.
@@ -33,10 +35,23 @@ type Board struct {
 // maxNameLen keeps names short enough to print in a table.
 const maxNameLen = 32
 
-// SessionHash identifies a session file's bytes.
-func SessionHash(b []byte) string {
-	h := sha256.Sum256(b)
-	return hex.EncodeToString(h[:])
+// PlayHash identifies a play by what decides its day: the challenge, the seed and every op in time order
+// (times normalized), so comments or whitespace in the file do not make it a new entry.
+func PlayHash(challenge string, session *config.ScenarioFile) (string, error) {
+	ops, err := opsOf(session.Scenario.Ops)
+	if err != nil {
+		return "", err
+	}
+	h := sha256.New()
+	fmt.Fprintf(h, "%s\n%d\n", challenge, session.Scenario.Seed)
+	for _, o := range ops {
+		v := "-"
+		if o.Value != nil {
+			v = fmt.Sprintf("%g", *o.Value)
+		}
+		fmt.Fprintf(h, "%g|%s|%s|%g|%s\n", o.sec, o.Action, o.Node, o.Minutes, v)
+	}
+	return hex.EncodeToString(h.Sum(nil)), nil
 }
 
 // LoadBoard reads a leaderboard file; a missing file is an empty board.
@@ -75,7 +90,7 @@ func (b *Board) Add(e Entry) error {
 	}
 	for _, x := range b.Entries {
 		if x.Session == e.Session {
-			return fmt.Errorf("this session is already on the board (%s, %.2f)", x.Name, x.Score)
+			return fmt.Errorf("this play is already on the board (%s, %.2f)", x.Name, x.Score)
 		}
 	}
 	b.Entries = append(b.Entries, e)
