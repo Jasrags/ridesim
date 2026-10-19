@@ -272,3 +272,9 @@ numbers come from `data/`. Read both before changing simulation logic.
   (seen Sept 2025 [fan]), off until there is a rate.
 - Guardians seats [user] (Jason's ride photo): each vehicle is 2 rows x 2 seats; parties share rows in the model (trains leave
   full [fan]). In the park it carries ~1,555/hr; appeal re-fit 1.49 -> 1.38 (approved): 70.5 / 104.5 min vs 69 / 89.
+
+## Decisions log (M19, Remy's Ratatouille Adventure, 2026-10-19)
+- Remy's (Jason): each group of 3 vehicles [fan] runs as one 18-seat train on scene blocks, loading on the dual-load station
+  (left/right sides [fan]) with a separate unload; built to 90% of 2,220/hr [wiki] = ~2,000/hr (one group every 32.4 s).
+- Seating (Jason): parties take whole rows of 3 [wiki]; odd seats go to single riders or a solo party ([fan] cast pair single
+  riders into odd seats). EPCOT's version is 2D since 2025-11-14 [fan]: no glasses step.
