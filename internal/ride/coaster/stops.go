@@ -88,6 +88,10 @@ func (c *Coaster) startFailures() {
 			}
 		case config.FailCascadeStop:
 			c.cascadeEnabled = f.CascadeStop != nil
+		case config.FailSideDown:
+			if sd := f.SideDown; sd != nil && sd.RatePerHr > 0 && c.unloadBlock() != nil && c.unloadBlock().alt != nil {
+				c.sideDowns(3600 / sd.RatePerHr)
+			}
 		case config.FailOpeningDelay:
 			// Drawn once at opening, before the ride runs ([fan] Rise is down at opening ~25% of days).
 			if d := f.OpeningDelay; d != nil && c.sim.Stream(engine.StreamFailures).Float64() < d.Probability {
@@ -95,6 +99,32 @@ func (c *Coaster) startFailures() {
 			}
 		}
 	}
+}
+
+// EvSideDown is logged when one platform of a dual-load station goes out of service. Block = the platform,
+// D = how long.
+const EvSideDown = "side_down"
+
+// streamSideDown keeps one-platform outages off the failures stream, so turning them on shifts no other failure.
+const streamSideDown = engine.StreamFailures + "/side_down"
+
+// sideDowns closes the second load platform at exponential gaps (mean meanGapS seconds) for sampled durations.
+// A train already on it finishes loading and leaves.
+func (c *Coaster) sideDowns(meanGapS float64) {
+	alt := c.unloadBlock().alt
+	gap := c.sim.Stream(streamSideDown).ExpFloat64() * meanGapS
+	c.sim.After(engine.Duration(math.Max(1, math.Round(gap*1000))), func() {
+		d := c.sample(c.cfg.Failures.SideDown.DurationS, streamSideDown)
+		if !alt.closed {
+			alt.closed = true
+			c.sim.Emit(engine.Event{Type: EvSideDown, Block: alt.cfg.ID, D: d})
+			c.sim.After(d, func() {
+				alt.closed = false
+				c.kick()
+			})
+		}
+		c.sideDowns(meanGapS)
+	})
 }
 
 // poisson schedules stops of cause with exponential gaps of mean meanGapS seconds.

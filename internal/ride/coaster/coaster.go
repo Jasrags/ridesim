@@ -64,6 +64,8 @@ type block struct {
 	cfg      *config.Block
 	role     role
 	next     *block
+	alt      *block // dual-load station: the second load platform an unload station may send trains to (M18)
+	closed   bool   // a dual-load platform out of service (side_down): no train may enter
 	occupant *train
 	switches []*switchState
 	rule     *exitRule
@@ -121,7 +123,8 @@ type Coaster struct {
 	byID     map[string]*block
 	switches map[string]*switchState
 	trains   []*train
-	load     *block
+	load     *block   // the first load platform
+	loads    []*block // every load platform (two with a dual-load station)
 
 	lines *lines.Lines // front of house: lines, merge, preshow (shared with continuous_load)
 
@@ -172,15 +175,24 @@ func New(sim *engine.Sim, cfg *config.CoasterFile, opts Options) (*Coaster, erro
 		if b.next == nil {
 			return nil, fmt.Errorf("coaster %s: block %s.next %q unknown", cfg.Ride.ID, b.cfg.ID, b.cfg.Next)
 		}
+		if b.cfg.AltNext != "" {
+			b.alt = c.byID[b.cfg.AltNext]
+		}
 	}
 	prev := map[*block]*block{}
 	for _, b := range c.blocks {
 		prev[b.next] = b
+		if b.alt != nil {
+			prev[b.alt] = b
+		}
 	}
 	for _, b := range c.blocks {
 		b.role = stationRole(b, prev[b])
 		if b.role == roleLoad || b.role == roleBoth {
-			c.load = b
+			if c.load == nil {
+				c.load = b
+			}
+			c.loads = append(c.loads, b)
 		}
 	}
 	if c.load == nil {
@@ -233,7 +245,9 @@ func (c *Coaster) Status() ride.Status { return ride.Open }
 func (c *Coaster) Start() {
 	prev := map[*block]*block{}
 	for _, b := range c.blocks {
-		prev[b.next] = b
+		if b.next != c.load.next || b == c.load { // with two platforms, walk back through the first one
+			prev[b.next] = b
+		}
 	}
 	b := c.load
 	placed := make([]*block, 0, c.opts.Trains)
@@ -407,7 +421,8 @@ func (c *Coaster) canExit(t *train) (ok bool, reason string, retryAt engine.Time
 	if c.Stopped() && pausesAt(b) {
 		return false, ReasonRideStopped, 0
 	}
-	if b.next.occupant != nil {
+	to := c.exitTarget(b)
+	if to == nil {
 		return false, ReasonNextOccupied, 0
 	}
 	if r := b.rule; r != nil {
@@ -422,7 +437,7 @@ func (c *Coaster) canExit(t *train) (ok bool, reason string, retryAt engine.Time
 			}
 		}
 	}
-	for _, s := range b.next.switches { // a train may not enter a block whose switch is still realigning
+	for _, s := range to.switches { // a train may not enter a block whose switch is still realigning
 		if s.alignedAt > now {
 			return false, ReasonSwitchRealign, s.alignedAt
 		}
@@ -430,7 +445,7 @@ func (c *Coaster) canExit(t *train) (ok bool, reason string, retryAt engine.Time
 	if c.shadowHoldPending(t) && !c.blockingUpstream(b) {
 		return false, ReasonHoldUntilClear, 0
 	}
-	if b == c.load && c.dispatched {
+	if isLoad(b) && c.dispatched { // both platforms of a dual-load station share the launch interval
 		if earliest := c.lastDispatch.Add(engine.Seconds(c.cfg.Station.MinDispatchIntervalS)); earliest > now {
 			return false, ReasonMinInterval, earliest
 		}
@@ -453,7 +468,7 @@ func (c *Coaster) blockingUpstream(b *block) bool {
 		if u.at == b || !u.workDone || !u.held {
 			continue
 		}
-		if u.at.next == b {
+		if u.at.next == b || u.at.alt == b {
 			return true
 		}
 		if u.at.rule != nil {
@@ -476,7 +491,8 @@ func (c *Coaster) depart(t *train) {
 		c.sim.Emit(engine.Event{Type: engine.EvHoldEnd, Train: t.id, Block: from.cfg.ID})
 		t.held, t.holdReason = false, ""
 	}
-	if from == c.load {
+	to := c.exitTarget(from)
+	if isLoad(from) {
 		c.sim.Emit(engine.Event{Type: engine.EvDispatch, Train: t.id, Block: from.cfg.ID, N: t.riders,
 			Info: fmt.Sprintf("gaps=%d rows=%d", t.gaps, t.rowsFree)})
 		c.lastDispatch, c.dispatched = c.sim.Now(), true
@@ -493,7 +509,27 @@ func (c *Coaster) depart(t *train) {
 			s.alignedAt = c.sim.Now().Add(d)
 		}
 	}
-	c.enter(t, from.next)
+	c.enter(t, to)
+}
+
+// isLoad reports whether b is a load platform.
+func isLoad(b *block) bool { return b.role == roleLoad || b.role == roleBoth }
+
+// exitTarget is the block a train leaving b moves into, or nil when every way is taken: the next block, or at a
+// dual-load station the first free, open platform.
+func (c *Coaster) exitTarget(b *block) *block {
+	if b.alt == nil {
+		if b.next.occupant != nil {
+			return nil
+		}
+		return b.next
+	}
+	for _, to := range []*block{b.next, b.alt} {
+		if to.occupant == nil && !to.closed {
+			return to
+		}
+	}
+	return nil
 }
 
 func (c *Coaster) unloadOccupant() *train {

@@ -22,6 +22,7 @@ var coasterChecks = []check[*CoasterFile]{
 	{"coaster.dispatch_rule", SevError, checkDispatchRule},
 	{"coaster.cascade_scope", SevError, checkCascadeScope},
 	{"coaster.opening_delay", SevError, checkOpeningDelay},
+	{"coaster.dual_load", SevError, checkDualLoad},
 	{"coaster.seat_rows", SevError, checkSeatRows},
 	{"coaster.stages", SevError, func(c *CoasterFile) (bool, string) {
 		return checkStageChain(c.Preshow, c.Stages, c.Ride.ListedCapacityPerHr)
@@ -74,6 +75,41 @@ func checkSeatRows(c *CoasterFile) (bool, string) {
 		return false, fmt.Sprintf("seats_per_train %d must be a positive multiple of seats_per_row %d", t.SeatsPerTrain, t.SeatsPerRow)
 	}
 	return true, fmt.Sprintf("%d rows of %d", t.SeatsPerTrain/t.SeatsPerRow, t.SeatsPerRow)
+}
+
+// checkDualLoad: at most one alt_next, on an unload station whose next is the first load platform; the second
+// platform is a station that rejoins at the same block. side_down (one platform out) needs the second platform.
+func checkDualLoad(c *CoasterFile) (bool, string) {
+	byID := map[string]*Block{}
+	for i := range c.Blocks {
+		byID[c.Blocks[i].ID] = &c.Blocks[i]
+	}
+	var forks []string
+	for _, b := range c.Blocks {
+		if b.AltNext == "" {
+			continue
+		}
+		forks = append(forks, b.ID)
+		first, second := byID[b.Next], byID[b.AltNext]
+		switch {
+		case b.Kind != BlockStation || first == nil || first.Kind != BlockStation:
+			return false, fmt.Sprintf("%s: alt_next needs an unload station whose next is a load station", b.ID)
+		case second == nil || second.Kind != BlockStation || second.ID == first.ID || second.AltNext != "":
+			return false, fmt.Sprintf("%s: alt_next %q must be a second load station", b.ID, b.AltNext)
+		case second.Next != first.Next:
+			return false, fmt.Sprintf("%s: platforms %s and %s must rejoin at the same block (%s vs %s)", b.ID, first.ID, second.ID, first.Next, second.Next)
+		}
+	}
+	if len(forks) > 1 {
+		return false, "only one dual-load station is supported, found " + strings.Join(forks, ", ")
+	}
+	if sd := c.Failures.SideDown; sd != nil && (len(forks) == 0 || sd.RatePerHr < 0 || sd.DurationS.Mean <= 0) {
+		return false, "failures.side_down needs a dual-load station (alt_next), rate_per_hr >= 0 and a positive duration_s"
+	}
+	if len(forks) == 0 {
+		return true, "single load station"
+	}
+	return true, "dual-load station at " + forks[0]
 }
 
 func checkOpeningDelay(c *CoasterFile) (bool, string) {
@@ -228,6 +264,9 @@ func checkCoasterRefs(c *CoasterFile) (bool, string) {
 		if !blocks[b.Next] {
 			bad = append(bad, fmt.Sprintf("%s.next %q", b.ID, b.Next))
 		}
+		if b.AltNext != "" && !blocks[b.AltNext] {
+			bad = append(bad, fmt.Sprintf("%s.alt_next %q", b.ID, b.AltNext))
+		}
 	}
 	ruleIDs := map[string]bool{}
 	for _, r := range c.Clearance.Rules {
@@ -285,7 +324,13 @@ func checkLoopClosed(c *CoasterFile) (bool, string) {
 		path = append(path, cur)
 		cur = next[cur]
 	}
-	if cur != start || len(seen) != len(c.Blocks) {
+	alts := 0 // a dual-load station's second platform sits off the main loop (coaster.dual_load checks it rejoins)
+	for _, b := range c.Blocks {
+		if b.AltNext != "" && !seen[b.AltNext] {
+			alts++
+		}
+	}
+	if cur != start || len(seen)+alts != len(c.Blocks) {
 		return false, fmt.Sprintf("path %s -> %s does not return to %s through all %d blocks", strings.Join(path, " -> "), cur, start, len(c.Blocks))
 	}
 	return true, strings.Join(path, " -> ") + " -> " + start

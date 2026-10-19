@@ -384,7 +384,7 @@ func rideFailures(k config.Kind, scenario []string) []string {
 	var allowed []string
 	switch k {
 	case config.KindCoaster:
-		allowed = []string{config.FailBriefStop, config.FailLongDowntime, config.FailCascadeStop, config.FailOpeningDelay}
+		allowed = []string{config.FailBriefStop, config.FailLongDowntime, config.FailCascadeStop, config.FailOpeningDelay, config.FailSideDown}
 	case config.KindContinuous:
 		allowed = []string{config.FailChainStop, config.FailLongDowntime, config.FailSideDown}
 	default: // elevator_drop, simulator_bays

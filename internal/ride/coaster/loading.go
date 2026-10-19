@@ -52,13 +52,18 @@ func (c *Coaster) Sample(d config.Dist) engine.Duration {
 
 // Board implements lines.Ride: seat whoever can be seated on the train in the load station.
 func (c *Coaster) Board() {
-	t := c.load.occupant
-	if t == nil || c.Stopped() || (t.phase != phaseBoarding && t.phase != phaseFillWait) {
+	if c.Stopped() {
 		return
 	}
-	c.board(t, t.phase == phaseFillWait)
-	if t.phase == phaseFillWait {
-		c.checkFillWait(t)
+	for _, b := range c.loads { // first platform first, as the line splits in order
+		t := b.occupant
+		if t == nil || (t.phase != phaseBoarding && t.phase != phaseFillWait) {
+			continue
+		}
+		c.board(t, t.phase == phaseFillWait)
+		if t.phase == phaseFillWait {
+			c.checkFillWait(t)
+		}
 	}
 }
 

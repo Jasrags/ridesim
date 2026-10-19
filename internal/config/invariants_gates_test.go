@@ -69,3 +69,32 @@ func TestGateAndHoursChecks(t *testing.T) {
 		})
 	}
 }
+
+const (
+	fxUnload    = "  - { id: UNLOAD, kind: station, next: LOAD }"
+	fxDualBlock = "  - { id: UNLOAD, kind: station, next: LOAD, alt_next: LOAD_B }\n  - { id: LOAD_B, kind: station, next: LIFT }"
+)
+
+func TestDualLoadValid(t *testing.T) {
+	f := patched(t, fxCoaster, "", fxUnload, fxDualBlock)
+	for _, r := range CheckFile(f) {
+		if r.Status == StatusFail {
+			t.Errorf("%s: %s", r.CheckID, r.Detail)
+		}
+	}
+}
+
+func TestDualLoadChecks(t *testing.T) {
+	for _, c := range []struct{ name, old, new string }{
+		{"alt_next on track", "  - { id: LIFT, kind: lift,", "  - { id: LIFT, kind: lift, alt_next: LOAD,"},
+		{"alt_next to track", fxUnload, "  - { id: UNLOAD, kind: station, next: LOAD, alt_next: LIFT }"},
+		{"platforms rejoin apart", fxUnload, "  - { id: UNLOAD, kind: station, next: LOAD, alt_next: LOAD_B }\n  - { id: LOAD_B, kind: station, next: COURSE }"},
+		{"side_down without a second platform", "  weather_hold: scripted", "  side_down: { rate_per_hr: 1, duration_s: { mean: 60, sd: 0 } }\n  weather_hold: scripted"},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			if r := resultFor(t, CheckFile(patched(t, fxCoaster, "", c.old, c.new)), "coaster.dual_load"); r.Status != StatusFail {
+				t.Fatalf("got %v (%s), want FAIL", r.Status, r.Detail)
+			}
+		})
+	}
+}

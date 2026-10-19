@@ -245,6 +245,9 @@ type Block struct {
 	HoldUntilClear bool     `yaml:"hold_until_clear"`
 	Note           string   `yaml:"note"`
 	Next           string   `yaml:"next"`
+	// AltNext is a second load platform this unload station can send trains to (dual-load station, M18). It is a
+	// station block that rejoins the track at the same block as Next's successor.
+	AltNext string `yaml:"alt_next"`
 }
 
 // Brake fields are pointers so the invariant can tell "missing" from "zero".
