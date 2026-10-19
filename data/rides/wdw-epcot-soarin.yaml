@@ -1,0 +1,98 @@
+# Soarin' (EPCOT, The Land; Soarin' Across America since 2026-05-26) — ride config, schema 1.0, archetype simulator_bays (M21)
+# Confidence tags: [wiki] = Wikipedia, [fan] = fan sources, [assumed] = our placeholder
+# Research pass 2026-10-19 (pages opened; notes in the EPCOT rides research file):
+#   wiki  https://en.wikipedia.org/wiki/Soarin%27
+#   wdwm  WDWMagic attraction page: "Total number of guests per each ride cycle: 87"; "including pre-flight briefing, is ten minutes
+#         ... flight lasts approximately five minutes"
+#   crk   crooksinwdw theoretical/operational hourly capacity (updated 2019-07-31): 2,088 / 1,879 "(3 theaters)"
+#   tp    TouringPlans attraction page (2026): ~90 guests per flight, Lightning Lane Multi Pass Tier 2, no single rider line
+#
+# Three theaters [wiki], each an 87-seat rig in three rows lifted into a dome [wiki][fan wdwm]; guests are assigned gates A/B/C
+# (27/33/27 seats [wiki infobox]). Each theater runs its own cycle: the last flight leaves, guests board at their gate, restraints are
+# checked, the pre-flight video plays, the flight. 3 x 87 x 8 cycles/hr = 2,088 [fan crk], a 7.5 min cycle [derived].
+# Capacity (as Star Tours, the 90% rule): crooksinwdw's operational 1,879/hr = 3 x 87 x 3600 / 500 s per cycle. Only the 87 seats and
+# the ~5 min flight are sourced; the new film's runtime is not published, so the flight is 300 s [assumed].
+
+schema_version: "1.0"
+
+ride:
+  id: wdw.epcot.soarin                 # <resort>.<park>.<ride>, unique across all parks
+  family: soarin
+  name: "Soarin' Across America"
+  location:
+    resort: walt_disney_world
+    park: epcot
+    land: world_nature                 # [map] The Land pavilion
+  other_versions:
+    - { resort: disneyland_resort, park: disney_california_adventure, status: operating, note: "Soarin' Over California / Around the World" }
+  archetype: simulator_bays
+  ride_duration_s: 300                 # [fan wdwm] "approximately five minutes" (the original film was 4:51 [wiki]; Across America not found)
+  total_experience_s: 600              # [fan wdwm] "including pre-flight briefing, is ten minutes"
+  height_restriction_in: 40            # [fan tp]
+  listed_capacity_per_hr: 2088         # [fan crk] theoretical; operational 1,879
+  data_conflicts:
+    - field: listed_capacity_per_hr
+      values: { fan_crk_theoretical: 2088, fan_crk_operational: 1879, fan_tp_line_speed_3min_per_100: 2000 }
+      chosen: fan_crk_theoretical
+      note: "Built to 1,879/hr, crooksinwdw's operational figure (= 90% of theoretical), as Star Tours."
+    - field: bays.boarding_groups
+      values: { wiki_infobox_by_gate: [27, 33, 27], wiki_body: "three rows, capacity of 87" }
+      chosen: wiki_infobox_by_gate
+      note: "Gates A/B/C taken as the groups cast assign parties to."
+
+bays:
+  count: 3                             # [wiki] three theaters
+  seats_per_bay: 87                    # [wiki][fan wdwm]
+  seats_per_row: 1                     # unused with boarding_groups
+  boarding_groups: [27, 33, 27]        # [wiki] gates A, B, C
+  layout: "3 rows lifted into a dome; gates A/B/C of 27/33/27"
+  restraints: seat_belt                # [assumed]
+
+cycle:
+  exit_s:             { mean: 45, sd: 8 }     # [assumed] the rig lowers and the last flight leaves
+  load_s:             { mean: 90, sd: 12 }    # [assumed] boarding at the gates
+  max_wait_after_ready_s: 10                  # [assumed]
+  callout_parties: 10                         # [assumed] cast fill gates from the lanes, as Star Tours
+  restraint_check_s:  { mean: 25, sd: 4 }     # [assumed]
+  safety_video_s:     { mean: 40, sd: 2 }     # [assumed] pre-flight briefing [fan wdwm]
+  flight_s:           { mean: 300, sd: 1 }    # [fan wdwm] ~5 min
+  # cycle = 45 + 90 + 25 + 40 + 300 = 500 s -> 3 x 87 x 3600 / 500 = 1,879/hr
+
+failures:
+  brief_stop:
+    rate_per_hr: 0.4                   # [assumed] as the other rides; no downtime data found
+    duration_s: { mean: 180, sd: 60 }
+  long_downtime:
+    mtbf_hr: 30                        # [assumed] as Star Tours
+    mttr_min: { mean: 40, sd: 15 }
+  side_down:                           # one theater out, the others keep flying [assumed rate]; off in the days
+    rate_per_hr: 0.05
+    duration_s: { mean: 1800, sd: 900 }
+  weather_hold: none                   # indoor
+
+queues:
+  party_split_policy: never
+  standby: { physical_capacity: 3000 } # [assumed]
+  single_rider: { enabled: false }     # [fan tp] none today (pre-2010 fact sheets listed one)
+  skip_line:
+    enabled: true                      # [fan tp] Lightning Lane Multi Pass, Tier 2
+    merge_point: station_queue_entrance   # [assumed] before the gate assignment
+    merge:
+      unit: guests
+      empty_lane_rule: pull_other
+      phase_hysteresis_guests: 20      # [assumed]
+      phases:                          # [assumed] same fan-reported placeholders as the other rides
+        - { name: normal,   when_ll_queue_guests_below: 60,  ll_per_standby: 2 }
+        - { name: elevated, when_ll_queue_guests_below: 200, ll_per_standby: 4 }
+        - { name: recovery, when_ll_queue_guests_below: null, ll_per_standby: 10 }
+  posted_wait: { algorithm: queue_len_over_throughput, padding_pct: 0 }
+
+validation_targets:
+  listed_capacity_per_hr: 2088
+  theoretical_riders_per_hr_at_target: 1879   # 3 theaters x 87 x 3600 / 500 s
+  avg_standby_wait_min_2026: 18               # [fan] Queue-Times 2026, Soarin' Across America row (park calibration target)
+
+config_invariants:                     # enforced by the loader (internal/config/invariants_bays.go)
+  - "bays.count >= 1; boarding_groups sum to seats_per_bay (or seats_per_row divides it)"
+  - "cycle.flight_s == ride.ride_duration_s (+/- 2 s)"
+  - "warn: bays x seats x 3600 / (exit + load + restraint + video + flight) within 5% of theoretical_riders_per_hr_at_target"

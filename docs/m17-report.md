@@ -146,3 +146,12 @@ The busiest hour runs ~15 min high, the same pattern as Slinky. Every other attr
   - The row rule is the biggest lever. TouringPlans' line speed (~860/hr) suggests fuller boats than the operator's account. A
     `[user]` look at how cast seat a party of 2 would settle it.
   - Boat count `[user]`.
+
+## M21 follow-up: Soarin' (2026-10-19)
+- **Model:** simulator_bays, as Star Tours.
+  - 3 theaters of 87 [wiki][fan WDWMagic], with gates A/B/C of 27/33/27 as the boarding groups [wiki] and callouts `[assumed]`.
+  - Built to crooksinwdw's operational 1,879/hr: a 500 s cycle per theater (45 exit + 90 load + 25 check + 40 pre-flight video +
+    300 flight).
+  - Only the ~5 min flight and 87 seats are sourced; Soarin' Across America's runtime is not published.
+- **Medium day, 10 seeds:** ~1,729/hr. It posts 17.5 / 32.1 min against Queue-Times' 18 / 34 with no re-fit (appeal 0.70).
+- **Open `[user]`:** the Across America film length, and the time from doors opening to lift-off.

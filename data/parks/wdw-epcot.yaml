@@ -64,8 +64,8 @@ nodes:
       # walk-through, ~150 guests at a time, ~20 min [fan TouringPlans]; appeal, thrill [assumed]. Position [osm] r21099075 · Journey of Water, Inspired by Moana (walk-through) · world_nature · map 21
   - { id: awesome_planet, kind: ride_simple, x: 803, y: 868, capacity_per_hr: 1600, duration_s: 900, queue_capacity: 900, appeal: 0.35, thrill: 0.05 }
       # film; 428 seats (lead only), 15 min [fan TouringPlans] (WDWMagic: 10); capacity [assumed]; appeal, thrill [assumed]. Position [osm] w782275579 · Awesome Planet · world_nature · map 22
-  - { id: soarin, kind: ride_simple, x: 746, y: 1265, capacity_per_hr: 1879, duration_s: 330, queue_capacity: 2000, lightning_lane: tier2, appeal: 0.70, thrill: 0.40 }
-      # 1,879/hr [fan crooksinwdw operational, 2019] (3 theaters x 87 x 8 cycles/hr); Soarin' Across America since 2026-05-26 [fan]; ~5.5 min [assumed]; tier [fan TouringPlans 2026-06-29]; appeal [assumed] (fitted 0.80 -> 0.70, tuning-log 2026-10-19), thrill [assumed]. Position [osm] r10729202 · Soarin' Around the World · world_nature · map 23
+  - { id: soarin, kind: ride, x: 746, y: 1265, ride_id: wdw.epcot.soarin, lightning_lane: tier2, appeal: 0.70, thrill: 0.40 }
+      # full ride model (simulator_bays, ride file 2026-10-19, M21; was ride_simple 1,879/hr, 330 s, queue 2,000); tier [fan TouringPlans 2026-06-29]; appeal [assumed] (fitted 0.80 -> 0.70, tuning-log 2026-10-19), thrill [assumed]. Position [osm] r10729202 · Soarin' Around the World · world_nature · map 23
   - { id: living_with_the_land, kind: ride_simple, x: 520, y: 973, capacity_per_hr: 1440, duration_s: 840, queue_capacity: 1200, lightning_lane: tier2, appeal: 0.73, thrill: 0.05 }
       # 1,440/hr [fan crooksinwdw operational, 2019]; ~14 min [assumed]; tier [fan TouringPlans 2026-06-29]; appeal [assumed] (fitted 0.50 -> 0.73, tuning-log 2026-10-19), thrill [assumed]. Position [osm] w958012721 · Living with the Land · world_nature · map 24
   - { id: seas_with_nemo, kind: ride_simple, x: 980, y: 552, capacity_per_hr: 1980, duration_s: 300, queue_capacity: 1200, lightning_lane: tier2, appeal: 0.72, thrill: 0.05 }
