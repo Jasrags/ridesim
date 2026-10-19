@@ -36,8 +36,8 @@ nodes:
   # ride_simple
   - { id: short_film_festival, kind: ride_simple, x: 1181, y: 1572, capacity_per_hr: 1700, duration_s: 1080, queue_capacity: 900, lightning_lane: tier2, appeal: 0.40, thrill: 0.05 }
       # continuous 4D films; seats and capacity [assumed]; ~18 min (lead only); tier [fan TouringPlans 2026-06-29]; appeal, thrill [assumed]. Position [osm] n4009891497 · Disney & Pixar Short Film Festival · world_celebration · map 3
-  - { id: figment, kind: ride_simple, x: 932, y: 1473, capacity_per_hr: 1980, duration_s: 360, queue_capacity: 1500, lightning_lane: tier2, appeal: 0.72, thrill: 0.10 }
-      # 1,980/hr [fan crooksinwdw operational, 2019]; ~6 min [assumed]; tier [fan TouringPlans 2026-06-29]; appeal [assumed] (fitted 0.45 -> 0.72, tuning-log 2026-10-19), thrill [assumed]. Position [osm] n2989730651 · Journey Into Imagination With Figment · world_celebration · map 4
+  - { id: figment, kind: ride, x: 932, y: 1473, ride_id: wdw.epcot.figment, lightning_lane: tier2, appeal: 0.72, thrill: 0.10 }
+      # full ride model (ride file 2026-10-19, M25; was ride_simple 1,980/hr, 360 s, queue 1,500); tier [fan TouringPlans 2026-06-29]; appeal [assumed] (fitted 0.45 -> 0.72, tuning-log 2026-10-19), thrill [assumed]. Position [osm] n2989730651 · Journey Into Imagination With Figment · world_celebration · map 4
   # dining
   - { id: festival_favorites, kind: dining, x: 1451, y: 1099, seats: 30, service_time_min: { mean: 8, sd: 3 }, appeal: 0.30 }
       # snack window; seats and times [assumed]. Position [osm] n11998956199 · Festival Favorites · world_celebration · map 8
@@ -66,8 +66,8 @@ nodes:
       # film; 428 seats (lead only), 15 min [fan TouringPlans] (WDWMagic: 10); capacity [assumed]; appeal, thrill [assumed]. Position [osm] w782275579 · Awesome Planet · world_nature · map 22
   - { id: soarin, kind: ride, x: 746, y: 1265, ride_id: wdw.epcot.soarin, lightning_lane: tier2, appeal: 0.70, thrill: 0.40 }
       # full ride model (simulator_bays, ride file 2026-10-19, M21; was ride_simple 1,879/hr, 330 s, queue 2,000); tier [fan TouringPlans 2026-06-29]; appeal [assumed] (fitted 0.80 -> 0.70, tuning-log 2026-10-19), thrill [assumed]. Position [osm] r10729202 · Soarin' Around the World · world_nature · map 23
-  - { id: living_with_the_land, kind: ride_simple, x: 520, y: 973, capacity_per_hr: 1440, duration_s: 840, queue_capacity: 1200, lightning_lane: tier2, appeal: 0.73, thrill: 0.05 }
-      # 1,440/hr [fan crooksinwdw operational, 2019]; ~14 min [assumed]; tier [fan TouringPlans 2026-06-29]; appeal [assumed] (fitted 0.50 -> 0.73, tuning-log 2026-10-19), thrill [assumed]. Position [osm] w958012721 · Living with the Land · world_nature · map 24
+  - { id: living_with_the_land, kind: ride, x: 520, y: 973, ride_id: wdw.epcot.living_with_the_land, lightning_lane: tier2, appeal: 0.73, thrill: 0.05, hours: "09:00-19:00" }
+      # full ride model (ride file 2026-10-19, M25; was ride_simple 1,440/hr, 840 s, queue 1,200); closes ~19:00 [fan TouringPlans 2026]; tier [fan TouringPlans 2026-06-29]; appeal [assumed] (fitted 0.50 -> 0.73, tuning-log 2026-10-19), thrill [assumed]. Position [osm] w958012721 · Living with the Land · world_nature · map 24
   - { id: seas_with_nemo, kind: ride, x: 980, y: 552, ride_id: wdw.epcot.seas_with_nemo, lightning_lane: tier2, appeal: 0.72, thrill: 0.05 }
       # full ride model (continuous_load omnimover, ride file 2026-10-19, M24; was ride_simple 1,980/hr, 300 s, queue 1,200); tier [fan TouringPlans 2026-06-29]; appeal [assumed] (fitted 0.45 -> 0.72, tuning-log 2026-10-19), thrill [assumed]. Position [osm] w307684414 · The Seas with Nemo & Friends · world_nature · map 25
   - { id: turtle_talk, kind: ride_simple, x: 1125, y: 554, capacity_per_hr: 540, duration_s: 1020, queue_capacity: 400, lightning_lane: tier2, appeal: 0.57, thrill: 0.00 }
@@ -87,8 +87,8 @@ nodes:
   - { id: shops_showcase_plaza, kind: shop, x: 1623, y: 1827, visit_min: { mean: 12, sd: 6 }, appeal: 0.30, thrill: 0.10 }
       # visit and appeal [assumed]. Position [osm] w295321043 w295320342 · Showcase Plaza shops (Port of Entry, Disney Traders) · showcase_plaza · map 81, 82
   # ride_simple
-  - { id: gran_fiesta, kind: ride_simple, x: 2431, y: 1722, capacity_per_hr: 1490, duration_s: 450, queue_capacity: 900, appeal: 0.71, thrill: 0.05 }
-      # 1,656/hr [wiki] x 90%; 15 riders a boat [wiki] (lead: ~20); ~7.5 min [assumed]; appeal [assumed] (fitted 0.40 -> 0.71, tuning-log 2026-10-19), thrill [assumed]. Position [osm] n2441107360 · Gran Fiesta Tour Starring The Three Caballeros · mexico · map 31
+  - { id: gran_fiesta, kind: ride, x: 2431, y: 1722, ride_id: wdw.epcot.gran_fiesta_tour, appeal: 0.71, thrill: 0.05 }
+      # full ride model (ride file 2026-10-19, M25; was ride_simple 1,490/hr, 450 s, queue 900); appeal [assumed] (fitted 0.40 -> 0.71, tuning-log 2026-10-19), thrill [assumed]. Position [osm] n2441107360 · Gran Fiesta Tour Starring The Three Caballeros · mexico · map 31
   # dining
   - { id: la_cantina, kind: dining, x: 2099, y: 1899, seats: 150, service_time_min: { mean: 25, sd: 8 }, appeal: 0.45, hours: "11:00-21:00" }
       # quick service, lakeside seating; WDWMagic Medium [fan]; seats and times [assumed]; World Showcase dining opens ~11:00 [fan Ziggy 2026]. Position [osm] w295598762 · La Cantina de San Angel · mexico · map 43

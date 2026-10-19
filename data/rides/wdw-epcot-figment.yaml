@@ -1,0 +1,119 @@
+# Journey Into Imagination With Figment (EPCOT, World Celebration) — ride config, schema 1.0, archetype multi_train_coaster (M25)
+# Confidence tags: [wiki] = Wikipedia, [fan] = fan sources, [assumed] = our placeholder
+# Research pass 2026-10-19 (pages opened; notes in the M25 research file):
+#   wiki https://en.wikipedia.org/wiki/Journey_into_Imagination_with_Figment (7:30)
+#   crk  crooksinwdw theoretical/operational hourly capacity (updated 2019-07-31): 2,200 / 1,980
+#   wdwnt WDWNT history: "modified omnimovers" of 7 (3 front, 4 back), run since 1999 as four-car trains that stop to board; 32 vehicles
+#   fan  separate load and unload positions; several in-ride stops (added 1999 and 2002)
+#
+# Four-car trains through the Imagination Institute's sense labs: Sound, Sight, Smell, the closed Touch/Taste door, the upside-down
+# house, the finale [wiki][fan]. Model (Jason, 2026-10-19): trains on blocks with separate load and unload; built to crooksinwdw's
+# counted 1,980/hr = one 28-seat train every 50.9 s; parties share cars (seat by seat). That needs ~10 trains for the loop; the only
+# fleet figure (32 cars = 8 trains) would cap it near 1,550/hr, so 11 trains run [derived] and the conflict is recorded.
+
+schema_version: "1.0"
+
+ride:
+  id: wdw.epcot.figment                # <resort>.<park>.<ride>, unique across all parks
+  family: journey_into_imagination
+  name: "Journey Into Imagination With Figment"
+  location:
+    resort: walt_disney_world
+    park: epcot
+    land: world_celebration            # [map]
+  other_versions: []
+  archetype: multi_train_coaster       # four-car trains on blocks
+  ride_duration_s: 450                 # [wiki] 7:30
+  height_restriction_in: 0
+  listed_capacity_per_hr: 2200         # [fan crk] theoretical
+  data_conflicts:
+    - field: listed_capacity_per_hr
+      values: { fan_crk_theoretical: 2200, fan_crk_operational: 1980, fan_tp_line_speed: 3000 }
+      chosen: fan_crk_theoretical
+      note: "Built to 1,980/hr (Jason, 2026-10-19); TouringPlans' 2 min per 100 exceeds the theoretical and is not used."
+    - field: trains.fleet_size
+      values: { fan_wdwnt_cars: 32, fan_coasterpedia_cars: 16, derived_trains_for_1980: 11 }
+      chosen: derived_trains_for_1980
+      note: "32 cars = 8 trains would cap it near 1,550/hr on a 7.5 min loop."
+
+trains:                                # one train = four cars
+  fleet_size: 11                       # [derived] see header
+  max_in_service: 11
+  default_in_service: 11               # lap 450 + 20 unload + 50.9 load = ~521 s needs ~10.2 at 50.9 s; 10 ran lap-bound at 1,941/hr [derived]
+  cars_per_train: 4                    # [fan wdwnt]
+  seats_per_train: 28                  # [fan wdwnt] 7 per car (3 front, 4 back)
+  seats_per_row: 1                     # parties share cars (Jason, 2026-10-19)
+  layout: "4 cars x (3 + 4)"
+  restraints: lap_bar                  # [assumed]
+
+# Lab order [wiki][fan]; ten [assumed] 45 s blocks (each under the 50.9 s interval with its 1 s release). The in-ride stops [fan] are
+# the block holds.
+blocks:
+  - { id: UNLOAD, kind: station, next: LOAD }   # [fan] separate unload position
+  - { id: LOAD, kind: station, next: INSTITUTE }
+  - { id: INSTITUTE, kind: brake, transit_s: { mean: 45, sd: 2 }, brake: &stop { hold_capable: true, stop_policy: stop_if_next_occupied, release_delay_s: { mean: 1, sd: 0.3 } }, next: SOUND_LAB }
+  - { id: SOUND_LAB, kind: brake, transit_s: { mean: 45, sd: 2 }, brake: *stop, next: SIGHT_LAB }
+  - { id: SIGHT_LAB, kind: brake, transit_s: { mean: 45, sd: 2 }, brake: *stop, next: SMELL_LAB }
+  - { id: SMELL_LAB, kind: brake, transit_s: { mean: 45, sd: 2 }, brake: *stop, next: TOUCH_DOOR }
+  - { id: TOUCH_DOOR, kind: brake, transit_s: { mean: 45, sd: 2 }, brake: *stop, next: FIGMENT_HOUSE }
+  - { id: FIGMENT_HOUSE, kind: brake, transit_s: { mean: 45, sd: 2 }, brake: *stop, next: UPSIDE_DOWN }
+  - { id: UPSIDE_DOWN, kind: brake, transit_s: { mean: 45, sd: 2 }, brake: *stop, next: OPEN_HOUSE }
+  - { id: OPEN_HOUSE, kind: brake, transit_s: { mean: 45, sd: 2 }, brake: *stop, next: FINALE }
+  - { id: FINALE, kind: brake, transit_s: { mean: 45, sd: 2 }, brake: *stop, next: TO_UNLOAD }
+  - { id: TO_UNLOAD, kind: brake, transit_s: { mean: 45, sd: 2 }, brake: *stop, next: UNLOAD }
+  # transit sum = 10 x 45 = 450 = ride_duration_s
+
+clearance:
+  rules: []
+
+station:
+  separate_load_unload: true           # [fan]
+  unload_s:        { mean: 20, sd: 4 } # [assumed]
+  load_s:          { mean: 36, sd: 5 } # [assumed] fitted: 36 + 8 + 6.9 = one train every 50.9 s (unload is separate)
+  restraint_check_s: { mean: 8, sd: 2 }    # [assumed]
+  dispatch_clearance_s: { mean: 6.9, sd: 1 }  # [assumed]
+  target_dispatch_interval_s: 50.9     # derived: 3600 x 28 / 1980 (Jason, 2026-10-19)
+  min_dispatch_interval_s: 45.8        # derived from the 2,200/hr theoretical
+  staff_at_station: 4                  # [assumed]
+  dispatch_rule: hold_for_full_or_max_wait
+  max_wait_after_ready_s: 5            # [assumed]
+
+failures:
+  # Day-long closures (Sept 2024) [fan]; frequent stalls in the smell lab are a lead only. Placeholders [assumed].
+  brief_stop:
+    rate_per_hr: 0.4
+    duration_s: { mean: 180, sd: 60 }
+  long_downtime:
+    mtbf_hr: 30
+    mttr_min: { mean: 40, sd: 15 }
+  weather_hold: none                   # indoor
+
+queues:
+  party_split_policy: never
+  standby: { physical_capacity: 1200 } # [assumed]
+  single_rider: { enabled: false }
+  skip_line:
+    enabled: true                      # [fan] Lightning Lane Multi Pass, Tier 2
+    merge_point: station_queue_entrance   # [assumed]
+    merge:
+      unit: guests
+      empty_lane_rule: pull_other
+      phase_hysteresis_guests: 20      # [assumed]
+      phases:                          # [assumed] same fan-reported placeholders as the other rides
+        - { name: normal,   when_ll_queue_guests_below: 60,  ll_per_standby: 2 }
+        - { name: elevated, when_ll_queue_guests_below: 200, ll_per_standby: 4 }
+        - { name: recovery, when_ll_queue_guests_below: null, ll_per_standby: 10 }
+  posted_wait: { algorithm: queue_len_over_throughput, padding_pct: 0 }
+
+validation_targets:
+  listed_capacity_per_hr: 2200
+  implied_dispatch_interval_s: 50.9    # target 1,980/hr: 3600 x 28 / 1980
+  theoretical_riders_per_hr_at_target: 1980
+  expect_four_trains_sufficient: false
+  avg_standby_wait_min_2026: 10        # [fan] Queue-Times 2026 (park calibration target)
+
+config_invariants:
+  - "sum(block.transit_s.mean over non-station blocks) == ride.ride_duration_s (+/- 2 s)"
+  - "count(blocks) >= trains.max_in_service + 1"
+  - "trains.default_in_service <= trains.max_in_service <= trains.fleet_size"
+  - "every block with kind=brake defines brake.hold_capable, brake.stop_policy and brake.release_delay_s"

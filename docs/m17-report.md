@@ -189,3 +189,25 @@ The busiest hour runs ~15 min high, the same pattern as Slinky. Every other attr
 - **Medium day, 10 seeds:** ~1,688/hr. It posts 7.2 / 17.5 min against 9 / 20, as it did as a simple ride, with no re-fit (appeal
   0.72).
 - **Open `[user]`:** vehicle count, ride time, accessibility stops.
+
+## M25 follow-up: Living with the Land, Gran Fiesta Tour, Figment (2026-10-19)
+All three are coaster-archetype models (vehicles on blocks). Parties share benches, rows and cars (Jason; no source on seating).
+None needed a re-fit.
+
+| Ride | Vehicles and station | Built to | Medium day (10 seeds) | Queue-Times |
+|---|---|---|---|---|
+| Living with the Land | boats of 40 (2 barges x 5 rows of 4) [wiki], one dock [fan], 10 boats [fan] | 1,440/hr (one boat / 100 s) | 11.1 / 23.9 min, ~1,009/hr | 11 / 24 |
+| Gran Fiesta Tour | boats of 15 (5 rows of 3) [wiki], separate unload dock [fan], 15 boats [derived] | 1,490/hr (one boat / 36.2 s) | 7.8 / 15.8 min, ~1,135/hr | 8 / 16 |
+| Figment | 4 cars x 7 seats (3 + 4) [fan], stopped loading, separate unload [fan], 11 trains [derived] | 1,980/hr (one train / 50.9 s) | 9.3 / 20.3 min, ~1,716/hr | 10 / 22 |
+
+- **Living with the Land** now closes at 19:00 (node hours), since it usually closes around 7 pm [fan TouringPlans].
+- **Figment's fleet:** the counted 1,980/hr needs ~10.2 trains for the 7.5 min loop. The only fleet figure (32 cars = 8 trains)
+  would cap it near 1,550, so the model runs 11 and records the conflict.
+- **Assumed:** scene times, station times (fitted to each interval) and failures. None of the three has a downtime rate.
+- **Open `[user]`:**
+  - boat and train counts in service;
+  - whether cast seat separate parties together;
+  - Living with the Land's closing time.
+
+**Status:** every EPCOT ride with a Queue-Times target now has a full model except Test Track. That needs a new archetype, and
+Jason asked to pause before it.

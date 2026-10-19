@@ -297,4 +297,4 @@ numbers come from `data/`. Read both before changing simulation logic.
   on seating). Capacity: Living with the Land crooksinwdw operational 1,440/hr (boats of 40, one every 100 s); Gran Fiesta 90% of
   1,656 = 1,490/hr (boats of 15, one every 36.2 s); Figment crooksinwdw operational 1,980/hr (trains of 4 x 7, one every 50.9 s).
 - Figment's counted 1,980/hr needs ~10 four-car trains for its 7.5 min loop; the only fleet figure (32 cars = 8 trains, WDWNT
-  history) would cap it near 1,550, so the model runs 10 trains [derived] and notes the conflict.
+  history) would cap it near 1,550, so the model runs 11 trains [derived] (10 ran lap-bound at 1,941) and notes the conflict.

@@ -1,0 +1,109 @@
+# Gran Fiesta Tour Starring The Three Caballeros (EPCOT, Mexico) — ride config, schema 1.0, archetype multi_train_coaster (M25)
+# Confidence tags: [wiki] = Wikipedia, [fan] = fan sources, [assumed] = our placeholder
+# Research pass 2026-10-19 (pages opened; notes in the M25 research file):
+#   wiki https://en.wikipedia.org/wiki/Gran_Fiesta_Tour_Starring_The_Three_Caballeros (Arrow flume boats of 15, 5 rows of 3; 1,656/hr)
+#   tp   TouringPlans (2026): ~7 min; line speed 5 min per 100; standby only
+#   wdwm WDWMagic (2026): ~8 min; separate unload dock before load, boats queue to unload
+#
+# Boats on a flume through Mexico's scenes (the Three Caballeros story) [wiki]. Model (Jason, 2026-10-19): boats on blocks with a
+# separate unload dock before load [fan wdwm]; built to 90% of 1,656/hr = 1,490/hr, one 15-seat boat every 36.2 s; parties share
+# rows (seat by seat). The fleet size was not found; enough boats run to fill the loop [derived].
+
+schema_version: "1.0"
+
+ride:
+  id: wdw.epcot.gran_fiesta_tour       # <resort>.<park>.<ride>, unique across all parks
+  family: gran_fiesta_tour
+  name: "Gran Fiesta Tour Starring The Three Caballeros"
+  location:
+    resort: walt_disney_world
+    park: epcot
+    land: mexico                       # [map]
+  other_versions: []
+  archetype: multi_train_coaster       # boats on blocks
+  ride_duration_s: 450                 # [fan] 7 min (TouringPlans) to 8 min (WDWMagic); 7.5 [assumed]
+  height_restriction_in: 0
+  listed_capacity_per_hr: 1656         # [wiki]
+  data_conflicts:
+    - field: trains.seats_per_train
+      values: { wiki: 15, fan_other: [16, 20] }
+      chosen: wiki
+    - field: trains.fleet_size
+      values: { fan_coasterpedia: 32, derived_loop: 16 }
+      chosen: derived_loop
+      note: "Coasterpedia's 32 x 16 looks wrong; 15 boats fill the ~511 s loop at 36.2 s."
+
+trains:                                # one train = one boat
+  fleet_size: 16                       # [derived]
+  max_in_service: 15
+  default_in_service: 15               # lap 450 + 25 unload + ~36 load = ~511 s needs ~14.1 at 36.2 s [derived]
+  cars_per_train: 1
+  seats_per_train: 15                  # [wiki] 5 rows of 3
+  seats_per_row: 1                     # parties share rows (Jason, 2026-10-19)
+  layout: "5 rows of 3"
+  restraints: none
+
+# Eight scenes in order [wiki]; the 450 s ride is split into fifteen [assumed] 30 s blocks (each under the 36.2 s interval).
+blocks:
+  - { id: UNLOAD, kind: station, next: LOAD }   # [fan wdwm] separate unload dock before load
+  - { id: LOAD, kind: station, next: SCENE_01 }
+  - { id: SCENE_01, kind: brake, transit_s: { mean: 30, sd: 1 }, brake: &boat { hold_capable: true, stop_policy: stop_if_next_occupied, release_delay_s: { mean: 1, sd: 0.3 } }, next: SCENE_02 }
+  - { id: SCENE_02, kind: brake, transit_s: { mean: 30, sd: 1 }, brake: *boat, next: SCENE_03 }
+  - { id: SCENE_03, kind: brake, transit_s: { mean: 30, sd: 1 }, brake: *boat, next: SCENE_04 }
+  - { id: SCENE_04, kind: brake, transit_s: { mean: 30, sd: 1 }, brake: *boat, next: SCENE_05 }
+  - { id: SCENE_05, kind: brake, transit_s: { mean: 30, sd: 1 }, brake: *boat, next: SCENE_06 }
+  - { id: SCENE_06, kind: brake, transit_s: { mean: 30, sd: 1 }, brake: *boat, next: SCENE_07 }
+  - { id: SCENE_07, kind: brake, transit_s: { mean: 30, sd: 1 }, brake: *boat, next: SCENE_08 }
+  - { id: SCENE_08, kind: brake, transit_s: { mean: 30, sd: 1 }, brake: *boat, next: SCENE_09 }
+  - { id: SCENE_09, kind: brake, transit_s: { mean: 30, sd: 1 }, brake: *boat, next: SCENE_10 }
+  - { id: SCENE_10, kind: brake, transit_s: { mean: 30, sd: 1 }, brake: *boat, next: SCENE_11 }
+  - { id: SCENE_11, kind: brake, transit_s: { mean: 30, sd: 1 }, brake: *boat, next: SCENE_12 }
+  - { id: SCENE_12, kind: brake, transit_s: { mean: 30, sd: 1 }, brake: *boat, next: SCENE_13 }
+  - { id: SCENE_13, kind: brake, transit_s: { mean: 30, sd: 1 }, brake: *boat, next: SCENE_14 }
+  - { id: SCENE_14, kind: brake, transit_s: { mean: 30, sd: 1 }, brake: *boat, next: SCENE_15 }
+  - { id: SCENE_15, kind: brake, transit_s: { mean: 30, sd: 1 }, brake: *boat, next: UNLOAD }   # [fan wdwm] boats queue here to unload
+  # transit sum = 15 x 30 = 450 = ride_duration_s
+
+clearance:
+  rules: []
+
+station:
+  separate_load_unload: true           # [fan wdwm]
+  unload_s:        { mean: 25, sd: 4 } # [assumed]
+  load_s:          { mean: 24, sd: 4 } # [assumed] fitted: 24 + 6 + 6.2 = one boat every 36.2 s (unload is separate)
+  restraint_check_s: { mean: 6, sd: 1.5 }  # [assumed] seating check
+  dispatch_clearance_s: { mean: 6.2, sd: 1 }  # [assumed]
+  target_dispatch_interval_s: 36.2     # derived: 3600 x 15 / 1490 (Jason, 2026-10-19)
+  min_dispatch_interval_s: 32.6        # derived from the listed 1,656/hr
+  staff_at_station: 3                  # [assumed]
+  dispatch_rule: hold_for_full_or_max_wait
+  max_wait_after_ready_s: 5            # [assumed]
+
+failures:
+  brief_stop:
+    rate_per_hr: 0.4                   # [assumed] no downtime rate found
+    duration_s: { mean: 180, sd: 60 }
+  long_downtime:
+    mtbf_hr: 30                        # [assumed]
+    mttr_min: { mean: 40, sd: 15 }
+  weather_hold: none                   # indoor
+
+queues:
+  party_split_policy: never
+  standby: { physical_capacity: 900 }  # [assumed]
+  single_rider: { enabled: false }
+  skip_line: { enabled: false }        # [fan tp] standby only
+  posted_wait: { algorithm: queue_len_over_throughput, padding_pct: 0 }
+
+validation_targets:
+  listed_capacity_per_hr: 1656
+  implied_dispatch_interval_s: 36.2    # target 1,490/hr: 3600 x 15 / 1490
+  theoretical_riders_per_hr_at_target: 1490
+  expect_four_trains_sufficient: false
+  avg_standby_wait_min_2026: 8         # [fan] Queue-Times 2026 (park calibration target)
+
+config_invariants:
+  - "sum(block.transit_s.mean over non-station blocks) == ride.ride_duration_s (+/- 2 s)"
+  - "count(blocks) >= trains.max_in_service + 1"
+  - "trains.default_in_service <= trains.max_in_service <= trains.fleet_size"
+  - "every block with kind=brake defines brake.hold_capable, brake.stop_policy and brake.release_delay_s"

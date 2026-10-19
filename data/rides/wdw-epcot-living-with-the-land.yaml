@@ -1,0 +1,121 @@
+# Living with the Land (EPCOT, The Land) — ride config, schema 1.0, archetype multi_train_coaster (M25)
+# Confidence tags: [wiki] = Wikipedia, [fan] = fan sources, [assumed] = our placeholder
+# Research pass 2026-10-19 (pages opened; notes in the M25 research file):
+#   wiki https://en.wikipedia.org/wiki/Living_with_the_Land (two coupled barges of ~20, 40 riders in 10 rows of 4; 16 boats with two
+#        spares; 14:55)
+#   crk  crooksinwdw theoretical/operational hourly capacity (updated 2019-07-31): 1,600 / 1,440
+#   tp   TouringPlans (2026): "four average-size adults is a typical load" per row; line speed 3 min per 100; usually closes ~7 pm
+#   wdwm WDWMagic forum (2006, a cast member): "up to 14 boats on it, with 10 being optimal", load and go about every minute
+#   bm   BlogMickey (2026-02-13): one station with a dock and conveyor belt
+#
+# Boats on a water canal through a storm, rainforest, desert and prairie, past a theater, then the Tropics, Aquacell, Temperate,
+# String and Creative greenhouses [wiki]. Model (Jason, 2026-10-19): boats on blocks with one combined dock [fan bm]; built to
+# crooksinwdw's operational 1,440/hr = one 40-seat boat every 100 s; parties share the benches (seat by seat).
+
+schema_version: "1.0"
+
+ride:
+  id: wdw.epcot.living_with_the_land   # <resort>.<park>.<ride>, unique across all parks
+  family: living_with_the_land
+  name: "Living with the Land"
+  location:
+    resort: walt_disney_world
+    park: epcot
+    land: world_nature                 # [map] The Land pavilion
+  other_versions: []
+  archetype: multi_train_coaster       # boats on blocks
+  ride_duration_s: 895                 # [wiki] 14:55
+  height_restriction_in: 0
+  listed_capacity_per_hr: 1600         # [fan crk] theoretical
+  data_conflicts:
+    - field: listed_capacity_per_hr
+      values: { fan_crk_theoretical: 1600, fan_crk_operational: 1440, fan_tp_line_speed: 2000 }
+      chosen: fan_crk_theoretical
+      note: "Built to 1,440/hr, crooksinwdw's operational figure (Jason, 2026-10-19)."
+    - field: trains.seats_per_train
+      values: { wiki_boat: 40, fan_tp_per_barge: 20 }
+      chosen: wiki_boat
+      note: "TouringPlans counts one barge of the two coupled per boat."
+
+trains:                                # one train = one boat (two coupled barges)
+  fleet_size: 16                       # [wiki] "16 (with two spares)"
+  max_in_service: 12                   # [assumed] (forum: up to 14 on the canal)
+  default_in_service: 10               # [fan wdwm] "10 being optimal"; lap 895 + 100 = 995 s needs ~10 at 100 s
+  cars_per_train: 2                    # [wiki] two barges
+  seats_per_train: 40                  # [wiki] 10 rows of 4
+  seats_per_row: 1                     # parties share benches (Jason, 2026-10-19); rows are 4 [wiki]
+  layout: "2 barges x 5 rows of 4"
+  restraints: none
+
+# Scene order [wiki]; times [assumed], each block shorter than the 100 s dock interval with its 2 s release.
+blocks:
+  - { id: DOCK, kind: station, next: STORM }   # [fan bm] one station: unload then load
+  - { id: STORM, kind: brake, transit_s: { mean: 70, sd: 3 }, brake: &boat { hold_capable: true, stop_policy: stop_if_next_occupied, release_delay_s: { mean: 2, sd: 0.5 } }, next: RAINFOREST }
+  - { id: RAINFOREST, kind: brake, transit_s: { mean: 60, sd: 3 }, brake: *boat, next: DESERT }
+  - { id: DESERT, kind: brake, transit_s: { mean: 60, sd: 3 }, brake: *boat, next: PRAIRIE_FARM }
+  - { id: PRAIRIE_FARM, kind: brake, transit_s: { mean: 70, sd: 3 }, brake: *boat, next: THEATER }
+  - { id: THEATER, kind: brake, transit_s: { mean: 60, sd: 3 }, brake: *boat, next: TROPICS }
+  - { id: TROPICS, kind: brake, transit_s: { mean: 90, sd: 3 }, brake: *boat, next: AQUACELL }
+  - { id: AQUACELL, kind: brake, transit_s: { mean: 90, sd: 3 }, brake: *boat, next: TEMPERATE }
+  - { id: TEMPERATE, kind: brake, transit_s: { mean: 95, sd: 3 }, brake: *boat, next: STRING }
+  - { id: STRING, kind: brake, transit_s: { mean: 80, sd: 3 }, brake: *boat, next: CREATIVE }
+  - { id: CREATIVE, kind: brake, transit_s: { mean: 95, sd: 3 }, brake: *boat, next: FINALE }
+  - { id: FINALE, kind: brake, transit_s: { mean: 75, sd: 3 }, brake: *boat, next: RETURN }
+  - { id: RETURN, kind: brake, transit_s: { mean: 50, sd: 3 }, brake: *boat, next: DOCK }   # [assumed] canal back to the dock
+  # transit sum = 70 + 60 + 60 + 70 + 60 + 90 + 90 + 95 + 80 + 95 + 75 + 50 = 895 = ride_duration_s
+
+clearance:
+  rules: []
+
+station:
+  separate_load_unload: false          # [fan bm] one dock
+  unload_s:        { mean: 30, sd: 5 } # [assumed]
+  load_s:          { mean: 50, sd: 8 } # [assumed] fitted: 30 + 50 + 10 + 8 + the next boat's 2 s release = one boat every 100 s
+  restraint_check_s: { mean: 10, sd: 2 }   # [assumed] seating check
+  dispatch_clearance_s: { mean: 8, sd: 2 } # [assumed]
+  target_dispatch_interval_s: 100      # derived: 3600 x 40 / 1440 (Jason, 2026-10-19)
+  min_dispatch_interval_s: 90          # derived from the 1,600/hr theoretical
+  staff_at_station: 4                  # [assumed]
+  dispatch_rule: hold_for_full_or_max_wait
+  max_wait_after_ready_s: 5            # [assumed]
+
+failures:
+  # No downtime rate found; events only (a two-week closure in 2021, boats taking on water and "more downtime than usual" late 2025,
+  # closures Jan 2026) [fan]. Placeholders [assumed].
+  brief_stop:
+    rate_per_hr: 0.4
+    duration_s: { mean: 180, sd: 60 }
+  long_downtime:
+    mtbf_hr: 20
+    mttr_min: { mean: 40, sd: 15 }
+  weather_hold: none                   # indoor
+
+queues:
+  party_split_policy: never
+  standby: { physical_capacity: 1500 } # [assumed]
+  single_rider: { enabled: false }
+  skip_line:
+    enabled: true                      # [fan tp] Lightning Lane Multi Pass, Tier 2
+    merge_point: station_queue_entrance   # [assumed]
+    merge:
+      unit: guests
+      empty_lane_rule: pull_other
+      phase_hysteresis_guests: 20      # [assumed]
+      phases:                          # [assumed] same fan-reported placeholders as the other rides
+        - { name: normal,   when_ll_queue_guests_below: 60,  ll_per_standby: 2 }
+        - { name: elevated, when_ll_queue_guests_below: 200, ll_per_standby: 4 }
+        - { name: recovery, when_ll_queue_guests_below: null, ll_per_standby: 10 }
+  posted_wait: { algorithm: queue_len_over_throughput, padding_pct: 0 }
+
+validation_targets:
+  listed_capacity_per_hr: 1600
+  implied_dispatch_interval_s: 100     # target 1,440/hr: 3600 x 40 / 1440
+  theoretical_riders_per_hr_at_target: 1440
+  expect_four_trains_sufficient: false
+  avg_standby_wait_min_2026: 11        # [fan] Queue-Times 2026 (park calibration target)
+
+config_invariants:
+  - "sum(block.transit_s.mean over non-station blocks) == ride.ride_duration_s (+/- 2 s)"
+  - "count(blocks) >= trains.max_in_service + 1"
+  - "trains.default_in_service <= trains.max_in_service <= trains.fleet_size"
+  - "every block with kind=brake defines brake.hold_capable, brake.stop_policy and brake.release_delay_s"
