@@ -155,3 +155,14 @@ The busiest hour runs ~15 min high, the same pattern as Slinky. Every other attr
   - Only the ~5 min flight and 87 seats are sourced; Soarin' Across America's runtime is not published.
 - **Medium day, 10 seeds:** ~1,729/hr. It posts 17.5 / 32.1 min against Queue-Times' 18 / 34 with no re-fit (appeal 0.70).
 - **Open `[user]`:** the Across America film length, and the time from doors opening to lift-off.
+
+## M22 follow-up: Mission: SPACE (2026-10-19)
+- **Model:** simulator_bays, as Soarin' and Star Tours.
+  - 4 centrifuges, each a bay of 10 four-seat capsules [wiki][fan TouringPlans]. Capsules are boarding groups of 4: cast combine
+    parties into crews, with callouts `[assumed]`.
+  - The 3-min briefing is a preshow [fan TouringPlans]; its rooms and size are `[assumed]`.
+  - Built to crooksinwdw's operational 1,440/hr: a 400 s cycle per centrifuge with the 4-min mission [wiki].
+  - Orange and Green are one ride. Queue-Times reports one wait, and Disney swaps centrifuges between them by demand [fan].
+- **Medium day, 10 seeds:** ~1,343/hr. It posts 15.6 / 29.1 min against 16 / 21 with no re-fit (appeal 0.62). The busiest hour runs
+  high, as it did as a simple ride.
+- **Open `[user]`:** the current Orange/Green split, and how cast form crews of 4.

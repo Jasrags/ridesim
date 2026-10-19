@@ -1,0 +1,109 @@
+# Mission: SPACE (EPCOT, World Discovery) — ride config, schema 1.0, archetype simulator_bays (M22)
+# Confidence tags: [wiki] = Wikipedia, [fan] = fan sources, [assumed] = our placeholder
+# Research pass 2026-10-19 (pages opened; notes in the EPCOT rides research file):
+#   wiki https://en.wikipedia.org/wiki/Mission:_Space ("four separate centrifuges, each with 10 capsules holding four riders")
+#   crk  crooksinwdw theoretical/operational hourly capacity (updated 2019-07-31): 1,600 / 1,440
+#   tp   TouringPlans attraction pages (2026): "4 guests per vehicle. 10 vehicles per spinner. 4 spinners total"; 15 min plus a
+#        3 min preshow; Disney "can reconfigure the ride's four centrifuges to either Orange or Green based on guest demand"
+#   wdwm WDWMagic 2015-11-20: Orange used three of the four bays, Green one
+#
+# Four centrifuges [wiki][fan tp], each a bay of 10 four-seat capsules that boards, checks and spins on its own cycle (simulator_bays,
+# as Star Tours and Soarin'). Orange and Green share the centrifuges and Queue-Times reports one wait, so they are one ride here
+# (the bay split is not modeled). A capsule is a crew of 4: cast combine smaller parties [assumed] (boarding groups with callouts).
+# Capacity (the 90% rule, as Soarin'): crooksinwdw's operational 1,440/hr = 4 x 40 x 3600 / 400 s per centrifuge cycle.
+
+schema_version: "1.0"
+
+ride:
+  id: wdw.epcot.mission_space          # <resort>.<park>.<ride>, unique across all parks
+  family: mission_space
+  name: "Mission: SPACE"
+  location:
+    resort: walt_disney_world
+    park: epcot
+    land: world_discovery              # [map]
+  other_versions: []
+  archetype: simulator_bays
+  ride_duration_s: 240                 # [wiki] "four-minute mission" (infobox 5:38 likely includes the capsule briefing)
+  total_experience_s: 1080             # [fan tp] 15 min plus a 3 min preshow
+  height_restriction_in: 40            # [fan tp] Green 40 in, Orange 44 in
+  listed_capacity_per_hr: 1600         # [wiki][fan crk] theoretical
+  data_conflicts:
+    - field: listed_capacity_per_hr
+      values: { wiki_crk_theoretical: 1600, fan_crk_operational: 1440, fan_tp_line_speed_per_side: 1500 }
+      chosen: wiki_crk_theoretical
+      note: "Built to 1,440/hr, crooksinwdw's operational figure (= 90%), as Soarin'."
+    - field: ride_duration_s
+      values: { wiki_body: 240, wiki_infobox: 338 }
+      chosen: wiki_body
+
+bays:
+  count: 4                             # [wiki][fan tp] four centrifuges
+  seats_per_bay: 40                    # [wiki] 10 capsules x 4
+  seats_per_row: 1                     # unused with boarding_groups
+  boarding_groups: [4, 4, 4, 4, 4, 4, 4, 4, 4, 4]   # [wiki] ten capsules of 4
+  layout: "10 capsules of 4 around a centrifuge"
+  restraints: shoulder_harness         # [assumed]
+
+cycle:
+  exit_s:             { mean: 45, sd: 8 }     # [assumed] crews leave the capsules
+  load_s:             { mean: 60, sd: 10 }    # [assumed] crews enter their capsules
+  max_wait_after_ready_s: 10                  # [assumed]
+  callout_parties: 10                         # [assumed] cast combine parties into crews of 4
+  restraint_check_s:  { mean: 45, sd: 8 }     # [assumed] harness check and capsule doors
+  safety_video_s:     { mean: 10, sd: 2 }     # [assumed] countdown in the capsule
+  flight_s:           { mean: 240, sd: 1 }    # [wiki] four-minute mission
+  # cycle = 45 + 60 + 45 + 10 + 240 = 400 s -> 4 x 40 x 3600 / 400 = 1,440/hr
+
+preshow:                               # the briefing [fan tp] 3 min preshow
+  enabled: true
+  rooms: 4                             # [assumed] one per centrifuge
+  batch_size: 40                       # [assumed] one centrifuge's crews
+  duration_s: { mean: 180, sd: 10 }    # [fan tp]
+  turnover_s: { mean: 30, sd: 5 }      # [assumed]
+  fill_rule: full_or_max_wait
+  max_fill_wait_s: 45                  # [assumed]
+  release_rule: when_load_area_has_room
+  load_area_capacity: 80               # [assumed] two centrifuges' crews wait at the gates
+  party_integrity: true
+  merge_point: true                    # [assumed] Lightning Lane merges before the briefing
+  bypass_for_single_rider: false
+
+failures:
+  brief_stop:
+    rate_per_hr: 0.4                   # [assumed] as the other rides; no downtime data found
+    duration_s: { mean: 180, sd: 60 }
+  long_downtime:
+    mtbf_hr: 30                        # [assumed] as Star Tours and Soarin'
+    mttr_min: { mean: 40, sd: 15 }
+  side_down:                           # one centrifuge out, the others keep spinning [assumed rate]; off in the days
+    rate_per_hr: 0.05
+    duration_s: { mean: 1800, sd: 900 }
+  weather_hold: none                   # indoor
+
+queues:
+  party_split_policy: never
+  standby: { physical_capacity: 1500 } # [assumed]
+  single_rider: { enabled: false }     # [fan tp] none today (pre-2010 fact sheets listed one)
+  skip_line:
+    enabled: true                      # [fan tp] Lightning Lane Multi Pass, Tier 2 (both teams)
+    merge_point: preshow_entrance      # [assumed]
+    merge:
+      unit: guests
+      empty_lane_rule: pull_other
+      phase_hysteresis_guests: 20      # [assumed]
+      phases:                          # [assumed] same fan-reported placeholders as the other rides
+        - { name: normal,   when_ll_queue_guests_below: 60,  ll_per_standby: 2 }
+        - { name: elevated, when_ll_queue_guests_below: 200, ll_per_standby: 4 }
+        - { name: recovery, when_ll_queue_guests_below: null, ll_per_standby: 10 }
+  posted_wait: { algorithm: queue_len_over_throughput, padding_pct: 0 }
+
+validation_targets:
+  listed_capacity_per_hr: 1600
+  theoretical_riders_per_hr_at_target: 1440   # 4 centrifuges x 40 x 3600 / 400 s
+  avg_standby_wait_min_2026: 16               # [fan] Queue-Times 2026 (park calibration target)
+
+config_invariants:                     # enforced by the loader (internal/config/invariants_bays.go)
+  - "bays.count >= 1; boarding_groups sum to seats_per_bay (or seats_per_row divides it)"
+  - "cycle.flight_s == ride.ride_duration_s (+/- 2 s)"
+  - "warn: bays x seats x 3600 / (exit + load + restraint + video + flight) within 5% of theoretical_riders_per_hr_at_target"
