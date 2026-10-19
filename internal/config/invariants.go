@@ -96,6 +96,10 @@ func CheckFile(f *File) []Result {
 		return run(scenarioChecks, f.Scenario)
 	case KindStudy:
 		return run(studyChecks, f.Study)
+	case KindScoring:
+		return run(scoringChecks, f.Scoring)
+	case KindChallenge:
+		return run(challengeChecks, f.Challenge)
 	}
 	return nil
 }

@@ -1,0 +1,11 @@
+# Minimal valid challenge fixture against test-fx-park-scenario.yaml. Broken variants are patches in challenge_test.go.
+schema_version: "1.0"
+challenge:
+  id: fx_challenge
+  title: "Fixture day"
+  scenario: fx_park_day
+  scoring: fx_scoring
+  levers: [ll_merge, ll_inventory]
+  goals:
+    - { metric: score, at_least: 5 }
+    - { metric: posted_avg_min, node: coaster, at_most: 30 }

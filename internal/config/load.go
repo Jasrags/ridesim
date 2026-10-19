@@ -24,6 +24,8 @@ const (
 	KindStudy
 	KindElevator
 	KindBays
+	KindScoring
+	KindChallenge
 )
 
 func (k Kind) String() string {
@@ -42,6 +44,10 @@ func (k Kind) String() string {
 		return "scenario"
 	case KindStudy:
 		return "study"
+	case KindScoring:
+		return "scoring"
+	case KindChallenge:
+		return "challenge"
 	}
 	return "unknown"
 }
@@ -57,6 +63,8 @@ type File struct {
 	Park       *ParkFile
 	Scenario   *ScenarioFile
 	Study      *StudyFile
+	Scoring    *ScoringFile
+	Challenge  *ChallengeFile
 }
 
 // RideID returns the ride id for ride files and "" for park files.
@@ -98,9 +106,11 @@ type header struct {
 	Ride          *struct {
 		Archetype string `yaml:"archetype"`
 	} `yaml:"ride"`
-	Park     *yaml.Node `yaml:"park"`
-	Scenario *yaml.Node `yaml:"scenario"`
-	Study    *yaml.Node `yaml:"study"`
+	Park      *yaml.Node `yaml:"park"`
+	Scenario  *yaml.Node `yaml:"scenario"`
+	Study     *yaml.Node `yaml:"study"`
+	Scoring   *yaml.Node `yaml:"scoring"`
+	Challenge *yaml.Node `yaml:"challenge"`
 }
 
 // LoadBytes parses one file. name is used for error messages and the filename invariant.
@@ -118,14 +128,20 @@ func LoadBytes(name string, data []byte) (*File, error) {
 
 	f := &File{Path: name}
 	sections := 0
-	for _, present := range []bool{h.Ride != nil, h.Park != nil, h.Scenario != nil, h.Study != nil} {
+	for _, present := range []bool{h.Ride != nil, h.Park != nil, h.Scenario != nil, h.Study != nil, h.Scoring != nil, h.Challenge != nil} {
 		if present {
 			sections++
 		}
 	}
 	switch {
 	case sections > 1:
-		return nil, fmt.Errorf("%s: file has more than one of ride, park, scenario, study", name)
+		return nil, fmt.Errorf("%s: file has more than one of ride, park, scenario, study, scoring, challenge", name)
+	case h.Scoring != nil:
+		f.Kind, f.Scoring = KindScoring, &ScoringFile{}
+		return f, decodeStrict(name, data, f.Scoring)
+	case h.Challenge != nil:
+		f.Kind, f.Challenge = KindChallenge, &ChallengeFile{}
+		return f, decodeStrict(name, data, f.Challenge)
 	case h.Study != nil:
 		f.Kind, f.Study = KindStudy, &StudyFile{}
 		return f, decodeStrict(name, data, f.Study)
@@ -136,7 +152,7 @@ func LoadBytes(name string, data []byte) (*File, error) {
 		f.Kind, f.Park = KindPark, &ParkFile{}
 		return f, decodeStrict(name, data, f.Park)
 	case h.Ride == nil:
-		return nil, fmt.Errorf("%s: no ride, park, scenario or study section", name)
+		return nil, fmt.Errorf("%s: no ride, park, scenario, study, scoring or challenge section", name)
 	}
 
 	switch h.Ride.Archetype {

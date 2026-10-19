@@ -60,6 +60,11 @@ func Validate(ds *Dataset) *Report {
 				r.Detail = fmt.Sprintf("%d variant(s) resolve and pass every check", len(vs)-1)
 			}
 			fr.Results = append(fr.Results, r)
+		case KindScoring:
+			fr.ID = f.Scoring.Scoring.ID
+		case KindChallenge:
+			fr.ID = f.Challenge.Challenge.ID
+			fr.Results = append(fr.Results, checkChallengeRefs(ds, f.Challenge))
 		}
 		rep.Files = append(rep.Files, fr)
 	}

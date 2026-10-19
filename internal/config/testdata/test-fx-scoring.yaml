@@ -1,0 +1,12 @@
+# Minimal valid scoring fixture. Broken variants are patches in challenge_test.go.
+schema_version: "1.0"
+scoring:
+  id: fx_scoring
+  experience: { ride: 10, show: 6, meet: 6 }
+  wait_comfort_min: 20
+  wait_penalty_per_min: 0.2
+  balk_penalty: 2
+  renege_penalty: 5
+  walk_penalty_per_min: 0.05
+  jam_penalty_per_min: 0.2
+  ll_lapse_penalty: 5
