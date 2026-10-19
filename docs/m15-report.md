@@ -60,3 +60,5 @@ live score exactly (48.52), and entering the same file twice was refused.
   easiest. Entries rank per date, so the board stays consistent; limit the accepted dates if the board is ever shared.
 - **More room to play:** the whole-day score needs levers that add capacity or steer crowds (posted-wait padding, show schedules, staffing). That's the trade-off milestone, where those levers get costs the score sees.
 - **Map labels:** they overlap at Hollywood Studios (pre-existing). The train buttons show on rides without a barn, and the server refuses them.
+
+Goals were re-set on 2026-10-19 after the M16 turn-away fix raised every baseline; see docs/m16-report.md.

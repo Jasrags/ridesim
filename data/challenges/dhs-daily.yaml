@@ -1,5 +1,5 @@
-# M15 daily challenge: every player of a date plays the same day (seed = YYYYMMDD). No-lever days on 2026-10-19..21
-# score 47.10-47.93 with 7,988-8,106 passes used.
+# M15 daily challenge: every player of a date plays the same day (seed = YYYYMMDD). After the M16 changes the no-lever day on
+# 2026-10-19 scores 49.08 with 8,147 passes used.
 schema_version: "1.0"
 challenge:
   id: dhs_daily
@@ -10,5 +10,5 @@ challenge:
   daily_seed: true
   levers: [ll_inventory, ll_merge, single_rider_open, single_rider_close, add_train, remove_train]
   goals:
-    - { metric: score, at_least: 47 }
+    - { metric: score, at_least: 48.5 }
     - { metric: ll_redeemed, at_least: 7500 }

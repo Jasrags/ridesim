@@ -1,5 +1,6 @@
-# M15 challenge. Goals were set from runs on 2026-10-19: the no-lever day misses the Slinky goals (62.9 / 91.4 min),
-# and a known play meets all four (Slinky LL inventory 0.1 and merge 1:1 at opening: 48.52, 54.6 / 70.5 min, 8,345 used).
+# M15 challenge; goals re-set 2026-10-19 after the M16 turn-away fix and realism pass. The no-lever day misses the Slinky goals
+# (62.2 / 88.5 min; score 50.40, 8,575 used); a known play meets all four (Slinky LL inventory 0.1 and merge 1:1 at opening:
+# 54.7 / 66.1 min, 50.28, 8,471 used).
 schema_version: "1.0"
 challenge:
   id: dhs_tame_slinky
@@ -11,5 +12,5 @@ challenge:
   goals:
     - { metric: posted_avg_min, node: slinky_dog_dash, at_most: 55 }
     - { metric: posted_peak_min, node: slinky_dog_dash, at_most: 72 }
-    - { metric: score, at_least: 48.5 }       # the no-lever day scores 48.43
-    - { metric: ll_redeemed, at_least: 8300 } # the no-lever day uses 8,494 passes
+    - { metric: score, at_least: 50.25 }      # the no-lever day scores 50.40: keep the day while taming Slinky
+    - { metric: ll_redeemed, at_least: 8400 } # the no-lever day uses 8,575 passes
