@@ -225,14 +225,17 @@ type CoasterFile struct {
 }
 
 type Trains struct {
-	FleetSize        int    `yaml:"fleet_size"`
-	MaxInService     int    `yaml:"max_in_service"`
-	DefaultInService int    `yaml:"default_in_service"`
-	CarsPerTrain     int    `yaml:"cars_per_train"`
-	SeatsPerTrain    int    `yaml:"seats_per_train"`
-	SeatsPerRow      int    `yaml:"seats_per_row"` // parties take whole rows
-	Layout           string `yaml:"layout"`
-	Restraints       string `yaml:"restraints"`
+	FleetSize        int `yaml:"fleet_size"`
+	MaxInService     int `yaml:"max_in_service"`
+	DefaultInService int `yaml:"default_in_service"`
+	CarsPerTrain     int `yaml:"cars_per_train"`
+	SeatsPerTrain    int `yaml:"seats_per_train"`
+	// SeatsPerRow is the seating unit a party gets to itself, not necessarily the physical row (see layout): a party
+	// takes whole units and is never split, and a unit's leftover seats go only to single riders or a solo party at the
+	// head of the line. 1 = seats fill one by one and parties share physical rows (Rise, Runaway Railway, Guardians, Remy's).
+	SeatsPerRow int    `yaml:"seats_per_row"`
+	Layout      string `yaml:"layout"`
+	Restraints  string `yaml:"restraints"`
 }
 
 type Block struct {

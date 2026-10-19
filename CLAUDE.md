@@ -276,5 +276,8 @@ numbers come from `data/`. Read both before changing simulation logic.
 ## Decisions log (M19, Remy's Ratatouille Adventure, 2026-10-19)
 - Remy's (Jason): each group of 3 vehicles [fan] runs as one 18-seat train on scene blocks, loading on the dual-load station
   (left/right sides [fan]) with a separate unload; built to 90% of 2,220/hr [wiki] = ~2,000/hr (one group every 32.4 s).
-- Seating (Jason): parties take whole rows of 3 [wiki]; odd seats go to single riders or a solo party ([fan] cast pair single
-  riders into odd seats). EPCOT's version is 2D since 2025-11-14 [fan]: no glasses step.
+- Seating [user] (Jason, replacing the whole-rows choice): his party of 4 shared a vehicle with a party of 2, split 1 front / 1
+  back, so Remy's seats fill one by one (whole rows left vehicles 76% full: the guest model has almost no single riders). EPCOT's version is 2D since 2025-11-14 [fan]: no glasses step.
+- Remy's downtime [assumed] (Jason): a long stop every 12 h (~7% with brief stops). In the park ~1,683/hr; appeal re-fit
+  1.34 -> 1.28 (approved): 45.9 / 70.1 min vs 46 / 62. `seats_per_row` is the seating unit a party gets to itself, not the
+  physical row (documented in config/types.go; rename deferred, Jason).

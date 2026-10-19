@@ -192,8 +192,8 @@ nodes:
   - { id: shops_morocco, kind: shop, x: 850, y: 3128, visit_min: { mean: 12, sd: 6 }, appeal: 0.30, thrill: 0.10, hours: "11:00-21:00" }
       # visit and appeal [assumed]; World Showcase shops open ~11:00 [fan Ziggy 2026]. Position [osm] n4852402677 n4852402678 n2991768096 n2991768097 n2991768098 · Morocco shops · morocco
   # ride_simple
-  - { id: remy, kind: ride_simple, x: 470, y: 3028, capacity_per_hr: 1998, duration_s: 280, queue_capacity: 1800, lightning_lane: tier1, appeal: 1.34, thrill: 0.30 }
-      # 2,220/hr [wiki] x 90%; 36 vehicles of 6, 4:40 [wiki]; opens with the park [fan ResortsGal]; tier [fan TouringPlans 2026-06-29]; appeal [assumed] (fitted 1.05 -> 1.34, tuning-log 2026-10-19), thrill [assumed]. Position [osm] w688994559 · Remy's Ratatouille Adventure · france · map 38
+  - { id: remy, kind: ride, x: 470, y: 3028, ride_id: wdw.epcot.remys_ratatouille_adventure, lightning_lane: tier1, appeal: 1.28, thrill: 0.30 }
+      # full ride model (ride file 2026-10-19, M19; was ride_simple 1,998/hr, 280 s, queue 1,800); tier [fan TouringPlans 2026-06-29]; appeal [assumed] (fitted 1.05 -> 1.34; 1.34 -> 1.28 with the full model, tuning-log 2026-10-19), thrill [assumed]. Position [osm] w688994559 · Remy's Ratatouille Adventure · france · map 38
   # show
   - { id: palais_du_cinema, kind: show, x: 411, y: 2793, capacity_guests: 350, duration_min: 18, schedule: ["11:00", "11:30", "12:00", "12:30", "13:00", "13:30", "14:00", "14:30", "15:00", "15:30", "16:00", "16:30", "17:00", "17:30", "18:00", "18:30", "19:00", "19:30", "20:00", "20:30"], appeal: 0.35, thrill: 0.00 }
       # Beauty and the Beast Sing-Along (15 min) alternates with Impressions de France (18 min) [fan]; seats and schedule [assumed]; appeal [assumed]. Position [osm] w305094846 · Palais du Cinéma (Beauty and the Beast Sing-Along / Impressions de France) · france · map 37

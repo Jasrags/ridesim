@@ -1,0 +1,125 @@
+# Remy's Ratatouille Adventure (EPCOT, France) — ride config, schema 1.0, archetype multi_train_coaster (M19)
+# Confidence tags: [wiki] = Wikipedia, [fan] = fan sources, [assumed] = our placeholder
+# Research pass 2026-10-19 (pages opened; notes and quotes in the M19 research file):
+#   wiki https://en.wikipedia.org/wiki/Remy%27s_Ratatouille_Adventure
+#   ziggy Ziggy Knows Disney ride guide (updated 2026-09-09): two load sides, separate unload, 2D since 2025-11-14
+#   jr   Jesuit Roundup (2024): vehicles dispatch in groups of 3
+#   tpi  Theme Park Insider (2014, Paris twin): a group of three stays together "throughout the attraction"
+#   rg   ResortsGal (updated 2026-04-24): cast pair single riders "where there is an odd seat left in a car"
+#
+# Trackless "Ratmobiles" [wiki]: 36 vehicles of 6 (2 rows of 3), dispatched and run in groups of 3 [fan jr][fan tpi]. Model (Jason,
+# 2026-10-19): each group of 3 runs as one 18-seat train on scene blocks (as Runaway Railway); cast send guests to a left or right
+# load side [fan ziggy], modeled with the dual-load station; unload is separate [fan ziggy]. No preshow; the 3D glasses are gone [fan].
+# Seating [user] (Jason, 2026-10-19): cast fill a 6-seat vehicle with several parties and split a party across its two rows of 3;
+# seats are modeled one by one within the group (the model does not keep a party inside one vehicle).
+# Capacity (Jason): 90% of 2,220/hr [wiki] = 1,998/hr, one group every 32.4 s, so each side gets 64.8 s per group [assumed split].
+
+schema_version: "1.0"
+
+ride:
+  id: wdw.epcot.remys_ratatouille_adventure   # <resort>.<park>.<ride>, unique across all parks
+  family: ratatouille
+  name: "Remy's Ratatouille Adventure"
+  location:
+    resort: walt_disney_world
+    park: epcot
+    land: france                       # [map]
+  other_versions:
+    - { resort: disneyland_paris, park: walt_disney_studios_park, status: operating, note: "Ratatouille: L'Aventure Totalement Toquée (2014), same system" }
+  archetype: multi_train_coaster       # trackless vehicle groups on scene blocks; see header
+  ride_duration_s: 280                 # [wiki] 4:40 (TouringPlans: 5 min)
+  height_restriction_in: 0             # [wiki] none
+  listed_capacity_per_hr: 2220         # [wiki]
+  data_conflicts:
+    - field: listed_capacity_per_hr
+      values: { wiki: 2220, fan_disneyblog: 1800, fan_magic_tips: 1600 }
+      chosen: wiki
+      note: "Built to 90% = ~2,000/hr (Jason, 2026-10-19). A 2,151/hr rope-drop count exists only as a snippet lead."
+
+trains:                                # one train = a group of 3 vehicles
+  fleet_size: 12                       # [wiki] 36 vehicles / 3 [fan jr]
+  max_in_service: 12
+  default_in_service: 12               # lap 280 + 25 unload + 64.8 platform = ~370 s needs ~11.4 groups at 32.4 s [derived]
+  cars_per_train: 3                    # [fan jr] three vehicles per group
+  seats_per_train: 18                  # [wiki] 6 per vehicle
+  seats_per_row: 1                     # [user] Jason: his party of 4 shared a vehicle with a party of 2, split 1 front / 1 back (2026-10-19), so seats fill one by one
+  layout: "3 vehicles x 2 rows of 3"   # [wiki][fan]
+  restraints: lap_bar                  # [assumed]
+
+# About 8 scenes [fan ziggy]: rooftop, kitchen, freezer, dining room, oven, inside the walls, stove, finale. No timings were found.
+# The 280 s show is split into ten [assumed] 28 s stopping points so each, with its 1 s release, is shorter than the 32.4 s interval.
+blocks:
+  - { id: UNLOAD, kind: station, next: LOAD_A, alt_next: LOAD_B }   # [fan ziggy] separate unload station
+  - { id: LOAD_A, kind: station, next: ROOFTOP }                     # [fan ziggy] left side
+  - { id: LOAD_B, kind: station, next: ROOFTOP }                     # [fan ziggy] right side
+  - { id: ROOFTOP, kind: brake, transit_s: { mean: 28, sd: 1 }, brake: &scene { hold_capable: true, stop_policy: stop_if_next_occupied, release_delay_s: { mean: 1, sd: 0.3 } }, next: KITCHEN_1 }   # [assumed]
+  - { id: KITCHEN_1, kind: brake, transit_s: { mean: 28, sd: 1 }, brake: *scene, next: KITCHEN_2 }
+  - { id: KITCHEN_2, kind: brake, transit_s: { mean: 28, sd: 1 }, brake: *scene, next: FREEZER }
+  - { id: FREEZER, kind: brake, transit_s: { mean: 28, sd: 1 }, brake: *scene, next: DINING_ROOM }
+  - { id: DINING_ROOM, kind: brake, transit_s: { mean: 28, sd: 1 }, brake: *scene, next: OVEN }
+  - { id: OVEN, kind: brake, transit_s: { mean: 28, sd: 1 }, brake: *scene, next: WALLS }
+  - { id: WALLS, kind: brake, transit_s: { mean: 28, sd: 1 }, brake: *scene, next: STOVE }
+  - { id: STOVE, kind: brake, transit_s: { mean: 28, sd: 1 }, brake: *scene, next: FINALE }
+  - { id: FINALE, kind: brake, transit_s: { mean: 28, sd: 1 }, brake: *scene, next: TO_UNLOAD }
+  - { id: TO_UNLOAD, kind: brake, transit_s: { mean: 28, sd: 1 }, brake: *scene, next: UNLOAD }   # [assumed] run to the unload dock
+  # transit sum = 10 x 28 = 280 = ride_duration_s
+
+clearance:
+  rules: []
+
+station:
+  separate_load_unload: true           # [fan ziggy]
+  unload_s:        { mean: 25, sd: 4 } # [assumed]
+  load_s:          { mean: 50, sd: 6 } # [assumed] fitted: two sides x (50 + 10 + 4.8) s = one group every 32.4 s
+  restraint_check_s: { mean: 10, sd: 2 }   # [assumed]
+  dispatch_clearance_s: { mean: 4.8, sd: 1 }   # [assumed]
+  target_dispatch_interval_s: 32.4     # derived: 3600 x 18 / 1998 (Jason, 2026-10-19)
+  min_dispatch_interval_s: 29          # derived from the listed 2,220/hr (one group every 29.2 s)
+  staff_at_station: 8                  # [assumed]
+  dispatch_rule: hold_for_full_or_max_wait
+  max_wait_after_ready_s: 5            # [assumed]
+
+failures:
+  # Remy ranked #4 for downtime at WDW Dec 2024 - Dec 2025 with "many daily downtimes" [fan Mickey Visit]; average interruption 39 min
+  # (Oct 2021, WDW Stats via Inside the Magic) [fan]; "28 times in 19 days" is a lead only. Rates [assumed]: about one long stop a day (Jason).
+  brief_stop:
+    rate_per_hr: 0.6                   # [assumed]
+    duration_s: { mean: 180, sd: 60 }
+  long_downtime:
+    mtbf_hr: 12                        # [assumed] (Jason, 2026-10-19): ~7% downtime with brief stops, below Rise's measured ~11%; 6 h gave ~14%
+    mttr_min: { mean: 39, sd: 15 }     # [fan] Oct 2021 average; sd [assumed]
+  side_down:                           # one load side out [assumed rate]; off in the days
+    rate_per_hr: 0.02
+    duration_s: { mean: 3600, sd: 1800 }
+  weather_hold: none                   # indoor
+
+queues:
+  party_split_policy: never
+  standby: { physical_capacity: 3000 } # [assumed]
+  single_rider: { enabled: true, fill_only_empty_seats: true }   # [fan TouringPlans 2026-10-19][fan rg] fills odd seats; "not always open all day" [fan]
+  skip_line:
+    enabled: true                      # [fan TouringPlans] Lightning Lane Multi Pass, Tier 1
+    merge_point: station_queue_entrance   # [assumed] at the load-side assignment
+    merge:
+      unit: guests
+      empty_lane_rule: pull_other
+      phase_hysteresis_guests: 20      # [assumed]
+      phases:                          # [assumed] same fan-reported placeholders as the other rides
+        - { name: normal,   when_ll_queue_guests_below: 60,  ll_per_standby: 2 }
+        - { name: elevated, when_ll_queue_guests_below: 200, ll_per_standby: 4 }
+        - { name: recovery, when_ll_queue_guests_below: null, ll_per_standby: 10 }
+  posted_wait: { algorithm: queue_len_over_throughput, padding_pct: 0 }
+
+validation_targets:
+  listed_capacity_per_hr: 2220
+  implied_dispatch_interval_s: 32.4    # target 1,998/hr: 3600 x 18 / 1998
+  theoretical_riders_per_hr_at_target: 1998
+  expect_four_trains_sufficient: false # 12 groups in service
+  avg_standby_wait_min_2026: 46        # [fan] Queue-Times 2026 (park calibration target)
+
+config_invariants:                     # enforced by the loader, applies to every ride
+  - "sum(block.transit_s.mean over non-station blocks) == ride.ride_duration_s (+/- 2 s)"
+  - "count(blocks) >= trains.max_in_service + 1"
+  - "trains.default_in_service <= trains.max_in_service <= trains.fleet_size"
+  - "every block with kind=brake defines brake.hold_capable, brake.stop_policy and brake.release_delay_s"
+  - "a dual-load station (alt_next) rejoins at one block; side_down needs it"

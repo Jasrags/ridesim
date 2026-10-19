@@ -112,3 +112,21 @@ Medium day, 10 seeds:
 
 The busiest hour runs ~15 min high, the same pattern as Slinky. Every other attraction is within 0.5 min of the table above.
 - **Open `[user]`:** load dwell per platform, how often the second platform is out, and whether cast seat strangers side by side.
+
+## M19 follow-up: Remy's Ratatouille Adventure (2026-10-19)
+- **Model** (Jason's choices): each group of 3 trackless vehicles [fan] runs as one 18-seat train on ten scene blocks, loading on
+  the dual-load station (left and right sides [fan]) with a separate unload. Built to 90% of 2,220/hr [wiki] = 1,998/hr: one group
+  every 32.4 s, so each side gets 64.8 s.
+  - EPCOT's version is 2D since 2025-11-14, so there is no glasses step [fan].
+  - The single-rider line is open in the model ([fan] it fills odd seats; its hours are not scripted).
+- **Seating `[user]`:** Jason's party of 4 shared a vehicle with a party of 2 split one front, one back, so seats fill one by one.
+  Whole rows of 3 left vehicles 76% full, because the guest model has almost no single riders (10 rode all day).
+- **Downtime `[assumed]`:** a long stop every 12 h (Jason) plus brief stops, about 7%. Every 6 h gave ~14%. The only sources are
+  "#4 for downtime at WDW" and a 39-min average outage in 2021.
+- **Medium day, 10 seeds:** ~1,683/hr. With the approved re-fit (appeal 1.34 -> 1.28) it posts 45.9 / 70.1 min against 46 / 62.
+  The busiest hour runs high, as with Guardians and Slinky.
+- **Open `[user]`:**
+  - dwell per load side;
+  - how many groups the show holds;
+  - when the single-rider line opens;
+  - stops per day.
