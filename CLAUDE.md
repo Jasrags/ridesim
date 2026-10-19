@@ -263,3 +263,10 @@ numbers come from `data/`. Read both before changing simulation logic.
 - EPCOT International Gateway share 20% [assumed] (Jason). EPCOT calibration (approved): 14 ride/meet appeals fitted to
   Queue-Times 2026; Canada Far and Wide and the Short Film Festival post fixed waits and are not fitted. Luminous, Food & Wine,
   Friendship boats and Play Zone are not modeled yet. Results in docs/m17-report.md.
+
+## Decisions log (M18, Guardians of the Galaxy: Cosmic Rewind, 2026-10-19)
+- Guardians gets a full coaster model (Jason): built to 90% of the 2,000/hr design figure = 1,800/hr (one launch every 40 s);
+  8 trains of 20 [wiki]; preshow chain holding room -> Welcome Center -> Phase Chamber, batches of up to 140 [fan]; LL Single Pass
+  merges before the preshow [fan].
+- Dual-load station (Jason): new coaster feature, trains alternate between two load platforms; `side_down` can take one out
+  (seen Sept 2025 [fan]), off until there is a rate.
