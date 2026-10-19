@@ -12,6 +12,7 @@ package coaster
 
 import (
 	"fmt"
+	"slices"
 
 	"github.com/jasrags/ridesim/internal/config"
 	"github.com/jasrags/ridesim/internal/engine"
@@ -64,8 +65,8 @@ type block struct {
 	cfg      *config.Block
 	role     role
 	next     *block
-	alt      *block // dual-load station: the second load platform an unload station may send trains to (M18)
-	closed   bool   // a dual-load platform out of service (side_down): no train may enter
+	alts     []*block // multi-load station: further load platforms an unload station may send trains to (M18, M26)
+	closed   bool     // a dual-load platform out of service (side_down): no train may enter
 	occupant *train
 	switches []*switchState
 	rule     *exitRule
@@ -175,15 +176,15 @@ func New(sim *engine.Sim, cfg *config.CoasterFile, opts Options) (*Coaster, erro
 		if b.next == nil {
 			return nil, fmt.Errorf("coaster %s: block %s.next %q unknown", cfg.Ride.ID, b.cfg.ID, b.cfg.Next)
 		}
-		if b.cfg.AltNext != "" {
-			b.alt = c.byID[b.cfg.AltNext]
+		for _, a := range b.cfg.AltNext {
+			b.alts = append(b.alts, c.byID[a])
 		}
 	}
 	prev := map[*block]*block{}
 	for _, b := range c.blocks {
 		prev[b.next] = b
-		if b.alt != nil {
-			prev[b.alt] = b
+		for _, a := range b.alts {
+			prev[a] = b
 		}
 	}
 	for _, b := range c.blocks {
@@ -468,7 +469,7 @@ func (c *Coaster) blockingUpstream(b *block) bool {
 		if u.at == b || !u.workDone || !u.held {
 			continue
 		}
-		if u.at.next == b || u.at.alt == b {
+		if u.at.next == b || slices.Contains(u.at.alts, b) {
 			return true
 		}
 		if u.at.rule != nil {
@@ -518,13 +519,13 @@ func isLoad(b *block) bool { return b.role == roleLoad || b.role == roleBoth }
 // exitTarget is the block a train leaving b moves into, or nil when every way is taken: the next block, or at a
 // dual-load station the first free, open platform.
 func (c *Coaster) exitTarget(b *block) *block {
-	if b.alt == nil {
+	if len(b.alts) == 0 {
 		if b.next.occupant != nil {
 			return nil
 		}
 		return b.next
 	}
-	for _, to := range []*block{b.next, b.alt} {
+	for _, to := range append([]*block{b.next}, b.alts...) {
 		if to.occupant == nil && !to.closed {
 			return to
 		}

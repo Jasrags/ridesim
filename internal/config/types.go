@@ -248,9 +248,26 @@ type Block struct {
 	HoldUntilClear bool     `yaml:"hold_until_clear"`
 	Note           string   `yaml:"note"`
 	Next           string   `yaml:"next"`
-	// AltNext is a second load platform this unload station can send trains to (dual-load station, M18). It is a
-	// station block that rejoins the track at the same block as Next's successor.
-	AltNext string `yaml:"alt_next"`
+	// AltNext lists further load platforms this unload station can send trains to (dual-load station, M18; Test Track's four
+	// bays, M26). Each is a station block that rejoins the track at the same block as Next's successor. YAML takes one id or a list.
+	AltNext Refs `yaml:"alt_next"`
+}
+
+// Refs is a list of block ids that YAML may give as one scalar or a sequence.
+type Refs []string
+
+// UnmarshalYAML accepts "LOAD_B" or [LOAD_B, LOAD_C].
+func (r *Refs) UnmarshalYAML(n *yaml.Node) error {
+	if n.Kind == yaml.ScalarNode {
+		*r = Refs{n.Value}
+		return nil
+	}
+	var list []string
+	if err := n.Decode(&list); err != nil {
+		return err
+	}
+	*r = list
+	return nil
 }
 
 // Brake fields are pointers so the invariant can tell "missing" from "zero".

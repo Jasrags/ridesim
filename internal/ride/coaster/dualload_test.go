@@ -21,7 +21,7 @@ func dualFixture(t *testing.T, dual bool) *config.CoasterFile {
 	blocks := []config.Block{}
 	for _, b := range f.Blocks {
 		if b.ID == "UNLOAD" {
-			b.AltNext = "LOAD_B"
+			b.AltNext = config.Refs{"LOAD_B"}
 		}
 		blocks = append(blocks, b)
 		if b.ID == "LOAD" {
@@ -102,5 +102,39 @@ func TestDualLoadSideDown(t *testing.T) {
 	}
 	if !usedAfter {
 		t.Error("LOAD_B never used after an outage ended")
+	}
+}
+
+// alt_next as a list: three platforms all dispatch, and side_down picks among the further ones.
+func TestMultiLoadDispatchesFromEveryPlatform(t *testing.T) {
+	f := dualFixture(t, true)
+	f.Trains.FleetSize, f.Trains.MaxInService = 5, 5
+	blocks := []config.Block{}
+	for _, b := range f.Blocks {
+		if b.ID == "UNLOAD" {
+			b.AltNext = config.Refs{"LOAD_B", "LOAD_C"}
+		}
+		blocks = append(blocks, b)
+		if b.ID == "LOAD_B" {
+			blocks = append(blocks, config.Block{ID: "LOAD_C", Kind: config.BlockStation, Next: "LIFT"})
+		}
+	}
+	f.Blocks = blocks
+	f.Failures.SideDown = &config.RateStop{RatePerHr: 2, DurationS: config.Dist{Mean: 600, SD: 0}}
+	evs := runCoaster(t, f, Options{Trains: 5, FixedTimes: true, Failures: []string{config.FailSideDown}}, 4*engine.Hour)
+	from, down := map[string]int{}, map[string]int{}
+	for _, e := range evs {
+		switch e.Type {
+		case engine.EvDispatch:
+			from[e.Block]++
+		case EvSideDown:
+			down[e.Block]++
+		}
+	}
+	if from["LOAD"] == 0 || from["LOAD_B"] == 0 || from["LOAD_C"] == 0 {
+		t.Fatalf("dispatches by platform %v, want all three", from)
+	}
+	if down["LOAD"] > 0 || down["LOAD_B"]+down["LOAD_C"] == 0 {
+		t.Errorf("side_down by platform %v: want only further platforms", down)
 	}
 }

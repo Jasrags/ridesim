@@ -298,3 +298,13 @@ numbers come from `data/`. Read both before changing simulation logic.
   1,656 = 1,490/hr (boats of 15, one every 36.2 s); Figment crooksinwdw operational 1,980/hr (trains of 4 x 7, one every 50.9 s).
 - Figment's counted 1,980/hr needs ~10 four-car trains for its 7.5 min loop; the only fleet figure (32 cars = 8 trains, WDWNT
   history) would cap it near 1,550, so the model runs 11 trains [derived] (10 ran lap-bound at 1,941) and notes the conflict.
+
+## Decisions log (M26, Test Track, 2026-10-19)
+- Test Track 3.0 has no design studio (guests go straight to boarding [wiki][fan]), so it is a coaster model (Jason): 6-seat cars
+  on blocks, a separate unload, and four parallel load bays (8 load rows = 4 bays of 2 [fan]). The dual-load station generalizes
+  to N platforms (`alt_next` takes a list); `side_down` closes one bay (seen July 2025 - July 2026, -25% [fan]), off in the days.
+- Built to 1,080/hr (crooksinwdw operational, pre-3.0): one car every 20 s. Parties may split across the two rows and single riders
+  fill odd seats [fan TouringPlans]; the single rider line stays enabled (closed since 2026-10-14 for a Disney test [fan]; a
+  scenario can close it).
+- Lead (not applied, Jason): Expedition Everest's single rider line closed permanently in September 2026 [fan]; noted in the Everest
+  file, change later.

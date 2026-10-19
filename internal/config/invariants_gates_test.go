@@ -98,3 +98,14 @@ func TestDualLoadChecks(t *testing.T) {
 		})
 	}
 }
+
+func TestMultiLoadListValid(t *testing.T) {
+	f := patched(t, fxCoaster, "", fxUnload, "  - { id: UNLOAD, kind: station, next: LOAD, alt_next: [LOAD_B, LOAD_C] }\n  - { id: LOAD_B, kind: station, next: LIFT }\n  - { id: LOAD_C, kind: station, next: LIFT }")
+	if r := resultFor(t, CheckFile(f), "coaster.dual_load"); r.Status != StatusPass {
+		t.Fatalf("%s", r.Detail)
+	}
+	bad := patched(t, fxCoaster, "", fxUnload, "  - { id: UNLOAD, kind: station, next: LOAD, alt_next: [LOAD_B, LOAD_B] }\n  - { id: LOAD_B, kind: station, next: LIFT }")
+	if r := resultFor(t, CheckFile(bad), "coaster.dual_load"); r.Status != StatusFail {
+		t.Fatalf("duplicate platform accepted: %s", r.Detail)
+	}
+}
