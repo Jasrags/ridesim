@@ -291,3 +291,10 @@ numbers come from `data/`. Read both before changing simulation logic.
   42 / 57. TouringPlans' ~860/hr line speed hints boats fill better than the operator's no-shared-rows account: [user] check.
 - Spaceship Earth (M23, Jason): continuous_load, one party per vehicle, full vehicles every 6 s (2,400/hr theoretical); appeal re-fit
   0.70 -> 0.58 (approved). [user] the chain slows for some guests and fully stops for wheelchairs; only full-stop holds are modeled.
+
+## Decisions log (M25, Living with the Land, Gran Fiesta Tour, Figment, 2026-10-19)
+- Jason: build all three, then pause before Test Track. Parties share benches, rows and cars on all three (seat by seat; no source
+  on seating). Capacity: Living with the Land crooksinwdw operational 1,440/hr (boats of 40, one every 100 s); Gran Fiesta 90% of
+  1,656 = 1,490/hr (boats of 15, one every 36.2 s); Figment crooksinwdw operational 1,980/hr (trains of 4 x 7, one every 50.9 s).
+- Figment's counted 1,980/hr needs ~10 four-car trains for its 7.5 min loop; the only fleet figure (32 cars = 8 trains, WDWNT
+  history) would cap it near 1,550, so the model runs 10 trains [derived] and notes the conflict.
