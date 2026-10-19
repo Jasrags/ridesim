@@ -7,7 +7,7 @@ numbers come from `data/`. Read both before changing simulation logic.
 - Go 1.22+, module `github.com/jasrags/ridesim`. Standard library plus `gopkg.in/yaml.v3` only;
   any other dependency needs a written justification and Jason's approval.
 - Layout: `cmd/ridesim`, `internal/{engine,config,ride,queue,guest,park,metrics}` (spec §3), plus
-  `internal/{scenario,study,live,web,osm}` and ride archetypes under `internal/ride/`. Map:
+  `internal/{scenario,study,live,web,osm,score,challenge}` and ride archetypes under `internal/ride/`. Map:
   `docs/CODEMAPS/architecture.md`.
 
 ## Determinism (hard requirement)
@@ -76,6 +76,8 @@ numbers come from `data/`. Read both before changing simulation logic.
 - `go run ./cmd/ridesim run -scenario data/scenarios/park-medium-day.yaml -log out/park.jsonl` (park day, M7)
 - `go run ./cmd/ridesim serve -scenario data/scenarios/park-medium-day.yaml` (web control room, M8; http://127.0.0.1:8080/)
 - `go run ./cmd/ridesim run -scenario data/scenarios/dhs-medium-day.yaml` (Hollywood Studios day, M9; serve works the same)
+- `go run ./cmd/ridesim serve -challenge data/challenges/dhs-tame-slinky.yaml` (challenge play, M15; daily ones take -date)
+- `go run ./cmd/ridesim challenge -file data/challenges/dhs-tame-slinky.yaml [-session played.yaml -name NAME]` (baseline, or verify onto out/leaderboard.json)
 - `go run ./cmd/ridesim osm-import -config osm/wdw-dhs/import.yaml -out out/dhs-draft.yaml -svg out/dhs-draft.svg` (draft park from OSM, M9)
 
 ## Decisions log (M3 kickoff, 2026-10-17)

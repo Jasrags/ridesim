@@ -21,14 +21,16 @@ go run ./cmd/ridesim run -scenario data/scenarios/dhs-medium-day.yaml -log out/d
 go run ./cmd/ridesim report -log out/dhs.jsonl      # recompute metrics from a saved log
 go run ./cmd/ridesim serve -scenario data/scenarios/dhs-medium-day.yaml   # live control room at http://127.0.0.1:8080/
 go run ./cmd/ridesim study -file data/studies/everest-operations.yaml     # A/B study on paired seeds
+go run ./cmd/ridesim serve -challenge data/challenges/dhs-tame-slinky.yaml # play a challenge (score and goals)
+go run ./cmd/ridesim challenge -file data/challenges/dhs-tame-slinky.yaml -session played.yaml -name you  # verify onto the leaderboard
 ```
 
 ## Layout
 
-- `cmd/ridesim` — the CLI (`validate`, `run`, `report`, `study`, `serve`, `osm-import`)
+- `cmd/ridesim` — the CLI (`validate`, `run`, `report`, `study`, `serve`, `challenge`, `osm-import`)
 - `internal/` — the engine, config loader, ride archetypes, queues, guests, park model, metrics, live
   session and web server; see [`docs/CODEMAPS/architecture.md`](docs/CODEMAPS/architecture.md)
-- `data/` — rides, parks, scenarios and studies as YAML
+- `data/` — rides, parks, scenarios, studies, the score weights and challenges as YAML
 - `docs/spec.md` — the behavior spec; `docs/m*-report.md` — validation results per milestone;
   `docs/tuning-log.md` — every change to an assumed value
 

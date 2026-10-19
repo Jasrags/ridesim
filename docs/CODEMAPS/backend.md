@@ -6,7 +6,8 @@ validate   -> config.LoadDir + invariants            (validate.go)
 run        -> scenario.Load(file) | ad hoc coaster -> Runner.Run -> metrics report, -log JSONL (run.go)
 report     -> engine.ReadLog -> metrics.Compute / ComputePark                                  (run.go)
 study      -> study.Run(base + variants, paired seeds) -> table + JSON                          (study.go)
-serve      -> live.New(session) -> web.Server on 127.0.0.1:8080                                 (serve.go)
+serve      -> live.New(session) -> web.Server on 127.0.0.1:8080; -challenge -> web.NewChallenge (serve.go)
+challenge  -> challenge.Run baseline | Verify(session) rerun -> score + goals -> local leaderboard (challenge.go)
 osm-import -> osm build -> draft park YAML + SVG (never overwrites)                             (osmimport.go)
 
 ## HTTP API (internal/web/server.go)
@@ -14,7 +15,7 @@ GET  /            -> embedded static/index.html
 GET  /api/state   -> live.Snapshot JSON
 GET  /api/events  -> SSE snapshot stream
 POST /api/speed   -> set sim speed
-POST /api/lever   -> Session.Apply(config.OpsEvent)
+POST /api/lever   -> Session.Apply(config.OpsEvent)  (challenge play: only the challenge's levers, else 403)
 POST /api/jump    -> Session.JumpTo(t)  (rerun from open with earlier ops)
 GET  /api/export  -> Session.Export -> park scenario YAML
 
@@ -36,6 +37,8 @@ ride/bays      per-bay exit -> board -> check -> flight cycle
 queue          FIFO with lazy delete, preshow batch stage, LL merge credit
 guest          Party, Poisson piecewise arrivals, party sizes, patience
 metrics        metrics.go ride report; ops.go; park.go ComputePark (posted waits, closures, edges)
-live           Session: Advance, Apply, JumpTo, Ops, Export, Snapshot; feed.go event ticker
+live           Session: Advance, Apply, JumpTo, Ops, Export, Snapshot, EnableScore/Card; feed.go event ticker
+score          Scorer.Add(event) -> Card (points per guest from the log); Compute(events, weights)
+challenge      Load, Seed (fixed | daily YYYYMMDD), Run, Evaluate goals, Verify session, Board (JSON leaderboard)
 study          Run -> replicate (parallel, ordered by seed) -> paired diffs, 95% t intervals
 osm            extract.go Overpass JSON; graph.go junction merge; build.go; emit.go YAML/SVG

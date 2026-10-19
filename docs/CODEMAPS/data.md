@@ -22,6 +22,11 @@ wdw-dhs.yaml (595 lines): node kinds ride 8, ride_simple 3, show 7, meet 3, dini
                          lightning_lane, single_rider_closed, walking_mode, no_lightning_lane, accessibility_holds}
 ride days: everest-*, rnrc-*, hm-baseline-day ; park days: park-{low,medium,high}-day, dhs-{low,medium,high}-day
 
+## data/scoring (1)  key: scoring{id, experience{ride, show, meet}, wait_comfort_min, wait_penalty_per_min, balk_penalty,
+  renege_penalty, walk_penalty_per_min, jam_penalty_per_min, ll_lapse_penalty}  (all [assumed], M15)
+## data/challenges (3)  key: challenge{id, title, description, scenario, scoring, daily_seed, levers[], goals[{metric, node?,
+  at_least | at_most}]}  metrics: score, experiences_per_guest, balks, reneges, ll_lapsed, ll_redeemed, posted_avg_min, posted_peak_min
+
 ## data/studies (3)  key: study{base, seeds, report_node, variants[{id, note, set | ride_set | scale}]}
 everest-operations, hm-what-ifs, rnrc-guest-flow
 

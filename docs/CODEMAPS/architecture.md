@@ -6,9 +6,10 @@ simulator. One binary (`cmd/ridesim`), no services, no database. Behavior spec: 
 
 ## Layers (imports point down only)
 ```
-cmd/ridesim  (CLI: validate run report study serve osm-import)
+cmd/ridesim  (CLI: validate run report study serve challenge osm-import)
    |-- web ------> live ------> scenario ----> park ----> ride/{coaster,continuous,elevator,bays}
    |-- study ----> scenario, metrics             |              |
+   |-- challenge -> scenario, metrics, score     |              |
    |-- osm (offline import, no sim deps)         |              v
    |-- metrics --> park (types only)             |          ride/lines -> queue ; ride/seats
    v                                             v              v
