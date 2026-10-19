@@ -1,0 +1,97 @@
+# Alien Swirling Saucers (Disney's Hollywood Studios, Toy Story Land) — ride config, schema 1.0, archetype simulator_bays (M16)
+# Confidence tags: [wiki] = Wikipedia, [fan] = fan sources, [assumed] = our placeholder
+# Research pass 2026-10-19 (pages opened):
+#   wiki https://en.wikipedia.org/wiki/Alien_Swirling_Saucers
+#   yfv  https://yourfirstvisit.net/?p=68593 (timed cycle, 2018)
+#   bm   https://blogmickey.com/alien-swirling-saucers-ride-toy-story-land/ (2020-04-11)
+#   tp   https://touringplans.com/hollywood-studios/attractions/alien-swirling-saucers (updated 2026-10-19)
+#   itm  https://insidethemagic.net/?p=848049 (2026-09-22, one side running)
+#
+# Two playsets run side by side [fan yfv][fan tp], each with 11 rocket cars towed by aliens in saucers, 22 in all [fan yfv][fan bm].
+# A car holds 2 riders (3 with small children) and takes one party [fan bm]. yfv timed a 3-minute cycle: ~90 s to unload and load,
+# ~90 s of ride. Each side is modeled as one bay that boards, checks and runs on its own cycle (simulator_bays, as Star Tours).
+# Capacity (Jason, 2026-10-19): built to the sourced cycle, 2 x 22 x 3600 / 180 = 880/hr with every seat full; one party per car
+# leaves seats empty, so the park's party mix sets what it carries. TouringPlans' line speed (10 min per 100 ahead) implies ~600/hr.
+# On 2026-09-22 only one side ran [fan itm]: that is side_down, which the DHS days leave off until there is a rate.
+
+schema_version: "1.0"
+
+ride:
+  id: wdw.dhs.alien_swirling_saucers   # <resort>.<park>.<ride>, unique across all parks
+  family: alien_swirling_saucers
+  name: "Alien Swirling Saucers"
+  location:
+    resort: walt_disney_world
+    park: disneys_hollywood_studios
+    land: toy_story_land               # [map]
+  other_versions: []                   # Mater's Junkyard Jamboree uses the same Zamperla system [wiki]
+  archetype: simulator_bays
+  ride_duration_s: 90                  # [fan yfv] timed ~90 s of ride (bm, guide2wdw say "2 minutes")
+  total_experience_s: 180              # [fan yfv] 3-minute cycle including unload and load
+  height_restriction_in: 32            # [wiki]
+  listed_capacity_per_hr: 880          # [fan yfv] 44 seats per 3-min cycle (no official figure; no crooksinwdw entry found)
+  data_conflicts:
+    - field: listed_capacity_per_hr
+      values: { fan_yfv_timed_cycle: 880, fan_tp_implied_10min_per_100: 600 }
+      chosen: fan_yfv_timed_cycle
+      note: "Built to the cycle; one party per car makes the carried rate lower (Jason, 2026-10-19)."
+    - field: ride_duration_s
+      values: { fan_yfv_timed: 90, fan_bm: 120 }
+      chosen: fan_yfv_timed
+
+bays:
+  count: 2                             # [fan yfv][fan tp] two playsets
+  seats_per_bay: 22                    # [fan yfv] 11 cars x 2
+  seats_per_row: 2                     # a car is a row: a party takes whole cars [fan bm] (the 3-with-children case is not modeled)
+  boarding_groups: []
+  layout: "11 rocket cars of 2"
+  restraints: lap_bar                  # [assumed]
+
+cycle:
+  exit_s:             { mean: 30, sd: 5 }     # [assumed] riders leave; part of yfv's ~90 s unload + load
+  load_s:             { mean: 50, sd: 8 }     # [assumed] boarding window; tp rates loading "slow"
+  max_wait_after_ready_s: 10                  # [assumed]
+  callout_parties: 0                          # [assumed] no callouts: one party per car, taken in line order
+  restraint_check_s:  { mean: 10, sd: 3 }     # [assumed]
+  safety_video_s:     { mean: 0, sd: 0 }      # none
+  flight_s:           { mean: 90, sd: 1 }     # [fan yfv] ride
+  # cycle = 30 + 50 + 10 + 0 + 90 = 180 s [fan yfv 3 min] -> 2 x 22 x 3600 / 180 = 880/hr
+
+failures:
+  brief_stop:
+    rate_per_hr: 0.4                   # [assumed] as the other rides; no downtime data found
+    duration_s: { mean: 180, sd: 60 }
+  long_downtime:
+    mtbf_hr: 30                        # [assumed]
+    mttr_min: { mean: 40, sd: 15 }
+  side_down:                           # one playset out, the other keeps running [fan itm 2026-09-22; rate assumed]
+    rate_per_hr: 0.05
+    duration_s: { mean: 3600, sd: 1800 }
+  weather_hold: none                   # outdoor, but no weather model in the DHS days
+
+queues:
+  party_split_policy: never
+  standby: { physical_capacity: 900 }  # [assumed] as the M9 simple ride
+  single_rider: { enabled: false }     # [fan] none (one party per car)
+  skip_line:
+    enabled: true                      # [fan tp] Lightning Lane Multi Pass, second group (tier 2)
+    merge_point: station_queue_entrance   # [assumed]
+    merge:
+      unit: guests
+      empty_lane_rule: pull_other
+      phase_hysteresis_guests: 20      # [assumed]
+      phases:                          # [assumed] same fan-reported placeholders as the other rides
+        - { name: normal,   when_ll_queue_guests_below: 60,  ll_per_standby: 2 }
+        - { name: elevated, when_ll_queue_guests_below: 200, ll_per_standby: 4 }
+        - { name: recovery, when_ll_queue_guests_below: null, ll_per_standby: 10 }
+  posted_wait: { algorithm: queue_len_over_throughput, padding_pct: 0 }
+
+validation_targets:
+  listed_capacity_per_hr: 880
+  theoretical_riders_per_hr_at_target: 880    # 2 sides x 22 x 3600 / 180 s
+  avg_standby_wait_min_2026: 16               # [fan] Queue-Times 2026 (park calibration target)
+
+config_invariants:                     # enforced by the loader (internal/config/invariants_bays.go)
+  - "bays.count >= 1; boarding_groups sum to seats_per_bay (or seats_per_row divides it)"
+  - "cycle.flight_s == ride.ride_duration_s (+/- 2 s)"
+  - "warn: bays x seats x 3600 / (exit + load + restraint + video + flight) within 5% of theoretical_riders_per_hr_at_target"
