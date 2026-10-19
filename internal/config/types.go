@@ -566,6 +566,10 @@ type Decision struct {
 	MealWindows        []string `yaml:"meal_windows"`
 	MealWindowBonus    float64  `yaml:"meal_window_bonus"` // added to dining utility inside a meal window
 	RerouteS           float64  `yaml:"reroute_s"`         // recompute routes from current walking times this often (0 = static; M9)
+	// M16 turn-away fixes, both off by default: guests skip options whose board wait is over their own patience,
+	// and shows whose next performance is already full when they choose.
+	PatienceAware   bool `yaml:"patience_aware"`
+	SkipFullShows   bool `yaml:"skip_full_shows"`
 }
 
 type Utility struct {

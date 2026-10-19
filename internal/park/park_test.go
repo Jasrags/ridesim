@@ -330,3 +330,29 @@ func TestSimpleRidesLogPostedWaits(t *testing.T) {
 		t.Errorf("filler logged %d posted waits, want one per board refresh", n)
 	}
 }
+
+// With patience_aware on, a party never picks an option whose board wait is over its patience (shows and
+// Lightning Lane returns excepted); with skip_full_shows on, never a show already full.
+func TestChoiceSkipsWaitsOverPatienceAndFullShows(t *testing.T) {
+	ds, pf := fixtureDataset(t)
+	pf.Decision.PatienceAware, pf.Decision.SkipFullShows = true, true
+	sim := engine.New(1)
+	p, err := New(sim, ds, pf, Options{Attendance: 50})
+	if err != nil {
+		t.Fatal(err)
+	}
+	p.Start()
+	a := p.agents[0]
+	a.patience = 10 * engine.Minute
+	for i := range p.board {
+		p.board[i] = 0
+	}
+	coaster, filler := p.g.Node("coaster").Idx, p.g.Node("filler").Idx
+	p.board[coaster], p.board[filler] = 30*engine.Minute, 30*engine.Minute
+	p.acts[p.g.Node("theater").Idx].(*show).guests = p.g.Node("theater").CapacityGuests
+	for i := 0; i < 200; i++ {
+		if c := p.choose(a); c == coaster || c == filler || c == p.g.Node("theater").Idx {
+			t.Fatalf("chose %s", p.g.Nodes[c].ID)
+		}
+	}
+}

@@ -237,7 +237,7 @@ func (p *Park) choose(a *agent) int {
 		case config.NodeShow:
 			sh := act.(*show)
 			at := sh.nextStart()
-			if at < 0 || at < eta {
+			if at < 0 || at < eta || d.SkipFullShows && sh.guests+a.size > n.CapacityGuests {
 				continue
 			}
 			waitMin = at.Sub(eta).Seconds() / 60
@@ -249,6 +249,8 @@ func (p *Park) choose(a *agent) int {
 		if b := p.heldFor(a, n.Idx, eta); b != nil {
 			waitMin = 0 // guests expect a short Lightning Lane wait
 			u += w.LLReturnWindowBonus
+		} else if d.PatienceAware && a.patience > 0 && n.Kind != config.NodeShow && p.board[n.Idx] > a.patience {
+			continue // the board already shows a wait longer than this party will stand
 		}
 		if n.Kind != config.NodeElsewhere {
 			u -= w.RepeatPenalty * float64(a.count[n.Idx])
