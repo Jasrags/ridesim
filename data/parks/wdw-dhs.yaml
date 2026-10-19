@@ -536,6 +536,8 @@ guests:
   ll_passes_per_guest: { mean: 4.0, sd: 1.5 }   # [assumed] Multi Pass bookings per buying party per day, incl. the 3 in advance
 
 decision:                            # as the synthetic park's calibrated values [assumed]
+  patience_aware: true    # [assumed] guests skip options whose board wait is over their patience (M16, Jason 2026-10-19)
+  skip_full_shows: true   # [assumed] guests skip a show already full when they choose (M16, Jason 2026-10-19)
   method: softmax_utility
   temperature: 0.25
   choice_set: top_k_by_utility

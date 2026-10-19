@@ -243,3 +243,5 @@ numbers come from `data/`. Read both before changing simulation logic.
   data (theater sizes, restaurant seats, meet times, LL purchase share, 2025 attendance), add the missing guide-map places, the
   Animation Courtyard rename and the Vacation Fun closure, and a full Alien Swirling Saucers model. [user] widths and ride
   timings wait for Jason's next visit.
+- Turn-away fix (Jason): at DHS `decision.patience_aware` and `skip_full_shows` are on (guests skip options whose board wait is
+  over their patience, and full shows). Turn-aways ~30,000 -> ~11,000 a medium day; waits unchanged. Synthetic park keeps them off.
