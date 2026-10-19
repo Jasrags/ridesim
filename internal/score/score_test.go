@@ -16,7 +16,7 @@ var weights = config.Scoring{ID: "w", Experience: config.ExperiencePoints{Ride: 
 func mins(m int64) engine.Time { return engine.Time(m * int64(engine.Minute)) }
 
 // One party of 2 and one of 1: the pair rides the coaster after 30 min (10 past comfort), sees a show,
-// walks 10 min after 5 min at a jam, and lets a pass lapse; the single balks at the meet and reneges at the
+// walks 10 min after 5 min at a jam, lets a pass lapse and balks at dining (free); the single balks at the meet and reneges at the
 // simple ride after 25 min. Dining does not score.
 func TestCardFromEvents(t *testing.T) {
 	ps := park.Scope
@@ -40,6 +40,7 @@ func TestCardFromEvents(t *testing.T) {
 		{T: mins(150), Src: "diner", Type: engine.EvBoard, Guest: 1<<8 | 3, N: 2},
 		{T: mins(160), Src: ps, Type: park.EvVisitEnd, Guest: 1, Block: "diner", Info: "rode"},
 		{T: mins(170), Src: ps, Type: park.EvLLLapse, Guest: 1, Block: "coaster"},
+		{T: mins(175), Src: "diner", Type: engine.EvBalk, Guest: 1<<8 | 4, N: 2}, // dining balks cost nothing
 		{T: mins(10), Src: "meet", Type: engine.EvBalk, Guest: 2<<8 | 1, N: 1},
 		{T: mins(20), Src: "simple", Type: engine.EvQueueJoin, Guest: 2<<8 | 2, N: 1},
 		{T: mins(45), Src: "simple", Type: engine.EvRenege, Guest: 2<<8 | 2, N: 1},

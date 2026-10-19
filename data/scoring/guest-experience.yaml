@@ -1,0 +1,14 @@
+# Guest-experience score (M15, decision 2026-10-19): points per guest over the day, from the event log only.
+# Every weight is [assumed]; changes go in docs/tuning-log.md with before, after and reason.
+schema_version: "1.0"
+scoring:
+  id: guest_experience
+  description: "Rides, shows and meets earn points; long waits, turning away, walking, jams and lapsed passes cost them"
+  experience: { ride: 10, show: 6, meet: 6 }   # [assumed] per guest per completed visit
+  wait_comfort_min: 20         # [assumed] a visit's wait up to this costs nothing
+  wait_penalty_per_min: 0.1    # [assumed] per guest-minute past the comfort threshold: a 90-min wait still nets +3
+  balk_penalty: 2              # [assumed] per guest turned away on arrival (posted wait over patience, or closed)
+  renege_penalty: 5            # [assumed] per guest who gave up in line (the time waited is charged too)
+  walk_penalty_per_min: 0.05   # [assumed] per guest-minute walking
+  jam_penalty_per_min: 0.2     # [assumed] per guest-minute waiting to enter a jammed walkway
+  ll_lapse_penalty: 5          # [assumed] per guest on a Lightning Lane pass that lapsed unused

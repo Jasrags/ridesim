@@ -1,0 +1,10 @@
+schema_version: "1.0"
+challenge:
+  id: dhs_medium_day
+  title: "A medium day"
+  description: "A typical Hollywood Studios day. Run Lightning Lane and the single-rider lines for the best guest day."
+  scenario: dhs_medium_day
+  scoring: guest_experience
+  levers: [ll_inventory, ll_merge, single_rider_open, single_rider_close, add_train, remove_train]
+  goals:
+    - { metric: score, at_least: 0 }

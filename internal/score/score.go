@@ -17,8 +17,8 @@ import (
 type Card struct {
 	Guests      int // guests who entered the park
 	Experiences int // guest visits completed at rides, shows and meets
-	Balks       int // guests who turned away on arrival
-	Reneges     int // guests who left a line
+	Balks       int // guests who turned away on arrival at a ride, show or meet
+	Reneges     int // guests who left a ride, show or meet line
 	LLLapsed    int // passes that lapsed unused
 
 	WaitMin     float64 // guest-minutes waited at rides and meets
@@ -115,9 +115,15 @@ func (s *Scorer) Add(e engine.Event) {
 		s.endWait(e)
 	case engine.EvRenege:
 		s.endWait(e)
+		if s.class[e.Src] == classNone {
+			return
+		}
 		s.card.Reneges += e.N
 		s.card.RenegePenalty += s.w.RenegePenalty * float64(e.N)
 	case engine.EvBalk:
+		if s.class[e.Src] == classNone {
+			return // dining and shops earn nothing, so turning away there costs nothing either
+		}
 		s.card.Balks += e.N
 		s.card.BalkPenalty += s.w.BalkPenalty * float64(e.N)
 	}

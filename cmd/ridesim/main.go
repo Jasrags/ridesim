@@ -23,6 +23,7 @@ var commands = []command{
 	{"report", "recompute metrics from a saved event log", runReport},
 	{"study", "run an A/B study: base scenario vs variants on paired seeds", runStudy},
 	{"serve", "play a park scenario live in the browser (control room)", runServe},
+	{"challenge", "score a challenge's day, or verify a played session onto the leaderboard", runChallenge},
 	{"osm-import", "write a draft park file from a saved OpenStreetMap extract", runOSMImport},
 }
 
