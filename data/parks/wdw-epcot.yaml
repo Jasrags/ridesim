@@ -1,0 +1,1311 @@
+# EPCOT — park config, schema 1.0
+# Built in M17 from the osm-import draft (osm/wdw-epcot/import.yaml) plus sourced attributes; edited by hand from here on.
+# Geometry © OpenStreetMap contributors, ODbL 1.0 (https://www.openstreetmap.org/copyright).
+# x, y: feet east and south of the park's north-west corner (28.376656, -81.554433) [osm].
+# Edge lengths follow the OSM path geometry [osm]; widths are defaults by path type [assumed].
+# Names, lands and map numbers: 2026 guide map (Jason) [map]. Research 2026-10-19: ride capacities crooksinwdw (operational, 2019) or
+# Wikipedia x 90% (Jason's rule), Lightning Lane tiers TouringPlans 2026-06-29, shows and hours TouringPlans / fan sites 2026.
+# World Showcase as an area opens with the park; its restaurants, shops and the two Circle-Vision films open ~11:00 [fan Ziggy 2026]
+# (node hours, M17). Two gates: main entrance and International Gateway (share [assumed], Jason 2026-10-19).
+# Not modeled yet: Luminous (21:00 lagoon show), the Food & Wine Festival booths (Jason), Friendship boats, Play Zone, and the
+# places listed at the end of osm/wdw-epcot/import.yaml. Attractions inside large buildings attach by straight links of up to ~330 ft.
+
+schema_version: "1.0"
+
+park:
+  id: wdw_epcot
+  open_hour: 9                       # [fan] 9:00-21:00 typical 2026 (Disney Tourist Blog, TouringPlans); 8:30 early entry not modeled
+  close_hour: 21
+  walking_mode: congestion
+
+nodes:
+  # entrance
+  - { id: gate, kind: entrance, x: 1620, y: 143, arrival_share: 0.80, exit: exit }   # [osm] n8716534792 · Main entrance · entrance · share [assumed] (no source; Skyliner and BoardWalk-area resort guests use the Gateway [fan ResortsGal])
+  # exit
+  - { id: exit, kind: exit, x: 1620, y: 143 }   # [osm] n8716534792 · Main entrance · entrance
+  # entrance
+  - { id: gate_ig, kind: entrance, x: 709, y: 2398, arrival_share: 0.20, exit: exit_ig }   # [osm] w1525709564 · International Gateway · entrance · share [assumed] (no source; Skyliner and BoardWalk-area resort guests use the Gateway [fan ResortsGal])
+  # exit
+  - { id: exit_ig, kind: exit, x: 709, y: 2398 }   # [osm] w1525709564 · International Gateway · entrance
+  # ride_simple
+  - { id: spaceship_earth, kind: ride_simple, x: 1555, y: 548, capacity_per_hr: 2160, duration_s: 900, queue_capacity: 2400, lightning_lane: tier2, appeal: 0.60, thrill: 0.10 }
+      # 2,160/hr operational [fan crooksinwdw operational, 2019]; ~15 min [assumed]; tier [fan TouringPlans 2026-06-29]; appeal, thrill [assumed]. Position [osm] w146221550 · Spaceship Earth · world_celebration · map 1
+  # meet
+  - { id: meet_mickey_friends, kind: meet, x: 1443, y: 1028, meet_s: { mean: 90, sd: 25 }, appeal: 0.60, thrill: 0.0 }
+      # Mickey, Minnie and Goofy [fan TouringPlans]; time per party [assumed]; appeal [assumed]. Position [osm] n11998956198 · Meet Mickey & Friends (CommuniCore Hall) · world_celebration · map 2
+  # ride_simple
+  - { id: short_film_festival, kind: ride_simple, x: 1181, y: 1572, capacity_per_hr: 1700, duration_s: 1080, queue_capacity: 900, lightning_lane: tier2, appeal: 0.40, thrill: 0.05 }
+      # continuous 4D films; seats and capacity [assumed]; ~18 min (lead only); tier [fan TouringPlans 2026-06-29]; appeal, thrill [assumed]. Position [osm] n4009891497 · Disney & Pixar Short Film Festival · world_celebration · map 3
+  - { id: figment, kind: ride_simple, x: 932, y: 1473, capacity_per_hr: 1980, duration_s: 360, queue_capacity: 1500, lightning_lane: tier2, appeal: 0.45, thrill: 0.10 }
+      # 1,980/hr [fan crooksinwdw operational, 2019]; ~6 min [assumed]; tier [fan TouringPlans 2026-06-29]; appeal, thrill [assumed]. Position [osm] n2989730651 · Journey Into Imagination With Figment · world_celebration · map 4
+  # dining
+  - { id: festival_favorites, kind: dining, x: 1451, y: 1099, seats: 30, service_time_min: { mean: 8, sd: 3 }, appeal: 0.30 }
+      # snack window; seats and times [assumed]. Position [osm] n11998956199 · Festival Favorites · world_celebration · map 8
+  # shop
+  - { id: shops_world_celebration, kind: shop, x: 1680, y: 683, visit_min: { mean: 12, sd: 6 }, appeal: 0.30, thrill: 0.10 }
+      # visit and appeal [assumed]. Position [osm] w782273946 w782273949 w295182226 · World Celebration shops · world_celebration · map 9, 10, 12
+  # ride_simple
+  - { id: guardians, kind: ride_simple, x: 2176, y: 698, capacity_per_hr: 1800, duration_s: 420, queue_capacity: 2400, lightning_lane: single_pass, appeal: 1.20, thrill: 0.90 }
+      # 2,000/hr [wiki] x 90% (Jason's rule); 3:20 ride [wiki] + boarding; the 14-min preshow sits in the wait [fan TouringPlans]; tier [fan TouringPlans 2026-06-29]; appeal, thrill [assumed]. Position [osm] w719079634 · Guardians of the Galaxy: Cosmic Rewind · world_discovery · map 13
+  - { id: mission_space, kind: ride_simple, x: 2330, y: 905, capacity_per_hr: 1440, duration_s: 330, queue_capacity: 1200, lightning_lane: tier2, appeal: 0.60, thrill: 0.85 }
+      # 1,440/hr [fan crooksinwdw operational, 2019]; 4 centrifuges x 10 capsules x 4 [fan]; Orange and Green as one ride; ~5.5 min [assumed]; tier [fan TouringPlans 2026-06-29]; appeal, thrill [assumed]. Position [osm] w295316766 · Mission: SPACE · world_discovery · map 14
+  - { id: test_track, kind: ride_simple, x: 2213, y: 1229, capacity_per_hr: 1080, duration_s: 300, queue_capacity: 1800, lightning_lane: tier1, appeal: 1.10, thrill: 0.75 }
+      # 1,080/hr [fan crooksinwdw operational, 2019] (Test Track 3.0, 2025, has no published figure); single rider line not modeled for simple rides; tier [fan TouringPlans 2026-06-29]; appeal, thrill [assumed]. Position [osm] w295315993 · Test Track · world_discovery · map 15
+  # dining
+  - { id: refreshment_station, kind: dining, x: 2013, y: 1261, seats: 30, service_time_min: { mean: 8, sd: 3 }, appeal: 0.30 }
+      # snack window (stand-in position: Taste Track); seats and times [assumed]. Position [osm] w196386511 · Refreshment Station (stand-in: Taste Track) · world_discovery · map 17
+  - { id: space_220, kind: dining, x: 2471, y: 1140, seats: 350, service_time_min: { mean: 75, sd: 15 }, appeal: 0.60 }
+      # >350 seats [wiki]; signature table service; times [assumed]. Position [osm] w689485632 · Space 220 Restaurant and Lounge · world_discovery · map 19
+  # shop
+  - { id: shops_world_discovery, kind: shop, x: 2168, y: 656, visit_min: { mean: 12, sd: 6 }, appeal: 0.30, thrill: 0.10 }
+      # visit and appeal [assumed]. Position [osm] n12825175778 · Treasures of Xandar · world_discovery · map 20
+  # ride_simple
+  - { id: journey_of_water, kind: ride_simple, x: 1362, y: 715, capacity_per_hr: 450, duration_s: 1200, queue_capacity: 600, appeal: 0.40, thrill: 0.05 }
+      # walk-through, ~150 guests at a time, ~20 min [fan TouringPlans]; appeal, thrill [assumed]. Position [osm] r21099075 · Journey of Water, Inspired by Moana (walk-through) · world_nature · map 21
+  - { id: awesome_planet, kind: ride_simple, x: 803, y: 868, capacity_per_hr: 1600, duration_s: 900, queue_capacity: 900, appeal: 0.35, thrill: 0.05 }
+      # film; 428 seats (lead only), 15 min [fan TouringPlans] (WDWMagic: 10); capacity [assumed]; appeal, thrill [assumed]. Position [osm] w782275579 · Awesome Planet · world_nature · map 22
+  - { id: soarin, kind: ride_simple, x: 746, y: 1265, capacity_per_hr: 1879, duration_s: 330, queue_capacity: 2000, lightning_lane: tier2, appeal: 0.80, thrill: 0.40 }
+      # 1,879/hr [fan crooksinwdw operational, 2019] (3 theaters x 87 x 8 cycles/hr); Soarin' Across America since 2026-05-26 [fan]; ~5.5 min [assumed]; tier [fan TouringPlans 2026-06-29]; appeal, thrill [assumed]. Position [osm] r10729202 · Soarin' Around the World · world_nature · map 23
+  - { id: living_with_the_land, kind: ride_simple, x: 520, y: 973, capacity_per_hr: 1440, duration_s: 840, queue_capacity: 1200, lightning_lane: tier2, appeal: 0.50, thrill: 0.05 }
+      # 1,440/hr [fan crooksinwdw operational, 2019]; ~14 min [assumed]; tier [fan TouringPlans 2026-06-29]; appeal, thrill [assumed]. Position [osm] w958012721 · Living with the Land · world_nature · map 24
+  - { id: seas_with_nemo, kind: ride_simple, x: 980, y: 552, capacity_per_hr: 1980, duration_s: 300, queue_capacity: 1200, lightning_lane: tier2, appeal: 0.45, thrill: 0.05 }
+      # 1,980/hr [fan crooksinwdw operational, 2019]; ~5 min [assumed]; tier [fan TouringPlans 2026-06-29]; appeal, thrill [assumed]. Position [osm] w307684414 · The Seas with Nemo & Friends · world_nature · map 25
+  - { id: turtle_talk, kind: ride_simple, x: 1125, y: 554, capacity_per_hr: 540, duration_s: 1020, queue_capacity: 400, lightning_lane: tier2, appeal: 0.40, thrill: 0.00 }
+      # ~100 per show, 17 min [fan TouringPlans] (~350/hr); modeled continuous at 540/hr, the least that lets Lightning Lane seat a party of 6 [assumed]; tier [fan TouringPlans 2026-06-29]; appeal, thrill [assumed]. Position [osm] n2990152020 · Turtle Talk With Crush · world_nature · map 26
+  - { id: seabase, kind: ride_simple, x: 1054, y: 566, capacity_per_hr: 1200, duration_s: 1800, appeal: 0.35, thrill: 0.00 }
+      # walk-through aquarium; capacity and visit time [assumed]; appeal, thrill [assumed]. Position [osm] n2990152021 · SeaBase Aquarium (stand-in: SeaBase Gift Shop) · world_nature · map 27
+  # dining
+  - { id: sunshine_seasons, kind: dining, x: 771, y: 991, seats: 400, service_time_min: { mean: 25, sd: 8 }, appeal: 0.50 }
+      # quick service food court; WDWMagic capacity High [fan]; seats and times [assumed]. Position [osm] n567544364 · Sunshine Seasons · world_nature · map 28
+  - { id: garden_grill, kind: dining, x: 660, y: 987, seats: 150, service_time_min: { mean: 70, sd: 15 }, appeal: 0.55 }
+      # character family style; WDWMagic Medium [fan]; seats and times [assumed]. Position [osm] n2734772673 · Chip 'n' Dale's Harvest Feast at Garden Grill · world_nature · map 29
+  - { id: coral_reef, kind: dining, x: 1261, y: 552, seats: 150, service_time_min: { mean: 60, sd: 15 }, appeal: 0.50 }
+      # table service; WDWMagic Medium [fan]; seats and times [assumed]. Position [osm] n2990152022 · Coral Reef Restaurant · world_nature · map 30
+  - { id: swirled_showcase, kind: dining, x: 1301, y: 1749, seats: 30, service_time_min: { mean: 8, sd: 3 }, appeal: 0.30 }
+      # soft-serve window; seats and times [assumed]. Position [osm] w941181955 · Swirled Showcase · showcase_plaza · map 40
+  # shop
+  - { id: shops_showcase_plaza, kind: shop, x: 1623, y: 1827, visit_min: { mean: 12, sd: 6 }, appeal: 0.30, thrill: 0.10 }
+      # visit and appeal [assumed]. Position [osm] w295321043 w295320342 · Showcase Plaza shops (Port of Entry, Disney Traders) · showcase_plaza · map 81, 82
+  # ride_simple
+  - { id: gran_fiesta, kind: ride_simple, x: 2431, y: 1722, capacity_per_hr: 1490, duration_s: 450, queue_capacity: 900, appeal: 0.40, thrill: 0.05 }
+      # 1,656/hr [wiki] x 90%; 15 riders a boat [wiki] (lead: ~20); ~7.5 min [assumed]; appeal, thrill [assumed]. Position [osm] n2441107360 · Gran Fiesta Tour Starring The Three Caballeros · mexico · map 31
+  # dining
+  - { id: la_cantina, kind: dining, x: 2099, y: 1899, seats: 150, service_time_min: { mean: 25, sd: 8 }, appeal: 0.45, hours: "11:00-21:00" }
+      # quick service, lakeside seating; WDWMagic Medium [fan]; seats and times [assumed]; World Showcase dining opens ~11:00 [fan Ziggy 2026]. Position [osm] w295598762 · La Cantina de San Angel · mexico · map 43
+  - { id: la_hacienda, kind: dining, x: 2226, y: 1981, seats: 150, service_time_min: { mean: 60, sd: 15 }, appeal: 0.50, hours: "11:00-21:00" }
+      # table service; WDWMagic Medium [fan]; seats and times [assumed]; World Showcase dining opens ~11:00 [fan Ziggy 2026]. Position [osm] w295598760 · La Hacienda de San Angel · mexico · map 44
+  - { id: la_cava, kind: dining, x: 2327, y: 1850, seats: 80, service_time_min: { mean: 40, sd: 12 }, appeal: 0.45, hours: "11:00-21:00" }
+      # tequila lounge; WDWMagic Low [fan]; seats and times [assumed]; World Showcase dining opens ~11:00 [fan Ziggy 2026]. Position [osm] n2993384456 · La Cava del Tequila · mexico · map 45
+  - { id: san_angel_inn, kind: dining, x: 2371, y: 1794, seats: 150, service_time_min: { mean: 60, sd: 15 }, appeal: 0.50, hours: "11:00-21:00" }
+      # table service; WDWMagic Medium [fan]; seats and times [assumed]; World Showcase dining opens ~11:00 [fan Ziggy 2026]. Position [osm] n595705466 · San Angel Inn Restaurante · mexico · map 46
+  # shop
+  - { id: shops_mexico, kind: shop, x: 2289, y: 1856, visit_min: { mean: 12, sd: 6 }, appeal: 0.30, thrill: 0.10, hours: "11:00-21:00" }
+      # visit and appeal [assumed]; World Showcase shops open ~11:00 [fan Ziggy 2026]. Position [osm] w295598761 n2993384458 n2993384457 n4852402694 · Mexico shops · mexico
+  # meet
+  - { id: meet_anna_elsa, kind: meet, x: 2391, y: 2086, meet_s: { mean: 30, sd: 10 }, appeal: 0.70, thrill: 0.0 }
+      # ~400 guests/hr from TouringPlans' line speed over several rooms [fan] / ~3.3 per party = ~30 s per party (derived); sd [assumed]; appeal [assumed]. Position [osm] w685999005 · Meet Anna and Elsa at Royal Sommerhus · norway · map 32
+  # ride_simple
+  - { id: frozen_ever_after, kind: ride_simple, x: 2637, y: 2128, capacity_per_hr: 900, duration_s: 300, queue_capacity: 1500, lightning_lane: tier1, appeal: 1.00, thrill: 0.30 }
+      # 900/hr [fan crooksinwdw operational, 2019]; ~5 min [assumed]; opens with the park [fan ResortsGal]; tier [fan TouringPlans 2026-06-29]; appeal, thrill [assumed]. Position [osm] n4213210754 · Frozen Ever After · norway · map 33
+  # dining
+  - { id: kringla, kind: dining, x: 2443, y: 2159, seats: 80, service_time_min: { mean: 8, sd: 3 }, appeal: 0.40, hours: "11:00-21:00" }
+      # bakery; WDWMagic Low [fan]; seats and times [assumed]; World Showcase dining opens ~11:00 [fan Ziggy 2026]. Position [osm] n2993376231 · Kringla Bakeri Og Kafe · norway · map 47
+  - { id: akershus, kind: dining, x: 2514, y: 2245, seats: 150, service_time_min: { mean: 70, sd: 15 }, appeal: 0.55, hours: "11:00-21:00" }
+      # princess character dining; WDWMagic Medium [fan]; seats and times [assumed]; World Showcase dining opens ~11:00 [fan Ziggy 2026]. Position [osm] n2993380042 · Princess Storybook Dining at Akershus Royal Banquet Hall · norway · map 48
+  # shop
+  - { id: shops_norway, kind: shop, x: 2453, y: 2108, visit_min: { mean: 12, sd: 6 }, appeal: 0.30, thrill: 0.10, hours: "11:00-21:00" }
+      # visit and appeal [assumed]; World Showcase shops open ~11:00 [fan Ziggy 2026]. Position [osm] n2993376232 n4852402692 · Norway shops · norway
+  # ride_simple
+  - { id: reflections_of_china, kind: ride_simple, x: 2732, y: 2437, capacity_per_hr: 2500, duration_s: 840, queue_capacity: 600, hours: "11:00-21:00", appeal: 0.30, thrill: 0.00 }
+      # Circle-Vision film 12:30, 14-min cycle [fan]; seats [assumed]; pavilion hours 11:00 [fan Ziggy, assumed for the film]; appeal, thrill [assumed]. Position [osm] n595705468 · Reflections of China (Circle-Vision 360) · china · map 34
+  # dining
+  - { id: nine_dragons, kind: dining, x: 2488, y: 2367, seats: 150, service_time_min: { mean: 60, sd: 15 }, appeal: 0.40, hours: "11:00-21:00" }
+      # table service; WDWMagic Medium [fan]; seats and times [assumed]; World Showcase dining opens ~11:00 [fan Ziggy 2026]. Position [osm] n490274317 · Nine Dragons Restaurant · china · map 49
+  - { id: lotus_blossom, kind: dining, x: 2562, y: 2376, seats: 150, service_time_min: { mean: 25, sd: 8 }, appeal: 0.40, hours: "11:00-21:00" }
+      # quick service; WDWMagic Medium [fan]; seats and times [assumed]; World Showcase dining opens ~11:00 [fan Ziggy 2026]. Position [osm] n490274318 · Lotus Blossom Café · china · map 50
+  - { id: joy_of_tea, kind: dining, x: 2418, y: 2486, seats: 30, service_time_min: { mean: 8, sd: 3 }, appeal: 0.30, hours: "11:00-21:00" }
+      # tea kiosk; seats and times [assumed]; World Showcase dining opens ~11:00 [fan Ziggy 2026]. Position [osm] w295597522 · Joy of Tea · china · map 51
+  # shop
+  - { id: shops_china, kind: shop, x: 2566, y: 2387, visit_min: { mean: 12, sd: 6 }, appeal: 0.30, thrill: 0.10, hours: "11:00-21:00" }
+      # visit and appeal [assumed]; World Showcase shops open ~11:00 [fan Ziggy 2026]. Position [osm] n2993376351 w295597875 · China shops · china
+  # dining
+  - { id: refreshment_outpost, kind: dining, x: 2586, y: 2697, seats: 30, service_time_min: { mean: 8, sd: 3 }, appeal: 0.30, hours: "11:00-21:00" }
+      # snack window; seats and times [assumed]; World Showcase dining opens ~11:00 [fan Ziggy 2026]. Position [osm] w295596501 · Refreshment Outpost (OSM: Refreshment Cool Post) · outpost · map 52
+  # shop
+  - { id: shops_outpost, kind: shop, x: 2602, y: 2803, visit_min: { mean: 12, sd: 6 }, appeal: 0.30, thrill: 0.10, hours: "11:00-21:00" }
+      # visit and appeal [assumed]; World Showcase shops open ~11:00 [fan Ziggy 2026]. Position [osm] w295596498 w295596499 · Outpost shops · outpost
+  # dining
+  - { id: biergarten, kind: dining, x: 2467, y: 3136, seats: 400, service_time_min: { mean: 70, sd: 15 }, appeal: 0.55, hours: "11:00-21:00" }
+      # buffet, communal benches [wiki]; WDWMagic High [fan]; seats and times [assumed]; World Showcase dining opens ~11:00 [fan Ziggy 2026]. Position [osm] n490274315 · Biergarten Restaurant · germany · map 53
+  - { id: sommerfest, kind: dining, x: 2391, y: 3122, seats: 80, service_time_min: { mean: 25, sd: 8 }, appeal: 0.40, hours: "11:00-21:00" }
+      # quick service; WDWMagic Low [fan]; seats and times [assumed]; World Showcase dining opens ~11:00 [fan Ziggy 2026]. Position [osm] n2993332938 · Sommerfest · germany · map 54
+  # shop
+  - { id: shops_germany, kind: shop, x: 2363, y: 3057, visit_min: { mean: 12, sd: 6 }, appeal: 0.30, thrill: 0.10, hours: "11:00-21:00" }
+      # visit and appeal [assumed]; World Showcase shops open ~11:00 [fan Ziggy 2026]. Position [osm] n2993332935 n2993332937 n2993332953 w183797227 n2993332954 n2993332952 n2993332936 n2993332951 · Germany shops (incl. Karamell-Küche) · germany · map 83
+  # dining
+  - { id: tutto_italia, kind: dining, x: 2084, y: 3229, seats: 150, service_time_min: { mean: 60, sd: 15 }, appeal: 0.50, hours: "11:00-21:00" }
+      # table service; seats and times [assumed]; World Showcase dining opens ~11:00 [fan Ziggy 2026]. Position [osm] w295592602 · Tutto Italia Ristorante · italy · map 55
+  - { id: tutto_gusto, kind: dining, x: 2052, y: 3343, seats: 80, service_time_min: { mean: 40, sd: 12 }, appeal: 0.40, hours: "11:00-21:00" }
+      # wine lounge; WDWMagic Low [fan]; seats and times [assumed]; World Showcase dining opens ~11:00 [fan Ziggy 2026]. Position [osm] n2995502834 · Tutto Gusto Wine Cellar · italy · map 56
+  - { id: via_napoli, kind: dining, x: 2009, y: 3397, seats: 400, service_time_min: { mean: 60, sd: 15 }, appeal: 0.55, hours: "11:00-21:00" }
+      # table service; WDWMagic High [fan]; seats and times [assumed]; World Showcase dining opens ~11:00 [fan Ziggy 2026]. Position [osm] w295592671 · Via Napoli Ristorante e Pizzeria · italy · map 57
+  - { id: gelateria_toscana, kind: dining, x: 2088, y: 3125, seats: 30, service_time_min: { mean: 8, sd: 3 }, appeal: 0.35, hours: "11:00-21:00" }
+      # gelato; seats and times [assumed]; World Showcase dining opens ~11:00 [fan Ziggy 2026]. Position [osm] w295593342 · Gelateria Toscana (OSM: Gelati) · italy · map 58
+  # shop
+  - { id: shops_italy, kind: shop, x: 2018, y: 3189, visit_min: { mean: 12, sd: 6 }, appeal: 0.30, thrill: 0.10, hours: "11:00-21:00" }
+      # visit and appeal [assumed]; World Showcase shops open ~11:00 [fan Ziggy 2026]. Position [osm] w295592597 n2993332940 n2993332941 · Italy shops · italy
+  # show
+  - { id: america_gardens, kind: show, x: 1622, y: 3078, capacity_guests: 2100, duration_min: 25, schedule: ["17:00", "18:15", "19:30"], appeal: 0.40, thrill: 0.05 }
+      # ~2,100 seats (lead only); concert length and schedule [assumed]; appeal [assumed]. Position [osm] w295589735 · America Gardens Theatre · american_adventure · map 35
+  - { id: american_adventure, kind: show, x: 1625, y: 3254, capacity_guests: 1024, duration_min: 29, schedule: ["11:45", "12:30", "13:15", "14:00", "14:45", "15:30", "16:30", "17:30", "18:30", "19:30"], appeal: 0.55, thrill: 0.00 }
+      # 1,024 seats, 29 min [fan WDWMagic]; schedule [fan TouringPlans 2026-10-19 grid]; appeal [assumed]. Position [osm] w295592223 · The American Adventure · american_adventure · map 36
+  # dining
+  - { id: joffreys_american_adventure, kind: dining, x: 1837, y: 3154, seats: 20, service_time_min: { mean: 8, sd: 3 }, appeal: 0.30, hours: "11:00-21:00" }
+      # coffee kiosk; seats and times [assumed]; World Showcase dining opens ~11:00 [fan Ziggy 2026]. Position [osm] w295592257 · Joffrey's Coffee & Tea Company · american_adventure · map 59
+  - { id: fife_and_drum, kind: dining, x: 1730, y: 3175, seats: 30, service_time_min: { mean: 8, sd: 3 }, appeal: 0.35, hours: "11:00-21:00" }
+      # snack stand; seats and times [assumed]; World Showcase dining opens ~11:00 [fan Ziggy 2026]. Position [osm] w295592241 · Fife & Drum Tavern · american_adventure · map 60
+  - { id: regal_eagle, kind: dining, x: 1748, y: 3318, seats: 150, service_time_min: { mean: 25, sd: 8 }, appeal: 0.50, hours: "11:00-21:00" }
+      # quick service; seats and times [assumed]; World Showcase dining opens ~11:00 [fan Ziggy 2026]. Position [osm] n2993302195 · Regal Eagle Smokehouse · american_adventure · map 61
+  - { id: funnel_cake, kind: dining, x: 1423, y: 3146, seats: 20, service_time_min: { mean: 8, sd: 3 }, appeal: 0.30, hours: "11:00-21:00" }
+      # kiosk; seats and times [assumed]; World Showcase dining opens ~11:00 [fan Ziggy 2026]. Position [osm] n4852402683 · Funnel Cake · american_adventure · map 62
+  # shop
+  - { id: shops_american_adventure, kind: shop, x: 1553, y: 3296, visit_min: { mean: 12, sd: 6 }, appeal: 0.30, thrill: 0.10, hours: "11:00-21:00" }
+      # visit and appeal [assumed]; World Showcase shops open ~11:00 [fan Ziggy 2026]. Position [osm] n2993332945 · Heritage Manor Gifts · american_adventure
+  # dining
+  - { id: kabuki_cafe, kind: dining, x: 1365, y: 3149, seats: 30, service_time_min: { mean: 8, sd: 3 }, appeal: 0.35, hours: "11:00-21:00" }
+      # snack window; seats and times [assumed]; World Showcase dining opens ~11:00 [fan Ziggy 2026]. Position [osm] w295593363 · Kabuki Cafe · japan · map 63
+  - { id: katsura_grill, kind: dining, x: 1292, y: 3285, seats: 80, service_time_min: { mean: 25, sd: 8 }, appeal: 0.40, hours: "11:00-21:00" }
+      # quick service; WDWMagic Low [fan]; seats and times [assumed]; World Showcase dining opens ~11:00 [fan Ziggy 2026]. Position [osm] w295587734 · Katsura Grill · japan · map 64
+  - { id: teppan_edo, kind: dining, x: 1185, y: 3289, seats: 150, service_time_min: { mean: 60, sd: 15 }, appeal: 0.55, hours: "11:00-21:00" }
+      # teppan table service; WDWMagic Medium [fan]; seats and times [assumed]; World Showcase dining opens ~11:00 [fan Ziggy 2026]. Position [osm] n593876328 · Teppan Edo · japan · map 65
+  - { id: shiki_sai, kind: dining, x: 1190, y: 3226, seats: 150, service_time_min: { mean: 60, sd: 15 }, appeal: 0.50, hours: "11:00-21:00" }
+      # sushi izakaya (former Tokyo Dining); seats and times [assumed]; World Showcase dining opens ~11:00 [fan Ziggy 2026]. Position [osm] n593876323 · Shiki-Sai: Sushi Izakaya (OSM: Tokyo Dining) · japan · map 66
+  - { id: takumi_tei, kind: dining, x: 1133, y: 3245, seats: 80, service_time_min: { mean: 75, sd: 15 }, appeal: 0.45, hours: "11:00-21:00" }
+      # signature table service; seats and times [assumed]; World Showcase dining opens ~11:00 [fan Ziggy 2026]. Position [osm] n7562508002 · Takumi-Tei · japan · map 67
+  # shop
+  - { id: shops_japan, kind: shop, x: 1232, y: 3432, visit_min: { mean: 12, sd: 6 }, appeal: 0.30, thrill: 0.10, hours: "11:00-21:00" }
+      # visit and appeal [assumed]; World Showcase shops open ~11:00 [fan Ziggy 2026]. Position [osm] n593876330 · Mitsukoshi Department Store · japan
+  # dining
+  - { id: spice_road_table, kind: dining, x: 846, y: 2967, seats: 150, service_time_min: { mean: 60, sd: 15 }, appeal: 0.45, hours: "11:00-21:00" }
+      # table service; WDWMagic Medium [fan]; seats and times [assumed]; World Showcase dining opens ~11:00 [fan Ziggy 2026]. Position [osm] w295448863 · Spice Road Table · morocco · map 68
+  # shop
+  - { id: shops_morocco, kind: shop, x: 850, y: 3128, visit_min: { mean: 12, sd: 6 }, appeal: 0.30, thrill: 0.10, hours: "11:00-21:00" }
+      # visit and appeal [assumed]; World Showcase shops open ~11:00 [fan Ziggy 2026]. Position [osm] n4852402677 n4852402678 n2991768096 n2991768097 n2991768098 · Morocco shops · morocco
+  # ride_simple
+  - { id: remy, kind: ride_simple, x: 470, y: 3028, capacity_per_hr: 1998, duration_s: 280, queue_capacity: 1800, lightning_lane: tier1, appeal: 1.05, thrill: 0.30 }
+      # 2,220/hr [wiki] x 90%; 36 vehicles of 6, 4:40 [wiki]; opens with the park [fan ResortsGal]; tier [fan TouringPlans 2026-06-29]; appeal, thrill [assumed]. Position [osm] w688994559 · Remy's Ratatouille Adventure · france · map 38
+  # show
+  - { id: palais_du_cinema, kind: show, x: 411, y: 2793, capacity_guests: 350, duration_min: 18, schedule: ["11:00", "11:30", "12:00", "12:30", "13:00", "13:30", "14:00", "14:30", "15:00", "15:30", "16:00", "16:30", "17:00", "17:30", "18:00", "18:30", "19:00", "19:30", "20:00", "20:30"], appeal: 0.35, thrill: 0.00 }
+      # Beauty and the Beast Sing-Along (15 min) alternates with Impressions de France (18 min) [fan]; seats and schedule [assumed]; appeal [assumed]. Position [osm] w305094846 · Palais du Cinéma (Beauty and the Beast Sing-Along / Impressions de France) · france · map 37
+  # dining
+  - { id: les_vins_des_chefs, kind: dining, x: 671, y: 2770, seats: 30, service_time_min: { mean: 8, sd: 3 }, appeal: 0.30, hours: "11:00-21:00" }
+      # wine kiosk; seats and times [assumed]; World Showcase dining opens ~11:00 [fan Ziggy 2026]. Position [osm] w118653061 · Les Vins des Chefs de France · france · map 69
+  - { id: chefs_de_france, kind: dining, x: 605, y: 2823, seats: 150, service_time_min: { mean: 60, sd: 15 }, appeal: 0.55, hours: "11:00-21:00" }
+      # table service; WDWMagic Medium [fan]; seats and times [assumed]; World Showcase dining opens ~11:00 [fan Ziggy 2026]. Position [osm] n567539827 · Chefs de France · france · map 70
+  - { id: monsieur_paul, kind: dining, x: 585, y: 2859, seats: 80, service_time_min: { mean: 75, sd: 15 }, appeal: 0.45, hours: "11:00-21:00" }
+      # signature table service; WDWMagic Low [fan] (lead: ~120 seats); times [assumed]; World Showcase dining opens ~11:00 [fan Ziggy 2026]. Position [osm] n787955697 · Monsieur Paul · france · map 71
+  - { id: lartisan_des_glaces, kind: dining, x: 546, y: 2899, seats: 20, service_time_min: { mean: 8, sd: 3 }, appeal: 0.35, hours: "11:00-21:00" }
+      # ice cream; seats and times [assumed]; World Showcase dining opens ~11:00 [fan Ziggy 2026]. Position [osm] n2991742091 · L'Artisan des Glaces · france · map 72
+  - { id: les_halles, kind: dining, x: 453, y: 3010, seats: 80, service_time_min: { mean: 25, sd: 8 }, appeal: 0.50, hours: "11:00-21:00" }
+      # bakery; WDWMagic Low [fan]; seats and times [assumed]; World Showcase dining opens ~11:00 [fan Ziggy 2026]. Position [osm] w305094685 · Les Halles Boulangerie-Patisserie · france · map 73
+  - { id: la_creperie, kind: dining, x: 325, y: 2966, seats: 80, service_time_min: { mean: 25, sd: 8 }, appeal: 0.45, hours: "11:00-21:00" }
+      # crêperie; seats and times [assumed]; World Showcase dining opens ~11:00 [fan Ziggy 2026]. Position [osm] w805278205 · La Crêperie de Paris · france · map 74
+  # shop
+  - { id: shops_france, kind: shop, x: 487, y: 2850, visit_min: { mean: 12, sd: 6 }, appeal: 0.30, thrill: 0.10, hours: "11:00-21:00" }
+      # visit and appeal [assumed]; World Showcase shops open ~11:00 [fan Ziggy 2026]. Position [osm] w305094845 n2991742087 n2991742088 n2991742090 n2991742089 · France shops · france · map 85
+  # dining
+  - { id: yorkshire_fish_shop, kind: dining, x: 860, y: 2323, seats: 80, service_time_min: { mean: 8, sd: 3 }, appeal: 0.40, hours: "11:00-21:00" }
+      # kiosk, outdoor seating [wiki]; WDWMagic Low [fan]; seats and times [assumed]; World Showcase dining opens ~11:00 [fan Ziggy 2026]. Position [osm] n567526849 · Yorkshire County Fish Shop · united_kingdom · map 75
+  - { id: rose_and_crown, kind: dining, x: 850, y: 2314, seats: 150, service_time_min: { mean: 60, sd: 15 }, appeal: 0.50, hours: "11:00-21:00" }
+      # dining room and pub; WDWMagic Medium [fan]; refurbishment from 2027-01-11 [fan WDWMagic]; seats and times [assumed]; World Showcase dining opens ~11:00 [fan Ziggy 2026]. Position [osm] w44486037 · Rose & Crown Dining Room and Pub · united_kingdom · map 76, 77
+  # shop
+  - { id: shops_united_kingdom, kind: shop, x: 757, y: 2214, visit_min: { mean: 12, sd: 6 }, appeal: 0.30, thrill: 0.10, hours: "11:00-21:00" }
+      # visit and appeal [assumed]; World Showcase shops open ~11:00 [fan Ziggy 2026]. Position [osm] n2991095968 n2991095969 n2991377070 n2991377069 n2991095967 n567531332 · United Kingdom shops · united_kingdom · map 87
+  # ride_simple
+  - { id: canada_far_and_wide, kind: ride_simple, x: 948, y: 1741, capacity_per_hr: 2100, duration_s: 900, queue_capacity: 600, hours: "11:00-21:00", appeal: 0.30, thrill: 0.00 }
+      # Circle-Vision film, 15 min [fan]; up to 600 seats (lead only); capacity [assumed]; pavilion hours 11:00 [fan Ziggy, assumed for the film]; appeal, thrill [assumed]. Position [osm] w295396535 · Canada Far and Wide (Circle-Vision 360) · canada · map 39
+  # dining
+  - { id: le_cellier, kind: dining, x: 950, y: 1828, seats: 80, service_time_min: { mean: 75, sd: 15 }, appeal: 0.50, hours: "11:00-21:00" }
+      # signature table service; WDWMagic Low [fan]; times [assumed]; World Showcase dining opens ~11:00 [fan Ziggy 2026]. Position [osm] w295396523 · Le Cellier Steakhouse · canada · map 79
+  - { id: la_poutinerie, kind: dining, x: 1230, y: 1792, seats: 30, service_time_min: { mean: 8, sd: 3 }, appeal: 0.35, hours: "11:00-21:00" }
+      # kiosk, opened 2026-07-01 replacing Refreshment Port [wiki]; seats and times [assumed]; World Showcase dining opens ~11:00 [fan Ziggy 2026]. Position [osm] w295321733 · La Poutinerie (replaced Refreshment Port, 2026-07-01) · canada · map 80
+  # shop
+  - { id: shops_canada, kind: shop, x: 959, y: 1913, visit_min: { mean: 12, sd: 6 }, appeal: 0.30, thrill: 0.10, hours: "11:00-21:00" }
+      # visit and appeal [assumed]; World Showcase shops open ~11:00 [fan Ziggy 2026]. Position [osm] w295396521 n4852402707 · Canada shops · canada · map 88
+  - { id: elsewhere, kind: elsewhere, visit_min: { mean: 20, sd: 10 }, appeal: 0.45, thrill: 0.30, x: 1455, y: 1686 }   # [assumed]; resting and wandering, beside junction j186 [assumed]
+  # junction
+  - { id: j001, kind: junction, x: 1620, y: 143 }   # [osm]
+  - { id: j002, kind: junction, x: 1619, y: 181 }   # [osm]
+  - { id: j003, kind: junction, x: 1592, y: 187 }   # [osm]
+  - { id: j004, kind: junction, x: 1647, y: 187 }   # [osm]
+  - { id: j005, kind: junction, x: 1563, y: 189 }   # [osm]
+  - { id: j006, kind: junction, x: 1680, y: 189 }   # [osm]
+  - { id: j007, kind: junction, x: 1524, y: 192 }   # [osm]
+  - { id: j008, kind: junction, x: 1730, y: 199 }   # [osm]
+  - { id: j009, kind: junction, x: 1492, y: 205 }   # [osm]
+  - { id: j010, kind: junction, x: 1680, y: 246 }   # [osm]
+  - { id: j011, kind: junction, x: 1560, y: 256 }   # [osm]
+  - { id: j012, kind: junction, x: 1703, y: 313 }   # [osm]
+  - { id: j013, kind: junction, x: 1618, y: 316 }   # [osm]
+  - { id: j014, kind: junction, x: 1537, y: 317 }   # [osm]
+  - { id: j015, kind: junction, x: 1666, y: 351 }   # [osm]
+  - { id: j016, kind: junction, x: 1719, y: 354 }   # [osm]
+  - { id: j017, kind: junction, x: 1516, y: 358 }   # [osm]
+  - { id: j018, kind: junction, x: 1571, y: 363 }   # [osm]
+  - { id: j019, kind: junction, x: 1577, y: 390 }   # [osm]
+  - { id: j020, kind: junction, x: 1664, y: 393 }   # [osm]
+  - { id: j021, kind: junction, x: 1625, y: 406 }   # [osm]
+  - { id: j022, kind: junction, x: 1625, y: 433 }   # [osm]
+  - { id: j023, kind: junction, x: 1703, y: 504 }   # [osm]
+  - { id: j024, kind: junction, x: 1674, y: 516 }   # [osm]
+  - { id: j025, kind: junction, x: 1417, y: 525 }   # [osm]
+  - { id: j026, kind: junction, x: 978, y: 554 }   # [osm]
+  - { id: j027, kind: junction, x: 1551, y: 554 }   # [osm]
+  - { id: j028, kind: junction, x: 1695, y: 563 }   # [osm]
+  - { id: j029, kind: junction, x: 1536, y: 586 }   # [osm]
+  - { id: j030, kind: junction, x: 1020, y: 590 }   # [osm]
+  - { id: j031, kind: junction, x: 1348, y: 617 }   # [osm]
+  - { id: j032, kind: junction, x: 1114, y: 636 }   # [osm]
+  - { id: j033, kind: junction, x: 1065, y: 646 }   # [osm]
+  - { id: j034, kind: junction, x: 1725, y: 658 }   # [osm]
+  - { id: j035, kind: junction, x: 1517, y: 661 }   # [osm]
+  - { id: j036, kind: junction, x: 1692, y: 664 }   # [osm]
+  - { id: j037, kind: junction, x: 1274, y: 686 }   # [osm]
+  - { id: j038, kind: junction, x: 1302, y: 697 }   # [osm]
+  - { id: j039, kind: junction, x: 2172, y: 705 }   # [osm]
+  - { id: j040, kind: junction, x: 1360, y: 707 }   # [osm]
+  - { id: j041, kind: junction, x: 1058, y: 715 }   # [osm]
+  - { id: j042, kind: junction, x: 1249, y: 722 }   # [osm]
+  - { id: j043, kind: junction, x: 1521, y: 732 }   # [osm]
+  - { id: j044, kind: junction, x: 2055, y: 733 }   # [osm]
+  - { id: j045, kind: junction, x: 1165, y: 735 }   # [osm]
+  - { id: j046, kind: junction, x: 2184, y: 743 }   # [osm]
+  - { id: j047, kind: junction, x: 1444, y: 750 }   # [osm]
+  - { id: j048, kind: junction, x: 1051, y: 758 }   # [osm]
+  - { id: j049, kind: junction, x: 1713, y: 761 }   # [osm]
+  - { id: j050, kind: junction, x: 1338, y: 768 }   # [osm]
+  - { id: j051, kind: junction, x: 1765, y: 770 }   # [osm]
+  - { id: j052, kind: junction, x: 1390, y: 772 }   # [osm]
+  - { id: j053, kind: junction, x: 1538, y: 780 }   # [osm]
+  - { id: j054, kind: junction, x: 1075, y: 796 }   # [osm]
+  - { id: j055, kind: junction, x: 1419, y: 798 }   # [osm]
+  - { id: j056, kind: junction, x: 1685, y: 808 }   # [osm]
+  - { id: j057, kind: junction, x: 1641, y: 816 }   # [osm]
+  - { id: j058, kind: junction, x: 1738, y: 816 }   # [osm]
+  - { id: j059, kind: junction, x: 1601, y: 818 }   # [osm]
+  - { id: j060, kind: junction, x: 1553, y: 822 }   # [osm]
+  - { id: j061, kind: junction, x: 2122, y: 830 }   # [osm]
+  - { id: j062, kind: junction, x: 1412, y: 833 }   # [osm]
+  - { id: j063, kind: junction, x: 1707, y: 847 }   # [osm]
+  - { id: j064, kind: junction, x: 2231, y: 849 }   # [osm]
+  - { id: j065, kind: junction, x: 1659, y: 854 }   # [osm]
+  - { id: j066, kind: junction, x: 1383, y: 856 }   # [osm]
+  - { id: j067, kind: junction, x: 1582, y: 860 }   # [osm]
+  - { id: j068, kind: junction, x: 1629, y: 867 }   # [osm]
+  - { id: j069, kind: junction, x: 2171, y: 875 }   # [osm]
+  - { id: j070, kind: junction, x: 2029, y: 882 }   # [osm]
+  - { id: j071, kind: junction, x: 1046, y: 885 }   # [osm]
+  - { id: j072, kind: junction, x: 1671, y: 888 }   # [osm]
+  - { id: j073, kind: junction, x: 2090, y: 890 }   # [osm]
+  - { id: j074, kind: junction, x: 1577, y: 901 }   # [osm]
+  - { id: j075, kind: junction, x: 1754, y: 904 }   # [osm]
+  - { id: j076, kind: junction, x: 2330, y: 905 }   # [osm]
+  - { id: j077, kind: junction, x: 1546, y: 917 }   # [osm]
+  - { id: j078, kind: junction, x: 1719, y: 926 }   # [osm]
+  - { id: j079, kind: junction, x: 1210, y: 928 }   # [osm]
+  - { id: j080, kind: junction, x: 2188, y: 937 }   # [osm]
+  - { id: j081, kind: junction, x: 2060, y: 938 }   # [osm]
+  - { id: j082, kind: junction, x: 1688, y: 945 }   # [osm]
+  - { id: j083, kind: junction, x: 2264, y: 946 }   # [osm]
+  - { id: j084, kind: junction, x: 1352, y: 948 }   # [osm]
+  - { id: j085, kind: junction, x: 1288, y: 954 }   # [osm]
+  - { id: j086, kind: junction, x: 2226, y: 964 }   # [osm]
+  - { id: j087, kind: junction, x: 912, y: 965 }   # [osm]
+  - { id: j088, kind: junction, x: 1004, y: 967 }   # [osm]
+  - { id: j089, kind: junction, x: 1416, y: 969 }   # [osm]
+  - { id: j090, kind: junction, x: 866, y: 972 }   # [osm]
+  - { id: j091, kind: junction, x: 1468, y: 975 }   # [osm]
+  - { id: j092, kind: junction, x: 1541, y: 982 }   # [osm]
+  - { id: j093, kind: junction, x: 2041, y: 985 }   # [osm]
+  - { id: j094, kind: junction, x: 1968, y: 986 }   # [osm]
+  - { id: j095, kind: junction, x: 2131, y: 986 }   # [osm]
+  - { id: j096, kind: junction, x: 1356, y: 987 }   # [osm]
+  - { id: j097, kind: junction, x: 1777, y: 987 }   # [osm]
+  - { id: j098, kind: junction, x: 2178, y: 987 }   # [osm]
+  - { id: j099, kind: junction, x: 1704, y: 988 }   # [osm]
+  - { id: j100, kind: junction, x: 1074, y: 989 }   # [osm]
+  - { id: j101, kind: junction, x: 2266, y: 989 }   # [osm]
+  - { id: j102, kind: junction, x: 1282, y: 990 }   # [osm]
+  - { id: j103, kind: junction, x: 1622, y: 990 }   # [osm]
+  - { id: j104, kind: junction, x: 1196, y: 992 }   # [osm]
+  - { id: j105, kind: junction, x: 867, y: 1003 }   # [osm]
+  - { id: j106, kind: junction, x: 2332, y: 1006 }   # [osm]
+  - { id: j107, kind: junction, x: 2228, y: 1009 }   # [osm]
+  - { id: j108, kind: junction, x: 911, y: 1010 }   # [osm]
+  - { id: j109, kind: junction, x: 2267, y: 1025 }   # [osm]
+  - { id: j110, kind: junction, x: 1717, y: 1029 }   # [osm]
+  - { id: j111, kind: junction, x: 1468, y: 1036 }   # [osm]
+  - { id: j112, kind: junction, x: 1546, y: 1038 }   # [osm]
+  - { id: j113, kind: junction, x: 2178, y: 1045 }   # [osm]
+  - { id: j114, kind: junction, x: 2414, y: 1045 }   # [osm]
+  - { id: j115, kind: junction, x: 2072, y: 1047 }   # [osm]
+  - { id: j116, kind: junction, x: 2267, y: 1053 }   # [osm]
+  - { id: j117, kind: junction, x: 1764, y: 1054 }   # [osm]
+  - { id: j118, kind: junction, x: 1522, y: 1062 }   # [osm]
+  - { id: j119, kind: junction, x: 1623, y: 1069 }   # [osm]
+  - { id: j120, kind: junction, x: 1673, y: 1070 }   # [osm]
+  - { id: j121, kind: junction, x: 2042, y: 1071 }   # [osm]
+  - { id: j122, kind: junction, x: 1179, y: 1075 }   # [osm]
+  - { id: j123, kind: junction, x: 1493, y: 1083 }   # [osm]
+  - { id: j124, kind: junction, x: 1546, y: 1090 }   # [osm]
+  - { id: j125, kind: junction, x: 1569, y: 1103 }   # [osm]
+  - { id: j126, kind: junction, x: 1166, y: 1111 }   # [osm]
+  - { id: j127, kind: junction, x: 2124, y: 1111 }   # [osm]
+  - { id: j128, kind: junction, x: 1452, y: 1115 }   # [osm]
+  - { id: j129, kind: junction, x: 1539, y: 1124 }   # [osm]
+  - { id: j130, kind: junction, x: 2031, y: 1126 }   # [osm]
+  - { id: j131, kind: junction, x: 1670, y: 1141 }   # [osm]
+  - { id: j132, kind: junction, x: 1223, y: 1143 }   # [osm]
+  - { id: j133, kind: junction, x: 1147, y: 1148 }   # [osm]
+  - { id: j134, kind: junction, x: 1399, y: 1149 }   # [osm]
+  - { id: j135, kind: junction, x: 1622, y: 1149 }   # [osm]
+  - { id: j136, kind: junction, x: 2176, y: 1149 }   # [osm]
+  - { id: j137, kind: junction, x: 1475, y: 1151 }   # [osm]
+  - { id: j138, kind: junction, x: 1994, y: 1165 }   # [osm]
+  - { id: j139, kind: junction, x: 1134, y: 1173 }   # [osm]
+  - { id: j140, kind: junction, x: 1510, y: 1173 }   # [osm]
+  - { id: j141, kind: junction, x: 1346, y: 1185 }   # [osm]
+  - { id: j142, kind: junction, x: 1436, y: 1193 }   # [osm]
+  - { id: j143, kind: junction, x: 2230, y: 1200 }   # [osm]
+  - { id: j144, kind: junction, x: 2205, y: 1218 }   # [osm]
+  - { id: j145, kind: junction, x: 1094, y: 1222 }   # [osm]
+  - { id: j146, kind: junction, x: 1477, y: 1224 }   # [osm]
+  - { id: j147, kind: junction, x: 1941, y: 1229 }   # [osm]
+  - { id: j148, kind: junction, x: 1299, y: 1231 }   # [osm]
+  - { id: j149, kind: junction, x: 1660, y: 1233 }   # [osm]
+  - { id: j150, kind: junction, x: 1581, y: 1234 }   # [osm]
+  - { id: j151, kind: junction, x: 1396, y: 1236 }   # [osm]
+  - { id: j152, kind: junction, x: 1621, y: 1239 }   # [osm]
+  - { id: j153, kind: junction, x: 1126, y: 1244 }   # [osm]
+  - { id: j154, kind: junction, x: 2151, y: 1260 }   # [osm]
+  - { id: j155, kind: junction, x: 1665, y: 1274 }   # [osm]
+  - { id: j156, kind: junction, x: 2015, y: 1276 }   # [osm]
+  - { id: j157, kind: junction, x: 2069, y: 1277 }   # [osm]
+  - { id: j158, kind: junction, x: 1443, y: 1279 }   # [osm]
+  - { id: j159, kind: junction, x: 887, y: 1302 }   # [osm]
+  - { id: j160, kind: junction, x: 1076, y: 1302 }   # [osm]
+  - { id: j161, kind: junction, x: 1354, y: 1302 }   # [osm]
+  - { id: j162, kind: junction, x: 1401, y: 1318 }   # [osm]
+  - { id: j163, kind: junction, x: 1656, y: 1318 }   # [osm]
+  - { id: j164, kind: junction, x: 1447, y: 1319 }   # [osm]
+  - { id: j165, kind: junction, x: 1622, y: 1325 }   # [osm]
+  - { id: j166, kind: junction, x: 1590, y: 1331 }   # [osm]
+  - { id: j167, kind: junction, x: 2133, y: 1331 }   # [osm]
+  - { id: j168, kind: junction, x: 887, y: 1340 }   # [osm]
+  - { id: j169, kind: junction, x: 1381, y: 1375 }   # [osm]
+  - { id: j170, kind: junction, x: 2032, y: 1383 }   # [osm]
+  - { id: j171, kind: junction, x: 2033, y: 1432 }   # [osm]
+  - { id: j172, kind: junction, x: 1622, y: 1438 }   # [osm]
+  - { id: j173, kind: junction, x: 1345, y: 1459 }   # [osm]
+  - { id: j174, kind: junction, x: 1691, y: 1479 }   # [osm]
+  - { id: j175, kind: junction, x: 1184, y: 1484 }   # [osm]
+  - { id: j176, kind: junction, x: 1622, y: 1494 }   # [osm]
+  - { id: j177, kind: junction, x: 1323, y: 1496 }   # [osm]
+  - { id: j178, kind: junction, x: 2037, y: 1497 }   # [osm]
+  - { id: j179, kind: junction, x: 1352, y: 1503 }   # [osm]
+  - { id: j180, kind: junction, x: 1841, y: 1507 }   # [osm]
+  - { id: j181, kind: junction, x: 1978, y: 1521 }   # [osm]
+  - { id: j182, kind: junction, x: 1285, y: 1567 }   # [osm]
+  - { id: j183, kind: junction, x: 1375, y: 1603 }   # [osm]
+  - { id: j184, kind: junction, x: 1386, y: 1634 }   # [osm]
+  - { id: j185, kind: junction, x: 1622, y: 1675 }   # [osm]
+  - { id: j186, kind: junction, x: 1395, y: 1686 }   # [osm]
+  - { id: j187, kind: junction, x: 1338, y: 1706 }   # [osm]
+  - { id: j188, kind: junction, x: 1357, y: 1725 }   # [osm]
+  - { id: j189, kind: junction, x: 948, y: 1741 }   # [osm]
+  - { id: j190, kind: junction, x: 1680, y: 1746 }   # [osm]
+  - { id: j191, kind: junction, x: 1573, y: 1747 }   # [osm]
+  - { id: j192, kind: junction, x: 1624, y: 1747 }   # [osm]
+  - { id: j193, kind: junction, x: 1321, y: 1751 }   # [osm]
+  - { id: j194, kind: junction, x: 1546, y: 1754 }   # [osm]
+  - { id: j195, kind: junction, x: 2081, y: 1770 }   # [osm]
+  - { id: j196, kind: junction, x: 1833, y: 1771 }   # [osm]
+  - { id: j197, kind: junction, x: 1750, y: 1772 }   # [osm]
+  - { id: j198, kind: junction, x: 1783, y: 1784 }   # [osm]
+  - { id: j199, kind: junction, x: 846, y: 1800 }   # [osm]
+  - { id: j200, kind: junction, x: 1212, y: 1800 }   # [osm]
+  - { id: j201, kind: junction, x: 1850, y: 1808 }   # [osm]
+  - { id: j202, kind: junction, x: 2042, y: 1808 }   # [osm]
+  - { id: j203, kind: junction, x: 1390, y: 1812 }   # [osm]
+  - { id: j204, kind: junction, x: 1623, y: 1817 }   # [osm]
+  - { id: j205, kind: junction, x: 822, y: 1820 }   # [osm]
+  - { id: j206, kind: junction, x: 1692, y: 1821 }   # [osm]
+  - { id: j207, kind: junction, x: 1347, y: 1822 }   # [osm]
+  - { id: j208, kind: junction, x: 961, y: 1823 }   # [osm]
+  - { id: j209, kind: junction, x: 1557, y: 1825 }   # [osm]
+  - { id: j210, kind: junction, x: 1893, y: 1825 }   # [osm]
+  - { id: j211, kind: junction, x: 874, y: 1829 }   # [osm]
+  - { id: j212, kind: junction, x: 2258, y: 1835 }   # [osm]
+  - { id: j213, kind: junction, x: 1215, y: 1836 }   # [osm]
+  - { id: j214, kind: junction, x: 1960, y: 1840 }   # [osm]
+  - { id: j215, kind: junction, x: 1139, y: 1848 }   # [osm]
+  - { id: j216, kind: junction, x: 2026, y: 1857 }   # [osm]
+  - { id: j217, kind: junction, x: 1624, y: 1858 }   # [osm]
+  - { id: j218, kind: junction, x: 1420, y: 1859 }   # [osm]
+  - { id: j219, kind: junction, x: 1094, y: 1861 }   # [osm]
+  - { id: j220, kind: junction, x: 1821, y: 1862 }   # [osm]
+  - { id: j221, kind: junction, x: 1583, y: 1863 }   # [osm]
+  - { id: j222, kind: junction, x: 1664, y: 1863 }   # [osm]
+  - { id: j223, kind: junction, x: 956, y: 1875 }   # [osm]
+  - { id: j224, kind: junction, x: 2082, y: 1875 }   # [osm]
+  - { id: j225, kind: junction, x: 2297, y: 1896 }   # [osm]
+  - { id: j226, kind: junction, x: 2223, y: 1902 }   # [osm]
+  - { id: j227, kind: junction, x: 1016, y: 1912 }   # [osm]
+  - { id: j228, kind: junction, x: 1053, y: 1928 }   # [osm]
+  - { id: j229, kind: junction, x: 2256, y: 1931 }   # [osm]
+  - { id: j230, kind: junction, x: 2240, y: 1976 }   # [osm]
+  - { id: j231, kind: junction, x: 2381, y: 2095 }   # [osm]
+  - { id: j232, kind: junction, x: 2373, y: 2137 }   # [osm]
+  - { id: j233, kind: junction, x: 2490, y: 2159 }   # [osm]
+  - { id: j234, kind: junction, x: 2527, y: 2165 }   # [osm]
+  - { id: j235, kind: junction, x: 2331, y: 2173 }   # [osm]
+  - { id: j236, kind: junction, x: 2448, y: 2196 }   # [osm]
+  - { id: j237, kind: junction, x: 757, y: 2201 }   # [osm]
+  - { id: j238, kind: junction, x: 2502, y: 2201 }   # [osm]
+  - { id: j239, kind: junction, x: 2407, y: 2203 }   # [osm]
+  - { id: j240, kind: junction, x: 2370, y: 2246 }   # [osm]
+  - { id: j241, kind: junction, x: 843, y: 2269 }   # [osm]
+  - { id: j242, kind: junction, x: 731, y: 2270 }   # [osm]
+  - { id: j243, kind: junction, x: 712, y: 2291 }   # [osm]
+  - { id: j244, kind: junction, x: 833, y: 2307 }   # [osm]
+  - { id: j245, kind: junction, x: 777, y: 2344 }   # [osm]
+  - { id: j246, kind: junction, x: 2723, y: 2363 }   # [osm]
+  - { id: j247, kind: junction, x: 697, y: 2394 }   # [osm]
+  - { id: j248, kind: junction, x: 2553, y: 2414 }   # [osm]
+  - { id: j249, kind: junction, x: 2596, y: 2418 }   # [osm]
+  - { id: j250, kind: junction, x: 2495, y: 2423 }   # [osm]
+  - { id: j251, kind: junction, x: 724, y: 2441 }   # [osm]
+  - { id: j252, kind: junction, x: 2423, y: 2442 }   # [osm]
+  - { id: j253, kind: junction, x: 735, y: 2474 }   # [osm]
+  - { id: j254, kind: junction, x: 2428, y: 2475 }   # [osm]
+  - { id: j255, kind: junction, x: 2512, y: 2476 }   # [osm]
+  - { id: j256, kind: junction, x: 2541, y: 2486 }   # [osm]
+  - { id: j257, kind: junction, x: 2574, y: 2494 }   # [osm]
+  - { id: j258, kind: junction, x: 747, y: 2507 }   # [osm]
+  - { id: j259, kind: junction, x: 2494, y: 2508 }   # [osm]
+  - { id: j260, kind: junction, x: 2467, y: 2529 }   # [osm]
+  - { id: j261, kind: junction, x: 2577, y: 2534 }   # [osm]
+  - { id: j262, kind: junction, x: 790, y: 2551 }   # [osm]
+  - { id: j263, kind: junction, x: 490, y: 2560 }   # [osm]
+  - { id: j264, kind: junction, x: 760, y: 2583 }   # [osm]
+  - { id: j265, kind: junction, x: 2538, y: 2638 }   # [osm]
+  - { id: j266, kind: junction, x: 721, y: 2643 }   # [osm]
+  - { id: j267, kind: junction, x: 686, y: 2654 }   # [osm]
+  - { id: j268, kind: junction, x: 651, y: 2668 }   # [osm]
+  - { id: j269, kind: junction, x: 592, y: 2686 }   # [osm]
+  - { id: j270, kind: junction, x: 527, y: 2701 }   # [osm]
+  - { id: j271, kind: junction, x: 2572, y: 2701 }   # [osm]
+  - { id: j272, kind: junction, x: 633, y: 2719 }   # [osm]
+  - { id: j273, kind: junction, x: 502, y: 2724 }   # [osm]
+  - { id: j274, kind: junction, x: 440, y: 2751 }   # [osm]
+  - { id: j275, kind: junction, x: 506, y: 2756 }   # [osm]
+  - { id: j276, kind: junction, x: 593, y: 2765 }   # [osm]
+  - { id: j277, kind: junction, x: 415, y: 2769 }   # [osm]
+  - { id: j278, kind: junction, x: 656, y: 2774 }   # [osm]
+  - { id: j279, kind: junction, x: 525, y: 2783 }   # [osm]
+  - { id: j280, kind: junction, x: 2578, y: 2785 }   # [osm]
+  - { id: j281, kind: junction, x: 462, y: 2789 }   # [osm]
+  - { id: j282, kind: junction, x: 408, y: 2790 }   # [osm]
+  - { id: j283, kind: junction, x: 499, y: 2816 }   # [osm]
+  - { id: j284, kind: junction, x: 531, y: 2818 }   # [osm]
+  - { id: j285, kind: junction, x: 502, y: 2838 }   # [osm]
+  - { id: j286, kind: junction, x: 538, y: 2849 }   # [osm]
+  - { id: j287, kind: junction, x: 693, y: 2861 }   # [osm]
+  - { id: j288, kind: junction, x: 270, y: 2863 }   # [osm]
+  - { id: j289, kind: junction, x: 2506, y: 2864 }   # [osm]
+  - { id: j290, kind: junction, x: 524, y: 2874 }   # [osm]
+  - { id: j291, kind: junction, x: 355, y: 2880 }   # [osm]
+  - { id: j292, kind: junction, x: 286, y: 2887 }   # [osm]
+  - { id: j293, kind: junction, x: 722, y: 2890 }   # [osm]
+  - { id: j294, kind: junction, x: 2483, y: 2896 }   # [osm]
+  - { id: j295, kind: junction, x: 320, y: 2898 }   # [osm]
+  - { id: j296, kind: junction, x: 324, y: 2904 }   # [osm]
+  - { id: j297, kind: junction, x: 754, y: 2912 }   # [osm]
+  - { id: j298, kind: junction, x: 692, y: 2916 }   # [osm]
+  - { id: j299, kind: junction, x: 2415, y: 2916 }   # [osm]
+  - { id: j300, kind: junction, x: 297, y: 2928 }   # [osm]
+  - { id: j301, kind: junction, x: 236, y: 2932 }   # [osm]
+  - { id: j302, kind: junction, x: 2441, y: 2938 }   # [osm]
+  - { id: j303, kind: junction, x: 2381, y: 2939 }   # [osm]
+  - { id: j304, kind: junction, x: 794, y: 2944 }   # [osm]
+  - { id: j305, kind: junction, x: 2321, y: 2961 }   # [osm]
+  - { id: j306, kind: junction, x: 335, y: 2965 }   # [osm]
+  - { id: j307, kind: junction, x: 325, y: 2966 }   # [osm]
+  - { id: j308, kind: junction, x: 2396, y: 2970 }   # [osm]
+  - { id: j309, kind: junction, x: 365, y: 2976 }   # [osm]
+  - { id: j310, kind: junction, x: 850, y: 2984 }   # [osm]
+  - { id: j311, kind: junction, x: 793, y: 2997 }   # [osm]
+  - { id: j312, kind: junction, x: 387, y: 3003 }   # [osm]
+  - { id: j313, kind: junction, x: 2343, y: 3003 }   # [osm]
+  - { id: j314, kind: junction, x: 2269, y: 3006 }   # [osm]
+  - { id: j315, kind: junction, x: 888, y: 3008 }   # [osm]
+  - { id: j316, kind: junction, x: 462, y: 3019 }   # [osm]
+  - { id: j317, kind: junction, x: 915, y: 3027 }   # [osm]
+  - { id: j318, kind: junction, x: 2286, y: 3033 }   # [osm]
+  - { id: j319, kind: junction, x: 2228, y: 3056 }   # [osm]
+  - { id: j320, kind: junction, x: 2370, y: 3064 }   # [osm]
+  - { id: j321, kind: junction, x: 871, y: 3076 }   # [osm]
+  - { id: j322, kind: junction, x: 1953, y: 3079 }   # [osm]
+  - { id: j323, kind: junction, x: 2159, y: 3083 }   # [osm]
+  - { id: j324, kind: junction, x: 2400, y: 3093 }   # [osm]
+  - { id: j325, kind: junction, x: 2113, y: 3100 }   # [osm]
+  - { id: j326, kind: junction, x: 2373, y: 3107 }   # [osm]
+  - { id: j327, kind: junction, x: 2083, y: 3112 }   # [osm]
+  - { id: j328, kind: junction, x: 1166, y: 3117 }   # [osm]
+  - { id: j329, kind: junction, x: 2015, y: 3122 }   # [osm]
+  - { id: j330, kind: junction, x: 1955, y: 3124 }   # [osm]
+  - { id: j331, kind: junction, x: 2121, y: 3127 }   # [osm]
+  - { id: j332, kind: junction, x: 2400, y: 3127 }   # [osm]
+  - { id: j333, kind: junction, x: 847, y: 3129 }   # [osm]
+  - { id: j334, kind: junction, x: 1259, y: 3130 }   # [osm]
+  - { id: j335, kind: junction, x: 1835, y: 3130 }   # [osm]
+  - { id: j336, kind: junction, x: 1423, y: 3132 }   # [osm]
+  - { id: j337, kind: junction, x: 1620, y: 3135 }   # [osm]
+  - { id: j338, kind: junction, x: 1362, y: 3139 }   # [osm]
+  - { id: j339, kind: junction, x: 1483, y: 3139 }   # [osm]
+  - { id: j340, kind: junction, x: 1769, y: 3139 }   # [osm]
+  - { id: j341, kind: junction, x: 1170, y: 3157 }   # [osm]
+  - { id: j342, kind: junction, x: 1716, y: 3158 }   # [osm]
+  - { id: j343, kind: junction, x: 1564, y: 3169 }   # [osm]
+  - { id: j344, kind: junction, x: 1623, y: 3173 }   # [osm]
+  - { id: j345, kind: junction, x: 1165, y: 3189 }   # [osm]
+  - { id: j346, kind: junction, x: 1357, y: 3210 }   # [osm]
+  - { id: j347, kind: junction, x: 1259, y: 3211 }   # [osm]
+  - { id: j348, kind: junction, x: 1367, y: 3254 }   # [osm]
+  - { id: j349, kind: junction, x: 1224, y: 3271 }   # [osm]
+  - { id: j350, kind: junction, x: 1249, y: 3277 }   # [osm]
+  - { id: j351, kind: junction, x: 1295, y: 3280 }   # [osm]
+  - { id: j352, kind: junction, x: 1357, y: 3280 }   # [osm]
+  - { id: j353, kind: junction, x: 1250, y: 3340 }   # [osm]
+  - { id: j354, kind: junction, x: 1245, y: 3371 }   # [osm]
+  - { id: j355, kind: junction, x: 1239, y: 3398 }   # [osm]
+
+edges:                               # bidirectional
+  - { id: elsewhere_j186, from: elsewhere, to: j186, length_ft: 300, width_ft: 40 }   # [assumed] many paths to the rest of the park
+  - { id: akershus_j238, from: akershus, to: j238, length_ft: 46, width_ft: 15 }   # length [osm] attraction to walkway, width [assumed] as the walkway it joins
+  - { id: america_gardens_j337, from: america_gardens, to: j337, length_ft: 57, width_ft: 15 }   # length [osm] attraction to walkway, width [assumed] as the walkway it joins
+  - { id: american_adventure_j344, from: american_adventure, to: j344, length_ft: 81, width_ft: 40 }   # length [osm] attraction to walkway, width [assumed] as the walkway it joins
+  - { id: awesome_planet_j090, from: awesome_planet, to: j090, length_ft: 116, width_ft: 15 }   # length [osm] attraction to walkway, width [assumed] as the walkway it joins
+  - { id: biergarten_j332, from: biergarten, to: j332, length_ft: 62, width_ft: 15 }   # length [osm] attraction to walkway, width [assumed] as the walkway it joins
+  - { id: canada_far_and_wide_j189, from: canada_far_and_wide, to: j189, length_ft: 10, width_ft: 15 }   # length [osm] attraction to walkway, width [assumed] as the walkway it joins
+  - { id: chefs_de_france_j276, from: chefs_de_france, to: j276, length_ft: 49, width_ft: 15 }   # length [osm] attraction to walkway, width [assumed] as the walkway it joins
+  - { id: coral_reef_j031, from: coral_reef, to: j031, length_ft: 109, width_ft: 15 }   # length [osm] attraction to walkway, width [assumed] as the walkway it joins
+  - { id: exit_ig_j247, from: exit_ig, to: j247, length_ft: 10, width_ft: 40 }   # length [osm] attraction to walkway, width [assumed] as the walkway it joins
+  - { id: exit_j001, from: exit, to: j001, length_ft: 10, width_ft: 15 }   # length [osm] attraction to walkway, width [assumed] as the walkway it joins
+  - { id: festival_favorites_j128, from: festival_favorites, to: j128, length_ft: 13, width_ft: 15 }   # length [osm] attraction to walkway, width [assumed] as the walkway it joins
+  - { id: fife_and_drum_j342, from: fife_and_drum, to: j342, length_ft: 20, width_ft: 40 }   # length [osm] attraction to walkway, width [assumed] as the walkway it joins
+  - { id: figment_j168, from: figment, to: j168, length_ft: 140, width_ft: 15 }   # length [osm] attraction to walkway, width [assumed] as the walkway it joins
+  - { id: frozen_ever_after_j234, from: frozen_ever_after, to: j234, length_ft: 115, width_ft: 15 }   # length [osm] attraction to walkway, width [assumed] as the walkway it joins
+  - { id: funnel_cake_j336, from: funnel_cake, to: j336, length_ft: 14, width_ft: 40 }   # length [osm] attraction to walkway, width [assumed] as the walkway it joins
+  - { id: garden_grill_j090, from: garden_grill, to: j090, length_ft: 194, width_ft: 15 }   # length [osm] attraction to walkway, width [assumed] as the walkway it joins
+  - { id: gate_ig_j247, from: gate_ig, to: j247, length_ft: 10, width_ft: 40 }   # length [osm] attraction to walkway, width [assumed] as the walkway it joins
+  - { id: gate_j001, from: gate, to: j001, length_ft: 10, width_ft: 15 }   # length [osm] attraction to walkway, width [assumed] as the walkway it joins
+  - { id: gelateria_toscana_j327, from: gelateria_toscana, to: j327, length_ft: 14, width_ft: 40 }   # length [osm] attraction to walkway, width [assumed] as the walkway it joins
+  - { id: gran_fiesta_j212, from: gran_fiesta, to: j212, length_ft: 207, width_ft: 40 }   # length [osm] attraction to walkway, width [assumed] as the walkway it joins
+  - { id: guardians_j039, from: guardians, to: j039, length_ft: 10, width_ft: 15 }   # length [osm] attraction to walkway, width [assumed] as the walkway it joins
+  - { id: j001_j002, from: j001, to: j002, length_ft: 31, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j002_j003, from: j002, to: j003, length_ft: 27, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j002_j004, from: j002, to: j004, length_ft: 28, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j003_j005, from: j003, to: j005, length_ft: 29, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j003_j013, from: j003, to: j013, length_ft: 129, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j004_j006, from: j004, to: j006, length_ft: 33, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j004_j013, from: j004, to: j013, length_ft: 128, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j005_j007, from: j005, to: j007, length_ft: 39, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j005_j011, from: j005, to: j011, length_ft: 56, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j006_j008, from: j006, to: j008, length_ft: 32, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j006_j010, from: j006, to: j010, length_ft: 54, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j007_j009, from: j007, to: j009, length_ft: 34, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j008_j010, from: j008, to: j010, length_ft: 71, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j008_j012, from: j008, to: j012, length_ft: 117, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j008_j016, from: j008, to: j016, length_ft: 212, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j009_j011, from: j009, to: j011, length_ft: 77, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j009_j014, from: j009, to: j014, length_ft: 121, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j009_j017, from: j009, to: j017, length_ft: 212, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j010_j012, from: j010, to: j012, length_ft: 69, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j010_j013, from: j010, to: j013, length_ft: 78, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j011_j013, from: j011, to: j013, length_ft: 60, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j011_j014, from: j011, to: j014, length_ft: 57, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j012_j015, from: j012, to: j015, length_ft: 54, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j012_j016, from: j012, to: j016, length_ft: 44, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j013_j015, from: j013, to: j015, length_ft: 39, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j013_j018, from: j013, to: j018, length_ft: 51, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j014_j017, from: j014, to: j017, length_ft: 46, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j014_j018, from: j014, to: j018, length_ft: 58, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j015_j020, from: j015, to: j020, length_ft: 42, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j016_j020, from: j016, to: j020, length_ft: 67, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j017_j019, from: j017, to: j019, length_ft: 68, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j017_j025, from: j017, to: j025, length_ft: 204, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j018_j019, from: j018, to: j019, length_ft: 28, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j019_j021, from: j019, to: j021, length_ft: 51, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j020_j021, from: j020, to: j021, length_ft: 42, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j021_j022, from: j021, to: j022, length_ft: 28, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j022_j024, from: j022, to: j024, length_ft: 99, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j022_j027, from: j022, to: j027, length_ft: 137, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j023_j024, from: j023, to: j024, length_ft: 31, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j024_j028, from: j024, to: j028, length_ft: 52, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j025_j029, from: j025, to: j029, length_ft: 140, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j025_j031, from: j025, to: j031, length_ft: 114, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j026_j030, from: j026, to: j030, length_ft: 57, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j027_j029, from: j027, to: j029, length_ft: 31, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j027_j035, from: j027, to: j035, length_ft: 157, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j028_j034, from: j028, to: j034, length_ft: 100, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j028_j036, from: j028, to: j036, length_ft: 118, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j029_j035, from: j029, to: j035, length_ft: 77, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j030_j033, from: j030, to: j033, length_ft: 72, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j031_j037, from: j031, to: j037, length_ft: 107, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j032_j033, from: j032, to: j033, length_ft: 54, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j033_j041, from: j033, to: j041, length_ft: 70, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j034_j036, from: j034, to: j036, length_ft: 31, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j034_j049, from: j034, to: j049, length_ft: 104, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j035_j043, from: j035, to: j043, length_ft: 70, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j037_j038, from: j037, to: j038, length_ft: 31, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j037_j042, from: j037, to: j042, length_ft: 44, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j038_j040, from: j038, to: j040, length_ft: 46, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j038_j050, from: j038, to: j050, length_ft: 74, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j039_j044, from: j039, to: j044, length_ft: 131, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j039_j046, from: j039, to: j046, length_ft: 43, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j040_j047, from: j040, to: j047, length_ft: 88, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j041_j045, from: j041, to: j045, length_ft: 108, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j041_j048, from: j041, to: j048, length_ft: 27, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j042_j045, from: j042, to: j045, length_ft: 96, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j042_j066, from: j042, to: j066, length_ft: 238, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j043_j053, from: j043, to: j053, length_ft: 38, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j044_j061, from: j044, to: j061, length_ft: 118, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j044_j070, from: j044, to: j070, length_ft: 223, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j045_j054, from: j045, to: j054, length_ft: 108, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j045_j079, from: j045, to: j079, length_ft: 200, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j046_j061, from: j046, to: j061, length_ft: 107, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j046_j064, from: j046, to: j064, length_ft: 117, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j047_j053, from: j047, to: j053, length_ft: 95, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j048_j054, from: j048, to: j054, length_ft: 38, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j049_j051, from: j049, to: j051, length_ft: 54, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j049_j056, from: j049, to: j056, length_ft: 41, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j050_j052, from: j050, to: j052, length_ft: 75, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j051_j058, from: j051, to: j058, length_ft: 53, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j052_j055, from: j052, to: j055, length_ft: 44, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j053_j060, from: j053, to: j060, length_ft: 27, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j054_j071, from: j054, to: j071, length_ft: 92, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j055_j062, from: j055, to: j062, length_ft: 53, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j056_j057, from: j056, to: j057, length_ft: 30, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j056_j063, from: j056, to: j063, length_ft: 36, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j056_j065, from: j056, to: j065, length_ft: 42, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j057_j059, from: j057, to: j059, length_ft: 40, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j057_j065, from: j057, to: j065, length_ft: 40, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j058_j063, from: j058, to: j063, length_ft: 43, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j059_j060, from: j059, to: j060, length_ft: 52, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j059_j067, from: j059, to: j067, length_ft: 38, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j060_j067, from: j060, to: j067, length_ft: 37, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j060_j091, from: j060, to: j091, length_ft: 183, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j061_j069, from: j061, to: j069, length_ft: 70, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j061_j073, from: j061, to: j073, length_ft: 67, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j062_j066, from: j062, to: j066, length_ft: 35, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j063_j075, from: j063, to: j075, length_ft: 74, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j064_j069, from: j064, to: j069, length_ft: 65, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j064_j083, from: j064, to: j083, length_ft: 102, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j065_j068, from: j065, to: j068, length_ft: 28, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j065_j072, from: j065, to: j072, length_ft: 43, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j067_j068, from: j067, to: j068, length_ft: 33, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j067_j074, from: j067, to: j074, length_ft: 33, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j069_j080, from: j069, to: j080, length_ft: 64, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j070_j073, from: j070, to: j073, length_ft: 63, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j070_j081, from: j070, to: j081, length_ft: 63, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j071_j088, from: j071, to: j088, length_ft: 103, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j072_j078, from: j072, to: j078, length_ft: 62, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j072_j103, from: j072, to: j103, length_ft: 85, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j073_j081, from: j073, to: j081, length_ft: 57, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j074_j077, from: j074, to: j077, length_ft: 38, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j074_j103, from: j074, to: j103, length_ft: 72, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j075_j078, from: j075, to: j078, length_ft: 40, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j075_j097, from: j075, to: j097, length_ft: 88, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j076_j083, from: j076, to: j083, length_ft: 85, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j077_j091, from: j077, to: j091, length_ft: 91, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j077_j103, from: j077, to: j103, length_ft: 76, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j078_j082, from: j078, to: j082, length_ft: 35, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j079_j085, from: j079, to: j085, length_ft: 82, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j079_j104, from: j079, to: j104, length_ft: 65, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j080_j086, from: j080, to: j086, length_ft: 50, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j080_j095, from: j080, to: j095, length_ft: 79, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j081_j093, from: j081, to: j093, length_ft: 52, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j082_j099, from: j082, to: j099, length_ft: 45, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j082_j103, from: j082, to: j103, length_ft: 52, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j083_j086, from: j083, to: j086, length_ft: 42, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j083_j101, from: j083, to: j101, length_ft: 43, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j084_j085, from: j084, to: j085, length_ft: 66, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j084_j089, from: j084, to: j089, length_ft: 70, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j084_j096, from: j084, to: j096, length_ft: 39, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j085_j102, from: j085, to: j102, length_ft: 37, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j086_j098, from: j086, to: j098, length_ft: 53, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j087_j088, from: j087, to: j088, length_ft: 93, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j087_j090, from: j087, to: j090, length_ft: 42, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j087_j108, from: j087, to: j108, length_ft: 44, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j088_j100, from: j088, to: j100, length_ft: 73, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j089_j091, from: j089, to: j091, length_ft: 45, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j089_j096, from: j089, to: j096, length_ft: 65, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j090_j105, from: j090, to: j105, length_ft: 33, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j091_j092, from: j091, to: j092, length_ft: 64, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j091_j111, from: j091, to: j111, length_ft: 49, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j092_j103, from: j092, to: j103, length_ft: 52, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j092_j112, from: j092, to: j112, length_ft: 37, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j093_j094, from: j093, to: j094, length_ft: 73, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j093_j095, from: j093, to: j095, length_ft: 91, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j093_j115, from: j093, to: j115, length_ft: 72, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j094_j097, from: j094, to: j097, length_ft: 191, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j094_j121, from: j094, to: j121, length_ft: 113, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j095_j098, from: j095, to: j098, length_ft: 47, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j095_j113, from: j095, to: j113, length_ft: 76, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j096_j102, from: j096, to: j102, length_ft: 75, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j097_j099, from: j097, to: j099, length_ft: 73, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j097_j117, from: j097, to: j117, length_ft: 68, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j098_j107, from: j098, to: j107, length_ft: 55, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j099_j103, from: j099, to: j103, length_ft: 54, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j099_j110, from: j099, to: j110, length_ft: 46, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j100_j104, from: j100, to: j104, length_ft: 122, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j100_j108, from: j100, to: j108, length_ft: 173, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j100_j145, from: j100, to: j145, length_ft: 244, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j101_j106, from: j101, to: j106, length_ft: 75, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j101_j109, from: j101, to: j109, length_ft: 36, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j102_j104, from: j102, to: j104, length_ft: 86, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j103_j112, from: j103, to: j112, length_ft: 50, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j103_j119, from: j103, to: j119, length_ft: 48, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j103_j120, from: j103, to: j120, length_ft: 70, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j104_j122, from: j104, to: j122, length_ft: 85, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j105_j108, from: j105, to: j108, length_ft: 40, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j106_j114, from: j106, to: j114, length_ft: 101, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j106_j116, from: j106, to: j116, length_ft: 85, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j107_j109, from: j107, to: j109, length_ft: 42, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j107_j113, from: j107, to: j113, length_ft: 63, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j109_j116, from: j109, to: j116, length_ft: 29, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j110_j117, from: j110, to: j117, length_ft: 54, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j110_j120, from: j110, to: j120, length_ft: 69, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j111_j112, from: j111, to: j112, length_ft: 28, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j111_j123, from: j111, to: j123, length_ft: 28, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j112_j118, from: j112, to: j118, length_ft: 28, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j112_j119, from: j112, to: j119, length_ft: 35, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j112_j124, from: j112, to: j124, length_ft: 45, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j112_j125, from: j112, to: j125, length_ft: 46, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j113_j136, from: j113, to: j136, length_ft: 112, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j115_j121, from: j115, to: j121, length_ft: 42, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j115_j127, from: j115, to: j127, length_ft: 83, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j116_j143, from: j116, to: j143, length_ft: 169, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j117_j131, from: j117, to: j131, length_ft: 131, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j118_j123, from: j118, to: j123, length_ft: 35, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j118_j124, from: j118, to: j124, length_ft: 28, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j119_j120, from: j119, to: j120, length_ft: 56, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j119_j135, from: j119, to: j135, length_ft: 80, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j121_j130, from: j121, to: j130, length_ft: 56, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j122_j126, from: j122, to: j126, length_ft: 32, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j122_j132, from: j122, to: j132, length_ft: 88, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j123_j128, from: j123, to: j128, length_ft: 44, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j123_j129, from: j123, to: j129, length_ft: 30, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j124_j125, from: j124, to: j125, length_ft: 27, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j124_j129, from: j124, to: j129, length_ft: 33, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j125_j129, from: j125, to: j129, length_ft: 32, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j126_j132, from: j126, to: j132, length_ft: 69, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j126_j133, from: j126, to: j133, length_ft: 35, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j126_j139, from: j126, to: j139, length_ft: 63, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j127_j130, from: j127, to: j130, length_ft: 95, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j127_j136, from: j127, to: j136, length_ft: 67, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j128_j134, from: j128, to: j134, length_ft: 57, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j128_j137, from: j128, to: j137, length_ft: 44, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j129_j135, from: j129, to: j135, length_ft: 52, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j129_j140, from: j129, to: j140, length_ft: 56, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j130_j138, from: j130, to: j138, length_ft: 44, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j131_j135, from: j131, to: j135, length_ft: 30, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j131_j155, from: j131, to: j155, length_ft: 143, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j132_j148, from: j132, to: j148, length_ft: 137, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j133_j139, from: j133, to: j139, length_ft: 28, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j134_j141, from: j134, to: j141, length_ft: 64, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j134_j142, from: j134, to: j142, length_ft: 58, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j135_j149, from: j135, to: j149, length_ft: 87, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j135_j150, from: j135, to: j150, length_ft: 89, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j136_j143, from: j136, to: j143, length_ft: 74, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j137_j140, from: j137, to: j140, length_ft: 41, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j137_j142, from: j137, to: j142, length_ft: 57, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j138_j147, from: j138, to: j147, length_ft: 64, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j139_j145, from: j139, to: j145, length_ft: 63, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j140_j146, from: j140, to: j146, length_ft: 61, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j141_j148, from: j141, to: j148, length_ft: 61, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j141_j151, from: j141, to: j151, length_ft: 72, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j142_j146, from: j142, to: j146, length_ft: 52, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j142_j151, from: j142, to: j151, length_ft: 59, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j143_j144, from: j143, to: j144, length_ft: 31, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j144_j154, from: j144, to: j154, length_ft: 69, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j145_j153, from: j145, to: j153, length_ft: 31, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j145_j160, from: j145, to: j160, length_ft: 91, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j146_j158, from: j146, to: j158, length_ft: 61, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j147_j156, from: j147, to: j156, length_ft: 77, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j147_j163, from: j147, to: j163, length_ft: 311, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j148_j153, from: j148, to: j153, length_ft: 175, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j148_j161, from: j148, to: j161, length_ft: 87, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j149_j152, from: j149, to: j152, length_ft: 40, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j149_j155, from: j149, to: j155, length_ft: 41, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j150_j152, from: j150, to: j152, length_ft: 40, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j150_j166, from: j150, to: j166, length_ft: 97, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j151_j158, from: j151, to: j158, length_ft: 63, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j152_j165, from: j152, to: j165, length_ft: 86, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j153_j160, from: j153, to: j160, length_ft: 74, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j154_j157, from: j154, to: j157, length_ft: 84, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j154_j167, from: j154, to: j167, length_ft: 73, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j155_j163, from: j155, to: j163, length_ft: 46, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j156_j157, from: j156, to: j157, length_ft: 49, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j156_j170, from: j156, to: j170, length_ft: 108, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j157_j167, from: j157, to: j167, length_ft: 84, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j158_j162, from: j158, to: j162, length_ft: 55, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j158_j164, from: j158, to: j164, length_ft: 39, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j159_j160, from: j159, to: j160, length_ft: 187, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j159_j168, from: j159, to: j168, length_ft: 38, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j160_j175, from: j160, to: j175, length_ft: 224, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j161_j162, from: j161, to: j162, length_ft: 50, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j161_j169, from: j161, to: j169, length_ft: 83, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j162_j164, from: j162, to: j164, length_ft: 46, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j163_j165, from: j163, to: j165, length_ft: 35, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j163_j172, from: j163, to: j172, length_ft: 125, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j164_j166, from: j164, to: j166, length_ft: 145, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j164_j169, from: j164, to: j169, length_ft: 91, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j165_j166, from: j165, to: j166, length_ft: 33, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j166_j172, from: j166, to: j172, length_ft: 113, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j169_j173, from: j169, to: j173, length_ft: 94, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j170_j171, from: j170, to: j171, length_ft: 50, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j170_j178, from: j170, to: j178, length_ft: 115, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j171_j178, from: j171, to: j178, length_ft: 65, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j172_j176, from: j172, to: j176, length_ft: 56, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j173_j177, from: j173, to: j177, length_ft: 62, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j173_j179, from: j173, to: j179, length_ft: 44, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j174_j176, from: j174, to: j176, length_ft: 73, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j174_j180, from: j174, to: j180, length_ft: 153, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j174_j181, from: j174, to: j181, length_ft: 298, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j176_j185, from: j176, to: j185, length_ft: 181, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j177_j179, from: j177, to: j179, length_ft: 41, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j177_j182, from: j177, to: j182, length_ft: 100, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j178_j181, from: j178, to: j181, length_ft: 61, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j179_j183, from: j179, to: j183, length_ft: 104, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j180_j181, from: j180, to: j181, length_ft: 130, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j181_j195, from: j181, to: j195, length_ft: 354, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j182_j183, from: j182, to: j183, length_ft: 149, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j183_j184, from: j183, to: j184, length_ft: 34, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j184_j186, from: j184, to: j186, length_ft: 56, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j184_j187, from: j184, to: j187, length_ft: 86, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j185_j190, from: j185, to: j190, length_ft: 91, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j185_j191, from: j185, to: j191, length_ft: 88, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j186_j188, from: j186, to: j188, length_ft: 50, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j187_j188, from: j187, to: j188, length_ft: 27, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j187_j193, from: j187, to: j193, length_ft: 49, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j188_j207, from: j188, to: j207, length_ft: 94, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j189_j208, from: j189, to: j208, length_ft: 75, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j190_j192, from: j190, to: j192, length_ft: 55, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j190_j197, from: j190, to: j197, length_ft: 75, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j190_j206, from: j190, to: j206, length_ft: 82, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j191_j192, from: j191, to: j192, length_ft: 52, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j191_j194, from: j191, to: j194, length_ft: 28, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j192_j204, from: j192, to: j204, length_ft: 66, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j193_j207, from: j193, to: j207, length_ft: 70, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j194_j203, from: j194, to: j203, length_ft: 166, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j194_j209, from: j194, to: j209, length_ft: 73, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j195_j202, from: j195, to: j202, length_ft: 36, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j196_j197, from: j196, to: j197, length_ft: 125, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j196_j198, from: j196, to: j198, length_ft: 51, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j196_j210, from: j196, to: j210, length_ft: 104, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j197_j198, from: j197, to: j198, length_ft: 35, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j198_j201, from: j198, to: j201, length_ft: 71, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j199_j205, from: j199, to: j205, length_ft: 35, width_ft: 10 }   # length [osm], width [assumed] steps
+  - { id: j199_j208, from: j199, to: j208, length_ft: 121, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j200_j213, from: j200, to: j213, length_ft: 36, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j200_j215, from: j200, to: j215, length_ft: 118, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j201_j210, from: j201, to: j210, length_ft: 34, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j201_j220, from: j201, to: j220, length_ft: 71, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j202_j214, from: j202, to: j214, length_ft: 93, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j202_j216, from: j202, to: j216, length_ft: 52, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j203_j207, from: j203, to: j207, length_ft: 40, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j203_j218, from: j203, to: j218, length_ft: 65, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j204_j206, from: j204, to: j206, length_ft: 70, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j204_j209, from: j204, to: j209, length_ft: 68, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j204_j217, from: j204, to: j217, length_ft: 31, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j205_j211, from: j205, to: j211, length_ft: 58, width_ft: 10 }   # length [osm], width [assumed] steps
+  - { id: j206_j222, from: j206, to: j222, length_ft: 51, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j207_j213, from: j207, to: j213, length_ft: 129, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j207_j218, from: j207, to: j218, length_ft: 82, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j208_j219, from: j208, to: j219, length_ft: 227, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j208_j223, from: j208, to: j223, length_ft: 28, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j209_j221, from: j209, to: j221, length_ft: 46, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j210_j214, from: j210, to: j214, length_ft: 57, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j210_j220, from: j210, to: j220, length_ft: 89, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j211_j223, from: j211, to: j223, length_ft: 72, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j212_j225, from: j212, to: j225, length_ft: 167, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j212_j226, from: j212, to: j226, length_ft: 109, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j213_j215, from: j213, to: j215, length_ft: 77, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j214_j216, from: j214, to: j216, length_ft: 68, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j215_j219, from: j215, to: j219, length_ft: 37, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j216_j224, from: j216, to: j224, length_ft: 37, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j217_j221, from: j217, to: j221, length_ft: 41, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j217_j222, from: j217, to: j222, length_ft: 40, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j218_j221, from: j218, to: j221, length_ft: 176, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j219_j227, from: j219, to: j227, length_ft: 115, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j219_j228, from: j219, to: j228, length_ft: 69, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j220_j222, from: j220, to: j222, length_ft: 166, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j221_j222, from: j221, to: j222, length_ft: 120, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j223_j227, from: j223, to: j227, length_ft: 54, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j224_j226, from: j224, to: j226, length_ft: 119, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j225_j226, from: j225, to: j226, length_ft: 55, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j225_j229, from: j225, to: j229, length_ft: 50, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j226_j229, from: j226, to: j229, length_ft: 45, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j226_j230, from: j226, to: j230, length_ft: 64, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j227_j228, from: j227, to: j228, length_ft: 41, width_ft: 10 }   # length [osm], width [assumed] steps
+  - { id: j228_j241, from: j228, to: j241, length_ft: 403, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j230_j235, from: j230, to: j235, length_ft: 218, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j231_j232, from: j231, to: j232, length_ft: 35, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j232_j235, from: j232, to: j235, length_ft: 44, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j232_j239, from: j232, to: j239, length_ft: 83, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j233_j234, from: j233, to: j234, length_ft: 39, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j233_j236, from: j233, to: j236, length_ft: 45, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j234_j238, from: j234, to: j238, length_ft: 58, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j235_j240, from: j235, to: j240, length_ft: 84, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j236_j238, from: j236, to: j238, length_ft: 92, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j236_j239, from: j236, to: j239, length_ft: 34, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j237_j241, from: j237, to: j241, length_ft: 112, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j237_j243, from: j237, to: j243, length_ft: 148, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j239_j240, from: j239, to: j240, length_ft: 58, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j240_j252, from: j240, to: j252, length_ft: 195, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j241_j244, from: j241, to: j244, length_ft: 38, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j242_j243, from: j242, to: j243, length_ft: 25, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j243_j245, from: j243, to: j245, length_ft: 90, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j244_j245, from: j244, to: j245, length_ft: 67, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j245_j247, from: j245, to: j247, length_ft: 88, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j246_j249, from: j246, to: j249, length_ft: 139, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j247_j251, from: j247, to: j251, length_ft: 45, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j247_j263, from: j247, to: j263, length_ft: 266, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j248_j249, from: j248, to: j249, length_ft: 26, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j248_j250, from: j248, to: j250, length_ft: 50, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j248_j255, from: j248, to: j255, length_ft: 69, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j249_j257, from: j249, to: j257, length_ft: 75, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j250_j252, from: j250, to: j252, length_ft: 74, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j251_j253, from: j251, to: j253, length_ft: 35, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j251_j258, from: j251, to: j258, length_ft: 71, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j252_j254, from: j252, to: j254, length_ft: 26, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j252_j255, from: j252, to: j255, length_ft: 89, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j253_j258, from: j253, to: j258, length_ft: 36, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j254_j260, from: j254, to: j260, length_ft: 66, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j255_j256, from: j255, to: j256, length_ft: 28, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j255_j257, from: j255, to: j257, length_ft: 51, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j255_j259, from: j255, to: j259, length_ft: 37, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j256_j257, from: j256, to: j257, length_ft: 31, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j257_j261, from: j257, to: j261, length_ft: 37, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j258_j262, from: j258, to: j262, length_ft: 41, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j258_j264, from: j258, to: j264, length_ft: 76, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j258_j266, from: j258, to: j266, length_ft: 142, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j259_j260, from: j259, to: j260, length_ft: 34, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j259_j261, from: j259, to: j261, length_ft: 106, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j260_j265, from: j260, to: j265, length_ft: 113, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j262_j264, from: j262, to: j264, length_ft: 40, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j262_j266, from: j262, to: j266, length_ft: 116, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j264_j266, from: j264, to: j266, length_ft: 67, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j265_j271, from: j265, to: j271, length_ft: 55, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j266_j267, from: j266, to: j267, length_ft: 32, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j266_j268, from: j266, to: j268, length_ft: 65, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j267_j268, from: j267, to: j268, length_ft: 32, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j268_j269, from: j268, to: j269, length_ft: 36, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j268_j272, from: j268, to: j272, length_ft: 45, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j269_j270, from: j269, to: j270, length_ft: 47, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j269_j272, from: j269, to: j272, length_ft: 40, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j269_j279, from: j269, to: j279, length_ft: 83, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j270_j273, from: j270, to: j273, length_ft: 35, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j271_j280, from: j271, to: j280, length_ft: 85, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j272_j276, from: j272, to: j276, length_ft: 42, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j272_j278, from: j272, to: j278, length_ft: 61, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j273_j274, from: j273, to: j274, length_ft: 67, width_ft: 30 }   # length [osm], width [assumed] living_street
+  - { id: j273_j275, from: j273, to: j275, length_ft: 31, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j274_j277, from: j274, to: j277, length_ft: 31, width_ft: 30 }   # length [osm], width [assumed] living_street
+  - { id: j274_j281, from: j274, to: j281, length_ft: 45, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j275_j279, from: j275, to: j279, length_ft: 35, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j275_j281, from: j275, to: j281, length_ft: 57, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j276_j284, from: j276, to: j284, length_ft: 67, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j277_j282, from: j277, to: j282, length_ft: 26, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j277_j288, from: j277, to: j288, length_ft: 143, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j277_j292, from: j277, to: j292, length_ft: 175, width_ft: 30 }   # length [osm], width [assumed] living_street
+  - { id: j277_j296, from: j277, to: j296, length_ft: 162, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j277_j301, from: j277, to: j301, length_ft: 241, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j278_j287, from: j278, to: j287, length_ft: 90, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j279_j283, from: j279, to: j283, length_ft: 34, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j279_j284, from: j279, to: j284, length_ft: 26, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j280_j289, from: j280, to: j289, length_ft: 106, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j281_j283, from: j281, to: j283, length_ft: 46, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j282_j291, from: j282, to: j291, length_ft: 104, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j282_j295, from: j282, to: j295, length_ft: 120, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j282_j296, from: j282, to: j296, length_ft: 141, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j282_j309, from: j282, to: j309, length_ft: 260, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j283_j285, from: j283, to: j285, length_ft: 27, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j284_j285, from: j284, to: j285, length_ft: 26, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j284_j286, from: j284, to: j286, length_ft: 27, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j286_j290, from: j286, to: j290, length_ft: 30, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j287_j293, from: j287, to: j293, length_ft: 36, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j287_j297, from: j287, to: j297, length_ft: 112, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j287_j298, from: j287, to: j298, length_ft: 64, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j288_j301, from: j288, to: j301, length_ft: 99, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j289_j294, from: j289, to: j294, length_ft: 39, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j289_j299, from: j289, to: j299, length_ft: 117, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j291_j295, from: j291, to: j295, length_ft: 36, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j291_j309, from: j291, to: j309, length_ft: 76, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j292_j301, from: j292, to: j301, length_ft: 67, width_ft: 30 }   # length [osm], width [assumed] living_street
+  - { id: j292_j309, from: j292, to: j309, length_ft: 124, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j293_j297, from: j293, to: j297, length_ft: 39, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j293_j298, from: j293, to: j298, length_ft: 41, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j294_j302, from: j294, to: j302, length_ft: 59, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j295_j309, from: j295, to: j309, length_ft: 33, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j296_j301, from: j296, to: j301, length_ft: 88, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j296_j309, from: j296, to: j309, length_ft: 84, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j297_j304, from: j297, to: j304, length_ft: 51, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j298_j311, from: j298, to: j311, length_ft: 154, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j299_j302, from: j299, to: j302, length_ft: 35, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j299_j303, from: j299, to: j303, length_ft: 42, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j300_j301, from: j300, to: j301, length_ft: 39, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j300_j306, from: j300, to: j306, length_ft: 27, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j300_j309, from: j300, to: j309, length_ft: 72, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j301_j307, from: j301, to: j307, length_ft: 129, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j302_j308, from: j302, to: j308, length_ft: 56, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j303_j305, from: j303, to: j305, length_ft: 65, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j303_j308, from: j303, to: j308, length_ft: 35, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j304_j310, from: j304, to: j310, length_ft: 56, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j304_j311, from: j304, to: j311, length_ft: 53, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j305_j313, from: j305, to: j313, length_ft: 47, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j305_j314, from: j305, to: j314, length_ft: 69, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j306_j309, from: j306, to: j309, length_ft: 32, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j307_j309, from: j307, to: j309, length_ft: 51, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j308_j313, from: j308, to: j313, length_ft: 63, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j309_j312, from: j309, to: j312, length_ft: 32, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j310_j311, from: j310, to: j311, length_ft: 71, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j310_j315, from: j310, to: j315, length_ft: 36, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j312_j316, from: j312, to: j316, length_ft: 141, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j313_j318, from: j313, to: j318, length_ft: 65, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j313_j320, from: j313, to: j320, length_ft: 58, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j314_j318, from: j314, to: j318, length_ft: 32, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j314_j319, from: j314, to: j319, length_ft: 80, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j315_j317, from: j315, to: j317, length_ft: 33, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j315_j321, from: j315, to: j321, length_ft: 83, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j317_j321, from: j317, to: j321, length_ft: 71, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j317_j328, from: j317, to: j328, length_ft: 269, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j318_j319, from: j318, to: j319, length_ft: 54, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j319_j323, from: j319, to: j323, length_ft: 67, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j320_j324, from: j320, to: j324, length_ft: 48, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j320_j326, from: j320, to: j326, length_ft: 48, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j321_j333, from: j321, to: j333, length_ft: 34, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j322_j330, from: j322, to: j330, length_ft: 45, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j323_j325, from: j323, to: j325, length_ft: 47, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j324_j326, from: j324, to: j326, length_ft: 30, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j324_j332, from: j324, to: j332, length_ft: 32, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j325_j327, from: j325, to: j327, length_ft: 29, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j325_j331, from: j325, to: j331, length_ft: 27, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j326_j332, from: j326, to: j332, length_ft: 43, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j327_j329, from: j327, to: j329, length_ft: 54, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j328_j334, from: j328, to: j334, length_ft: 82, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j328_j341, from: j328, to: j341, length_ft: 38, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j329_j330, from: j329, to: j330, length_ft: 43, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j330_j335, from: j330, to: j335, length_ft: 120, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j334_j338, from: j334, to: j338, length_ft: 91, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j334_j341, from: j334, to: j341, length_ft: 80, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j334_j347, from: j334, to: j347, length_ft: 78, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j335_j340, from: j335, to: j340, length_ft: 67, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j336_j338, from: j336, to: j338, length_ft: 61, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j336_j339, from: j336, to: j339, length_ft: 62, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j337_j339, from: j337, to: j339, length_ft: 154, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j337_j340, from: j337, to: j340, length_ft: 163, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j338_j346, from: j338, to: j346, length_ft: 56, width_ft: 10 }   # length [osm], width [assumed] steps
+  - { id: j339_j343, from: j339, to: j343, length_ft: 87, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j340_j342, from: j340, to: j342, length_ft: 50, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j341_j345, from: j341, to: j345, length_ft: 31, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j342_j344, from: j342, to: j344, length_ft: 89, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j343_j344, from: j343, to: j344, length_ft: 60, width_ft: 40 }   # length [osm], width [assumed] pedestrian
+  - { id: j346_j347, from: j346, to: j347, length_ft: 94, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j346_j348, from: j346, to: j348, length_ft: 42, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j347_j350, from: j347, to: j350, length_ft: 64, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j347_j351, from: j347, to: j351, length_ft: 76, width_ft: 10 }   # length [osm], width [assumed] steps
+  - { id: j348_j352, from: j348, to: j352, length_ft: 26, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j349_j350, from: j349, to: j350, length_ft: 26, width_ft: 10 }   # length [osm], width [assumed] steps
+  - { id: j350_j353, from: j350, to: j353, length_ft: 65, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j351_j352, from: j351, to: j352, length_ft: 58, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j351_j353, from: j351, to: j353, length_ft: 76, width_ft: 10 }   # length [osm], width [assumed] steps
+  - { id: j353_j354, from: j353, to: j354, length_ft: 31, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: j354_j355, from: j354, to: j355, length_ft: 28, width_ft: 15 }   # length [osm], width [assumed] footway
+  - { id: joffreys_american_adventure_j335, from: joffreys_american_adventure, to: j335, length_ft: 24, width_ft: 40 }   # length [osm] attraction to walkway, width [assumed] as the walkway it joins
+  - { id: journey_of_water_j040, from: journey_of_water, to: j040, length_ft: 10, width_ft: 15 }   # length [osm] attraction to walkway, width [assumed] as the walkway it joins
+  - { id: joy_of_tea_j254, from: joy_of_tea, to: j254, length_ft: 15, width_ft: 40 }   # length [osm] attraction to walkway, width [assumed] as the walkway it joins
+  - { id: kabuki_cafe_j338, from: kabuki_cafe, to: j338, length_ft: 10, width_ft: 15 }   # length [osm] attraction to walkway, width [assumed] as the walkway it joins
+  - { id: katsura_grill_j351, from: katsura_grill, to: j351, length_ft: 10, width_ft: 15 }   # length [osm] attraction to walkway, width [assumed] as the walkway it joins
+  - { id: kringla_j236, from: kringla, to: j236, length_ft: 35, width_ft: 40 }   # length [osm] attraction to walkway, width [assumed] as the walkway it joins
+  - { id: la_cantina_j224, from: la_cantina, to: j224, length_ft: 10, width_ft: 40 }   # length [osm] attraction to walkway, width [assumed] as the walkway it joins
+  - { id: la_cava_j225, from: la_cava, to: j225, length_ft: 47, width_ft: 40 }   # length [osm] attraction to walkway, width [assumed] as the walkway it joins
+  - { id: la_creperie_j307, from: la_creperie, to: j307, length_ft: 10, width_ft: 40 }   # length [osm] attraction to walkway, width [assumed] as the walkway it joins
+  - { id: la_hacienda_j230, from: la_hacienda, to: j230, length_ft: 15, width_ft: 40 }   # length [osm] attraction to walkway, width [assumed] as the walkway it joins
+  - { id: la_poutinerie_j200, from: la_poutinerie, to: j200, length_ft: 19, width_ft: 15 }   # length [osm] attraction to walkway, width [assumed] as the walkway it joins
+  - { id: lartisan_des_glaces_j290, from: lartisan_des_glaces, to: j290, length_ft: 33, width_ft: 15 }   # length [osm] attraction to walkway, width [assumed] as the walkway it joins
+  - { id: le_cellier_j208, from: le_cellier, to: j208, length_ft: 10, width_ft: 15 }   # length [osm] attraction to walkway, width [assumed] as the walkway it joins
+  - { id: les_halles_j316, from: les_halles, to: j316, length_ft: 10, width_ft: 40 }   # length [osm] attraction to walkway, width [assumed] as the walkway it joins
+  - { id: les_vins_des_chefs_j278, from: les_vins_des_chefs, to: j278, length_ft: 16, width_ft: 40 }   # length [osm] attraction to walkway, width [assumed] as the walkway it joins
+  - { id: living_with_the_land_j090, from: living_with_the_land, to: j090, length_ft: 333, width_ft: 15 }   # length [osm] attraction to walkway, width [assumed] as the walkway it joins
+  - { id: lotus_blossom_j248, from: lotus_blossom, to: j248, length_ft: 36, width_ft: 15 }   # length [osm] attraction to walkway, width [assumed] as the walkway it joins
+  - { id: meet_anna_elsa_j231, from: meet_anna_elsa, to: j231, length_ft: 13, width_ft: 15 }   # length [osm] attraction to walkway, width [assumed] as the walkway it joins
+  - { id: meet_mickey_friends_j111, from: meet_mickey_friends, to: j111, length_ft: 23, width_ft: 15 }   # length [osm] attraction to walkway, width [assumed] as the walkway it joins
+  - { id: mission_space_j076, from: mission_space, to: j076, length_ft: 10, width_ft: 15 }   # length [osm] attraction to walkway, width [assumed] as the walkway it joins
+  - { id: monsieur_paul_j286, from: monsieur_paul, to: j286, length_ft: 47, width_ft: 15 }   # length [osm] attraction to walkway, width [assumed] as the walkway it joins
+  - { id: nine_dragons_j250, from: nine_dragons, to: j250, length_ft: 56, width_ft: 15 }   # length [osm] attraction to walkway, width [assumed] as the walkway it joins
+  - { id: palais_du_cinema_j282, from: palais_du_cinema, to: j282, length_ft: 10, width_ft: 40 }   # length [osm] attraction to walkway, width [assumed] as the walkway it joins
+  - { id: reflections_of_china_j246, from: reflections_of_china, to: j246, length_ft: 75, width_ft: 40 }   # length [osm] attraction to walkway, width [assumed] as the walkway it joins
+  - { id: refreshment_outpost_j271, from: refreshment_outpost, to: j271, length_ft: 15, width_ft: 40 }   # length [osm] attraction to walkway, width [assumed] as the walkway it joins
+  - { id: refreshment_station_j156, from: refreshment_station, to: j156, length_ft: 10, width_ft: 15 }   # length [osm] attraction to walkway, width [assumed] as the walkway it joins
+  - { id: regal_eagle_j342, from: regal_eagle, to: j342, length_ft: 162, width_ft: 40 }   # length [osm] attraction to walkway, width [assumed] as the walkway it joins
+  - { id: remy_j316, from: remy, to: j316, length_ft: 10, width_ft: 40 }   # length [osm] attraction to walkway, width [assumed] as the walkway it joins
+  - { id: rose_and_crown_j244, from: rose_and_crown, to: j244, length_ft: 19, width_ft: 40 }   # length [osm] attraction to walkway, width [assumed] as the walkway it joins
+  - { id: san_angel_inn_j225, from: san_angel_inn, to: j225, length_ft: 119, width_ft: 40 }   # length [osm] attraction to walkway, width [assumed] as the walkway it joins
+  - { id: seabase_j030, from: seabase, to: j030, length_ft: 41, width_ft: 15 }   # length [osm] attraction to walkway, width [assumed] as the walkway it joins
+  - { id: seas_with_nemo_j026, from: seas_with_nemo, to: j026, length_ft: 10, width_ft: 15 }   # length [osm] attraction to walkway, width [assumed] as the walkway it joins
+  - { id: shiki_sai_j345, from: shiki_sai, to: j345, length_ft: 45, width_ft: 15 }   # length [osm] attraction to walkway, width [assumed] as the walkway it joins
+  - { id: shops_american_adventure_j343, from: shops_american_adventure, to: j343, length_ft: 127, width_ft: 40 }   # length [osm] attraction to walkway, width [assumed] as the walkway it joins
+  - { id: shops_canada_j223, from: shops_canada, to: j223, length_ft: 24, width_ft: 15 }   # length [osm] attraction to walkway, width [assumed] as the walkway it joins
+  - { id: shops_china_j248, from: shops_china, to: j248, length_ft: 25, width_ft: 15 }   # length [osm] attraction to walkway, width [assumed] as the walkway it joins
+  - { id: shops_france_j285, from: shops_france, to: j285, length_ft: 19, width_ft: 15 }   # length [osm] attraction to walkway, width [assumed] as the walkway it joins
+  - { id: shops_germany_j320, from: shops_germany, to: j320, length_ft: 10, width_ft: 15 }   # length [osm] attraction to walkway, width [assumed] as the walkway it joins
+  - { id: shops_italy_j329, from: shops_italy, to: j329, length_ft: 67, width_ft: 40 }   # length [osm] attraction to walkway, width [assumed] as the walkway it joins
+  - { id: shops_japan_j355, from: shops_japan, to: j355, length_ft: 35, width_ft: 40 }   # length [osm] attraction to walkway, width [assumed] as the walkway it joins
+  - { id: shops_mexico_j225, from: shops_mexico, to: j225, length_ft: 32, width_ft: 40 }   # length [osm] attraction to walkway, width [assumed] as the walkway it joins
+  - { id: shops_morocco_j333, from: shops_morocco, to: j333, length_ft: 10, width_ft: 15 }   # length [osm] attraction to walkway, width [assumed] as the walkway it joins
+  - { id: shops_norway_j233, from: shops_norway, to: j233, length_ft: 64, width_ft: 40 }   # length [osm] attraction to walkway, width [assumed] as the walkway it joins
+  - { id: shops_outpost_j280, from: shops_outpost, to: j280, length_ft: 30, width_ft: 40 }   # length [osm] attraction to walkway, width [assumed] as the walkway it joins
+  - { id: shops_showcase_plaza_j204, from: shops_showcase_plaza, to: j204, length_ft: 10, width_ft: 15 }   # length [osm] attraction to walkway, width [assumed] as the walkway it joins
+  - { id: shops_united_kingdom_j237, from: shops_united_kingdom, to: j237, length_ft: 12, width_ft: 40 }   # length [osm] attraction to walkway, width [assumed] as the walkway it joins
+  - { id: shops_world_celebration_j036, from: shops_world_celebration, to: j036, length_ft: 10, width_ft: 15 }   # length [osm] attraction to walkway, width [assumed] as the walkway it joins
+  - { id: shops_world_discovery_j039, from: shops_world_discovery, to: j039, length_ft: 49, width_ft: 15 }   # length [osm] attraction to walkway, width [assumed] as the walkway it joins
+  - { id: short_film_festival_j175, from: short_film_festival, to: j175, length_ft: 88, width_ft: 15 }   # length [osm] attraction to walkway, width [assumed] as the walkway it joins
+  - { id: soarin_j159, from: soarin, to: j159, length_ft: 145, width_ft: 15 }   # length [osm] attraction to walkway, width [assumed] as the walkway it joins
+  - { id: sommerfest_j332, from: sommerfest, to: j332, length_ft: 10, width_ft: 15 }   # length [osm] attraction to walkway, width [assumed] as the walkway it joins
+  - { id: space_220_j114, from: space_220, to: j114, length_ft: 111, width_ft: 15 }   # length [osm] attraction to walkway, width [assumed] as the walkway it joins
+  - { id: spaceship_earth_j027, from: spaceship_earth, to: j027, length_ft: 10, width_ft: 15 }   # length [osm] attraction to walkway, width [assumed] as the walkway it joins
+  - { id: spice_road_table_j310, from: spice_road_table, to: j310, length_ft: 13, width_ft: 40 }   # length [osm] attraction to walkway, width [assumed] as the walkway it joins
+  - { id: sunshine_seasons_j105, from: sunshine_seasons, to: j105, length_ft: 84, width_ft: 15 }   # length [osm] attraction to walkway, width [assumed] as the walkway it joins
+  - { id: swirled_showcase_j193, from: swirled_showcase, to: j193, length_ft: 21, width_ft: 15 }   # length [osm] attraction to walkway, width [assumed] as the walkway it joins
+  - { id: takumi_tei_j345, from: takumi_tei, to: j345, length_ft: 65, width_ft: 15 }   # length [osm] attraction to walkway, width [assumed] as the walkway it joins
+  - { id: teppan_edo_j349, from: teppan_edo, to: j349, length_ft: 41, width_ft: 10 }   # length [osm] attraction to walkway, width [assumed] as the walkway it joins
+  - { id: test_track_j144, from: test_track, to: j144, length_ft: 14, width_ft: 15 }   # length [osm] attraction to walkway, width [assumed] as the walkway it joins
+  - { id: turtle_talk_j032, from: turtle_talk, to: j032, length_ft: 83, width_ft: 15 }   # length [osm] attraction to walkway, width [assumed] as the walkway it joins
+  - { id: tutto_gusto_j329, from: tutto_gusto, to: j329, length_ft: 223, width_ft: 40 }   # length [osm] attraction to walkway, width [assumed] as the walkway it joins
+  - { id: tutto_italia_j331, from: tutto_italia, to: j331, length_ft: 109, width_ft: 40 }   # length [osm] attraction to walkway, width [assumed] as the walkway it joins
+  - { id: via_napoli_j329, from: via_napoli, to: j329, length_ft: 275, width_ft: 40 }   # length [osm] attraction to walkway, width [assumed] as the walkway it joins
+  - { id: yorkshire_fish_shop_j244, from: yorkshire_fish_shop, to: j244, length_ft: 32, width_ft: 40 }   # length [osm] attraction to walkway, width [assumed] as the walkway it joins
+
+
+congestion:                          # BPR-style link travel time, as Hollywood Studios [assumed]
+  free_speed_fps: 4.0                # [assumed]
+  comfortable_density_per_sqft: 0.10 # [assumed]
+  alpha: 1.5                         # [assumed]
+  beta: 3                            # [assumed]
+  jam_density_per_sqft: 0.30         # [assumed]
+  min_capacity_length_ft: 100        # [assumed] as Hollywood Studios (decision 2026-10-18)
+  spillback:
+    enabled: true
+    width_consumed_ft_per_100_guests: 1.5   # [assumed]
+    applies_to: [awesome_planet_j090, figment_j168, frozen_ever_after_j234, gran_fiesta_j212, guardians_j039, journey_of_water_j040, living_with_the_land_j090, mission_space_j076, remy_j316, seas_with_nemo_j026, short_film_festival_j175, soarin_j159, spaceship_earth_j027, test_track_j144, turtle_talk_j032]
+
+guests:
+  daily_attendance: { low: 21600, medium: 33200, high: 44900 }   # medium: TEA 2024 12.13M / 365 [wiki, derived]; low/high +-35% [assumed] as Hollywood Studios
+  arrival_curve_share_by_hour:       # [assumed] as Hollywood Studios
+    "9": 0.22
+    "10": 0.18
+    "11": 0.14
+    "12": 0.11
+    "13": 0.09
+    "14": 0.08
+    "15": 0.06
+    "16": 0.05
+    "17": 0.04
+    "18": 0.03
+  party_size: { 1: 0.08, 2: 0.32, 3: 0.20, 4: 0.25, 5: 0.10, 6: 0.05 }   # [assumed] as Hollywood Studios
+  stay_hours: { mean: 8, sd: 2 }     # [assumed]
+  patience_min: { mean: 75, sd: 30 } # [assumed] as calibrated at Hollywood Studios (M9)
+  thrill_tolerance: { mean: 0.55, sd: 0.25 }   # [assumed]
+  ll_passes_per_guest: { mean: 4.0, sd: 1.5 }   # [assumed] as Hollywood Studios
+
+decision:                            # as Hollywood Studios [assumed]
+  patience_aware: true               # [assumed] (M16)
+  skip_full_shows: true              # [assumed] (M16)
+  method: softmax_utility
+  temperature: 0.25
+  choice_set: top_k_by_utility
+  k: 5
+  utility:
+    appeal: 1.0
+    thrill_match: 0.6
+    wait_penalty_per_min: 0.012      # as calibrated at Hollywood Studios (M9)
+    walk_penalty_per_min: 0.05
+    repeat_penalty: 0.8
+    ll_return_window_bonus: 0.5
+  posted_wait_refresh_s: 300
+  fatigue_per_hour: 0.06
+  meal_windows: ["11:30-13:30", "17:30-19:30"]
+  meal_window_bonus: 0.8
+  reroute_s: 300                     # [assumed] as Hollywood Studios
+
+lightning_lane:                      # tiers and Single Pass [fan TouringPlans 2026-06-29; Inside the Magic 2026-06-28]
+  purchase_share: 0.30               # [fan] as Hollywood Studios (no EPCOT figure found)
+  advance_bookings: 3                # unused with tiers (advance_by_tier applies)
+  advance_by_tier: { tier1: 1, tier2: 2 }   # [fan] one Tier 1 and two Tier 2 before the day
+  single_pass_share: 0.15            # [assumed] share of parties buying the Guardians Single Pass, as Rise at Hollywood Studios
+  window_min: 60                     # [assumed]
+  grace_min: 15                      # [assumed]
+  inventory_share: 0.40              # [assumed] as Hollywood Studios
+  elsewhere_share: 0.0               # every Tier 2 experience at EPCOT is a modeled node
+
+calibration_targets:                 # [fan] Queue-Times 2026: average posted / average daily maximum (read 2026-10-19)
+  rides:                             # (the report compares the daily-max figure with the busiest clock hour)
+    guardians: { avg_standby_min: 69, peak_standby_min: 89 }
+    test_track: { avg_standby_min: 58, peak_standby_min: 77 }
+    remy: { avg_standby_min: 46, peak_standby_min: 62 }
+    frozen_ever_after: { avg_standby_min: 42, peak_standby_min: 57 }
+    meet_anna_elsa: { avg_standby_min: 40, peak_standby_min: 75 }
+    meet_mickey_friends: { avg_standby_min: 22, peak_standby_min: 38 }
+    soarin: { avg_standby_min: 18, peak_standby_min: 34 }          # Soarin' Across America row (since 2026-05-26)
+    mission_space: { avg_standby_min: 16, peak_standby_min: 21 }
+    turtle_talk: { avg_standby_min: 15, peak_standby_min: 18 }
+    canada_far_and_wide: { avg_standby_min: 14, peak_standby_min: 14 }
+    living_with_the_land: { avg_standby_min: 11, peak_standby_min: 24 }
+    short_film_festival: { avg_standby_min: 10, peak_standby_min: 10 }
+    figment: { avg_standby_min: 10, peak_standby_min: 22 }
+    spaceship_earth: { avg_standby_min: 10, peak_standby_min: 19 }
+    seas_with_nemo: { avg_standby_min: 9, peak_standby_min: 20 }
+    gran_fiesta: { avg_standby_min: 8, peak_standby_min: 16 }
+
+# Import notes:
+#   bridged 71 dead ends within 45 ft of another path
+#   joined 8 separate walkway pieces within 45 ft of the network
+#   dropped a walkway piece of 65 nodes, 78 ft from the main network (node 13913435255 at 1860,295 toward 1791,258)
+#   dropped a walkway piece of 54 nodes, 585 ft from the main network (node 11781706568 at 2812,1606 toward 2305,1897)
+#   dropped a walkway piece of 44 nodes, 66 ft from the main network (node 1320371644 at 915,2034 toward 974,2065)
+#   dropped a walkway piece of 27 nodes, 77 ft from the main network (node 1334683669 at 892,2357 toward 830,2311)
+#   dropped a walkway piece of 22 nodes, 54 ft from the main network (node 11241179674 at 2364,1909 toward 2311,1918)
+#   dropped a walkway piece of 22 nodes, 104 ft from the main network (node 7529432057 at 1892,568 toward 1802,517)
+#   dropped a walkway piece of 8 nodes, 190 ft from the main network (node 11241179577 at 819,429 toward 970,545)
+#   dropped a walkway piece of 5 nodes, 129 ft from the main network (node 11241179584 at 924,424 toward 970,545)
+#   dropped a walkway piece of 5 nodes, 508 ft from the main network (node 2999354089 at 3217,2210 toward 2732,2362)
+#   dropped a walkway piece of 5 nodes, 302 ft from the main network (node 11241179593 at 1069,259 toward 970,545)
+#   dropped a walkway piece of 4 nodes, 204 ft from the main network (node 5170844909 at 1784,3351 toward 1711,3160)
+#   dropped a walkway piece of 3 nodes, 48 ft from the main network (node 2094200087 at 1074,1419 toward 1122,1416)
+#   dropped a walkway piece of 3 nodes, 282 ft from the main network (node 3106397424 at 1073,3630 toward 1231,3396)
+#   dropped a walkway piece of 3 nodes, 443 ft from the main network (node 3106397446 at 2768,3380 toward 2406,3125)
+#   dropped a walkway piece of 3 nodes, 335 ft from the main network (node 3106397448 at 745,3532 toward 806,3202)
+#   dropped a walkway piece of 3 nodes, 333 ft from the main network (node 7531784078 at 587,3461 toward 758,3175)
+#   dropped a walkway piece of 2 nodes, 58 ft from the main network (node 1286595354 at 2380,969 toward 2330,999)
+#   dropped a walkway piece of 2 nodes, 64 ft from the main network (node 2993332318 at 2049,3054 toward 2058,3118)
+#   dropped a walkway piece of 2 nodes, 72 ft from the main network (node 8632729629 at 1625,3246 toward 1624,3173)
+#   dropped a walkway piece of 2 nodes, 116 ft from the main network (node 5170844908 at 1495,3281 toward 1385,3243)
+#   node living_with_the_land is 333 ft from the nearest walkway; check its osm refs or set at
+#   node garden_grill is 194 ft from the nearest walkway; check its osm refs or set at
+#   node gran_fiesta is 207 ft from the nearest walkway; check its osm refs or set at
+#   node tutto_gusto is 223 ft from the nearest walkway; check its osm refs or set at
+#   node via_napoli is 275 ft from the nearest walkway; check its osm refs or set at
+#   node regal_eagle is 162 ft from the nearest walkway; check its osm refs or set at

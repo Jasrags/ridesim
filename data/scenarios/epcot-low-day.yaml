@@ -1,0 +1,12 @@
+# EPCOT, low crowd (M17): every ride is a simple ride for now (full models follow one at a time).
+# Confidence tags: [assumed] = our placeholder
+schema_version: "1.0"
+scenario:
+  id: epcot_low_day
+  description: "EPCOT day 09:00-21:00 at low attendance; failures on (full ride models only)"
+  park_id: wdw_epcot
+  seed: 1
+  duration_h: 12
+  warmup_min: 60
+  crowd_level: low
+  failures: [brief_stop, long_downtime, cascade_stop, opening_delay]

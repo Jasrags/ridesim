@@ -1,0 +1,154 @@
+# EPCOT — OSM import mapping for `ridesim osm-import` (M17, 2026-10-19).
+# Names, lands and map numbers come from the 2026 guide map (Jason's image) [map]; positions and walkway geometry from the
+# OSM extract [osm] (© OpenStreetMap contributors, ODbL 1.0).
+#   go run ./cmd/ridesim osm-import -config osm/wdw-epcot/import.yaml -out <draft.yaml> -svg <map.svg>
+# Where OSM has no element for a guide-map location, a nearby element stands in ("stand-in" below) or it is listed as not imported.
+# Lands: the four neighborhoods, and each World Showcase pavilion as its own land (shops are grouped per land).
+
+park:
+  id: wdw_epcot
+  name: "EPCOT"
+  extract: extract-2026-10-19.json
+  boundary: w805298160                # tourism=theme_park outline; its north-west corner is the origin
+
+walk:
+  highways: [footway, pedestrian, steps, path, living_street]
+  exclude_access: [private, "no"]     # backstage
+  exclude_name_contains: [Queue]      # queue lines belong to the ride models, not the walkway graph
+  snap_ft: 45                         # as Hollywood Studios
+  cluster_ft: 25
+  exclude_inside: []
+  widths_ft:                          # [assumed] defaults by path type, as Hollywood Studios; chokepoints to be measured [user]
+    pedestrian: 40
+    living_street: 30
+    footway: 15
+    steps: 10
+    path: 8
+
+nodes:
+  # gates (Jason: two gates). Main: the footway hub north of Spaceship Earth; International Gateway: its named path.
+  - { id: gate, kind: entrance, name: "Main entrance", land: entrance, osm: [n8716534792] }
+  - { id: exit, kind: exit, name: "Main entrance", land: entrance, osm: [n8716534792] }
+  - { id: gate_ig, kind: entrance, name: "International Gateway", land: entrance, osm: [w1525709564] }
+  - { id: exit_ig, kind: exit, name: "International Gateway", land: entrance, osm: [w1525709564] }
+
+  # World Celebration
+  - { id: spaceship_earth, kind: ride_simple, name: "Spaceship Earth", land: world_celebration, map_no: [1], osm: [w146221550] }
+  - { id: meet_mickey_friends, kind: meet, name: "Meet Mickey & Friends (CommuniCore Hall)", land: world_celebration, map_no: [2], osm: [n11998956198] }
+  - { id: short_film_festival, kind: ride_simple, name: "Disney & Pixar Short Film Festival", land: world_celebration, map_no: [3], osm: [n4009891497] }
+  - { id: figment, kind: ride_simple, name: "Journey Into Imagination With Figment", land: world_celebration, map_no: [4], osm: [n2989730651] }
+  - { id: festival_favorites, kind: dining, name: "Festival Favorites", land: world_celebration, map_no: [8], osm: [n11998956199] }
+  - { id: shops_world_celebration, kind: shop, name: "World Celebration shops", land: world_celebration, map_no: [9, 10, 12], osm: [w782273946, w782273949, w295182226] }
+
+  # World Discovery
+  - { id: guardians, kind: ride_simple, name: "Guardians of the Galaxy: Cosmic Rewind", land: world_discovery, map_no: [13], osm: [w719079634] }
+  - { id: mission_space, kind: ride_simple, name: "Mission: SPACE", land: world_discovery, map_no: [14], osm: [w295316766] }
+  - { id: test_track, kind: ride_simple, name: "Test Track", land: world_discovery, map_no: [15], osm: [w295315993] }
+  - { id: refreshment_station, kind: dining, name: "Refreshment Station (stand-in: Taste Track)", land: world_discovery, map_no: [17], osm: [w196386511] }
+  - { id: space_220, kind: dining, name: "Space 220 Restaurant and Lounge", land: world_discovery, map_no: [19], osm: [w689485632] }
+  - { id: shops_world_discovery, kind: shop, name: "Treasures of Xandar", land: world_discovery, map_no: [20], osm: [n12825175778] }
+
+  # World Nature
+  - { id: journey_of_water, kind: ride_simple, name: "Journey of Water, Inspired by Moana (walk-through)", land: world_nature, map_no: [21], osm: [r21099075] }
+  - { id: awesome_planet, kind: ride_simple, name: "Awesome Planet", land: world_nature, map_no: [22], osm: [w782275579] }
+  - { id: soarin, kind: ride_simple, name: "Soarin' Around the World", land: world_nature, map_no: [23], osm: [r10729202] }
+  - { id: living_with_the_land, kind: ride_simple, name: "Living with the Land", land: world_nature, map_no: [24], osm: [w958012721] }
+  - { id: seas_with_nemo, kind: ride_simple, name: "The Seas with Nemo & Friends", land: world_nature, map_no: [25], osm: [w307684414] }
+  - { id: turtle_talk, kind: ride_simple, name: "Turtle Talk With Crush", land: world_nature, map_no: [26], osm: [n2990152020] }
+  - { id: seabase, kind: ride_simple, name: "SeaBase Aquarium (stand-in: SeaBase Gift Shop)", land: world_nature, map_no: [27], osm: [n2990152021] }
+  - { id: sunshine_seasons, kind: dining, name: "Sunshine Seasons", land: world_nature, map_no: [28], osm: [n567544364] }
+  - { id: garden_grill, kind: dining, name: "Chip 'n' Dale's Harvest Feast at Garden Grill", land: world_nature, map_no: [29], osm: [n2734772673] }
+  - { id: coral_reef, kind: dining, name: "Coral Reef Restaurant", land: world_nature, map_no: [30], osm: [n2990152022] }
+
+  # World Showcase entrance plaza
+  - { id: swirled_showcase, kind: dining, name: "Swirled Showcase", land: showcase_plaza, map_no: [40], osm: [w941181955] }
+  - { id: shops_showcase_plaza, kind: shop, name: "Showcase Plaza shops (Port of Entry, Disney Traders)", land: showcase_plaza, map_no: [81, 82], osm: [w295321043, w295320342] }
+
+  # Mexico
+  - { id: gran_fiesta, kind: ride_simple, name: "Gran Fiesta Tour Starring The Three Caballeros", land: mexico, map_no: [31], osm: [n2441107360] }
+  - { id: la_cantina, kind: dining, name: "La Cantina de San Angel", land: mexico, map_no: [43], osm: [w295598762] }
+  - { id: la_hacienda, kind: dining, name: "La Hacienda de San Angel", land: mexico, map_no: [44], osm: [w295598760] }
+  - { id: la_cava, kind: dining, name: "La Cava del Tequila", land: mexico, map_no: [45], osm: [n2993384456] }
+  - { id: san_angel_inn, kind: dining, name: "San Angel Inn Restaurante", land: mexico, map_no: [46], osm: [n595705466] }
+  - { id: shops_mexico, kind: shop, name: "Mexico shops", land: mexico, osm: [w295598761, n2993384458, n2993384457, n4852402694] }
+
+  # Norway
+  - { id: meet_anna_elsa, kind: meet, name: "Meet Anna and Elsa at Royal Sommerhus", land: norway, map_no: [32], osm: [w685999005] }
+  - { id: frozen_ever_after, kind: ride_simple, name: "Frozen Ever After", land: norway, map_no: [33], osm: [n4213210754] }
+  - { id: kringla, kind: dining, name: "Kringla Bakeri Og Kafe", land: norway, map_no: [47], osm: [n2993376231] }
+  - { id: akershus, kind: dining, name: "Princess Storybook Dining at Akershus Royal Banquet Hall", land: norway, map_no: [48], osm: [n2993380042] }
+  - { id: shops_norway, kind: shop, name: "Norway shops", land: norway, osm: [n2993376232, n4852402692] }
+
+  # China
+  - { id: reflections_of_china, kind: ride_simple, name: "Reflections of China (Circle-Vision 360)", land: china, map_no: [34], osm: [n595705468] }
+  - { id: nine_dragons, kind: dining, name: "Nine Dragons Restaurant", land: china, map_no: [49], osm: [n490274317] }
+  - { id: lotus_blossom, kind: dining, name: "Lotus Blossom Café", land: china, map_no: [50], osm: [n490274318] }
+  - { id: joy_of_tea, kind: dining, name: "Joy of Tea", land: china, map_no: [51], osm: [w295597522] }
+  - { id: shops_china, kind: shop, name: "China shops", land: china, osm: [n2993376351, w295597875] }
+
+  # Outpost
+  - { id: refreshment_outpost, kind: dining, name: "Refreshment Outpost (OSM: Refreshment Cool Post)", land: outpost, map_no: [52], osm: [w295596501] }
+  - { id: shops_outpost, kind: shop, name: "Outpost shops", land: outpost, osm: [w295596498, w295596499] }
+
+  # Germany
+  - { id: biergarten, kind: dining, name: "Biergarten Restaurant", land: germany, map_no: [53], osm: [n490274315] }
+  - { id: sommerfest, kind: dining, name: "Sommerfest", land: germany, map_no: [54], osm: [n2993332938] }
+  - { id: shops_germany, kind: shop, name: "Germany shops (incl. Karamell-Küche)", land: germany, map_no: [83], osm: [n2993332935, n2993332937, n2993332953, w183797227, n2993332954, n2993332952, n2993332936, n2993332951] }
+
+  # Italy
+  - { id: tutto_italia, kind: dining, name: "Tutto Italia Ristorante", land: italy, map_no: [55], osm: [w295592602] }
+  - { id: tutto_gusto, kind: dining, name: "Tutto Gusto Wine Cellar", land: italy, map_no: [56], osm: [n2995502834] }
+  - { id: via_napoli, kind: dining, name: "Via Napoli Ristorante e Pizzeria", land: italy, map_no: [57], osm: [w295592671] }
+  - { id: gelateria_toscana, kind: dining, name: "Gelateria Toscana (OSM: Gelati)", land: italy, map_no: [58], osm: [w295593342] }
+  - { id: shops_italy, kind: shop, name: "Italy shops", land: italy, osm: [w295592597, n2993332940, n2993332941] }
+
+  # The American Adventure
+  - { id: america_gardens, kind: show, name: "America Gardens Theatre", land: american_adventure, map_no: [35], osm: [w295589735] }
+  - { id: american_adventure, kind: show, name: "The American Adventure", land: american_adventure, map_no: [36], osm: [w295592223] }
+  - { id: joffreys_american_adventure, kind: dining, name: "Joffrey's Coffee & Tea Company", land: american_adventure, map_no: [59], osm: [w295592257] }
+  - { id: fife_and_drum, kind: dining, name: "Fife & Drum Tavern", land: american_adventure, map_no: [60], osm: [w295592241] }
+  - { id: regal_eagle, kind: dining, name: "Regal Eagle Smokehouse", land: american_adventure, map_no: [61], osm: [n2993302195] }
+  - { id: funnel_cake, kind: dining, name: "Funnel Cake", land: american_adventure, map_no: [62], osm: [n4852402683] }
+  - { id: shops_american_adventure, kind: shop, name: "Heritage Manor Gifts", land: american_adventure, osm: [n2993332945] }
+
+  # Japan
+  - { id: kabuki_cafe, kind: dining, name: "Kabuki Cafe", land: japan, map_no: [63], osm: [w295593363] }
+  - { id: katsura_grill, kind: dining, name: "Katsura Grill", land: japan, map_no: [64], osm: [w295587734] }
+  - { id: teppan_edo, kind: dining, name: "Teppan Edo", land: japan, map_no: [65], osm: [n593876328] }
+  - { id: shiki_sai, kind: dining, name: "Shiki-Sai: Sushi Izakaya (OSM: Tokyo Dining)", land: japan, map_no: [66], osm: [n593876323] }
+  - { id: takumi_tei, kind: dining, name: "Takumi-Tei", land: japan, map_no: [67], osm: [n7562508002] }
+  - { id: shops_japan, kind: shop, name: "Mitsukoshi Department Store", land: japan, osm: [n593876330] }
+
+  # Morocco
+  - { id: spice_road_table, kind: dining, name: "Spice Road Table", land: morocco, map_no: [68], osm: [w295448863] }
+  - { id: shops_morocco, kind: shop, name: "Morocco shops", land: morocco, osm: [n4852402677, n4852402678, n2991768096, n2991768097, n2991768098] }
+
+  # France
+  - { id: remy, kind: ride_simple, name: "Remy's Ratatouille Adventure", land: france, map_no: [38], osm: [w688994559] }
+  - { id: palais_du_cinema, kind: show, name: "Palais du Cinéma (Beauty and the Beast Sing-Along / Impressions de France)", land: france, map_no: [37], osm: [w305094846] }
+  - { id: les_vins_des_chefs, kind: dining, name: "Les Vins des Chefs de France", land: france, map_no: [69], osm: [w118653061] }
+  - { id: chefs_de_france, kind: dining, name: "Chefs de France", land: france, map_no: [70], osm: [n567539827] }
+  - { id: monsieur_paul, kind: dining, name: "Monsieur Paul", land: france, map_no: [71], osm: [n787955697] }
+  - { id: lartisan_des_glaces, kind: dining, name: "L'Artisan des Glaces", land: france, map_no: [72], osm: [n2991742091] }
+  - { id: les_halles, kind: dining, name: "Les Halles Boulangerie-Patisserie", land: france, map_no: [73], osm: [w305094685] }
+  - { id: la_creperie, kind: dining, name: "La Crêperie de Paris", land: france, map_no: [74], osm: [w805278205] }
+  - { id: shops_france, kind: shop, name: "France shops", land: france, map_no: [85], osm: [w305094845, n2991742087, n2991742088, n2991742090, n2991742089] }
+
+  # United Kingdom
+  - { id: yorkshire_fish_shop, kind: dining, name: "Yorkshire County Fish Shop", land: united_kingdom, map_no: [75], osm: [n567526849] }
+  - { id: rose_and_crown, kind: dining, name: "Rose & Crown Dining Room and Pub", land: united_kingdom, map_no: [76, 77], osm: [w44486037] }
+  - { id: shops_united_kingdom, kind: shop, name: "United Kingdom shops", land: united_kingdom, map_no: [87], osm: [n2991095968, n2991095969, n2991377070, n2991377069, n2991095967, n567531332] }
+
+  # Canada
+  - { id: canada_far_and_wide, kind: ride_simple, name: "Canada Far and Wide (Circle-Vision 360)", land: canada, map_no: [39], osm: [w295396535] }
+  - { id: le_cellier, kind: dining, name: "Le Cellier Steakhouse", land: canada, map_no: [79], osm: [w295396523] }
+  - { id: la_poutinerie, kind: dining, name: "La Poutinerie (replaced Refreshment Port, 2026-07-01)", land: canada, map_no: [80], osm: [w295321733] }
+  - { id: shops_canada, kind: shop, name: "Canada shops", land: canada, map_no: [88], osm: [w295396521, n4852402707] }
+
+# Not imported (add by hand or find in OSM): Geo-82 (5), Connections Café (6), Connections Eatery (7), Club Cool (11), Play Zone (16),
+# Joffrey's in World Discovery (18), Joffrey's in World Showcase plaza (41), Choza de Margarita (42), Joffrey's in Canada (78),
+# Art of Disney (84), The Tea Caddy is in the UK shops group, World Traveler (86, by the International Gateway).
+# Luminous: The Symphony of Us (21:00, around the lagoon) is left out of the first run: one show node would send every viewer to one
+# point on the promenade.
+
+links: []

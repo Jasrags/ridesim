@@ -14,7 +14,7 @@ func TestValidateRealDataSucceeds(t *testing.T) {
 	if err := dispatch([]string{"validate", "-data", "../../data"}, &out); err != nil {
 		t.Fatalf("validate: %v\n%s", err, out.String())
 	}
-	for _, want := range []string{"WARN  continuous.spacing_vs_route", "CONFLICT ride_duration_s: wiki=82, rcdb=70", "OK: 36 file(s)"} {
+	for _, want := range []string{"WARN  continuous.spacing_vs_route", "CONFLICT ride_duration_s: wiki=82, rcdb=70", "OK: 40 file(s)"} {
 		if !strings.Contains(out.String(), want) {
 			t.Errorf("report missing %q", want)
 		}
