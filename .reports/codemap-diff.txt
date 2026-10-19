@@ -1,0 +1,16 @@
+Codemap scan 2026-10-19 (first run: no previous codemaps, so no diff)
+
+Created
+  docs/CODEMAPS/architecture.md  layers, run + live data flow, determinism rules, archetype table
+  docs/CODEMAPS/backend.md       CLI commands, HTTP API (7 routes), package map with key funcs
+  docs/CODEMAPS/frontend.md      web control room page (single embedded index.html)
+  docs/CODEMAPS/data.md          YAML data files (10 rides, 2 parks, 16 scenarios, 3 studies), OSM extract, event log
+  docs/CODEMAPS/dependencies.md  gopkg.in/yaml.v3 only; no runtime services
+
+Scanned: 119 .go files (14,024 non-test lines, 5,851 test lines), 30 data YAML, 1 HTML page
+Dependencies: gopkg.in/yaml.v3 v3.0.1 (unchanged; only external module)
+Staleness (>90 days): none checked against git dates; all docs/m*-report.md are from the M1-M14 work (2026-10-17/18)
+
+Notes
+  - No database or frontend framework; "backend" = CLI + sim packages + HTTP API, "data" = YAML + event log.
+  - Fixed: stale package comments in internal/ride/ride.go and internal/queue/standby.go.

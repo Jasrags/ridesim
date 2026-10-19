@@ -1,5 +1,6 @@
 // Package ride defines the interface every ride archetype implements (spec §3). Implementations live
-// in subpackages: coaster (multi_train_coaster) now, continuous (continuous_load) in M5.
+// in subpackages: coaster (multi_train_coaster), continuous (continuous_load), elevator (elevator_drop)
+// and bays (simulator_bays).
 package ride
 
 import (

@@ -1,5 +1,5 @@
-// Package queue holds ride queues: FIFO lines with lazy deletion (reneging) and the preshow batch
-// stage. The Lightning Lane merge arrives in M4.
+// Package queue holds ride queues: FIFO lines with lazy deletion (reneging), the preshow batch
+// stage, and the Lightning Lane merge.
 package queue
 
 import "github.com/jasrags/ridesim/internal/guest"
