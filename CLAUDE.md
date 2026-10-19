@@ -245,3 +245,7 @@ numbers come from `data/`. Read both before changing simulation logic.
   timings wait for Jason's next visit.
 - Turn-away fix (Jason): at DHS `decision.patience_aware` and `skip_full_shows` are on (guests skip options whose board wait is
   over their patience, and full shows). Turn-aways ~30,000 -> ~11,000 a medium day; waits unchanged. Synthetic park keeps them off.
+- DHS realism choices (Jason, 2026-10-19): Alien Swirling Saucers gets a full simulator_bays model built to the sourced 3-min
+  cycle (2 sides x 11 two-seat cars, one party per car), so the party mix sets capacity; both sides run (the one-side state seen
+  2026-09-22 stays a side_down failure, off). Vacation Fun is removed (closed from 2026-10-28). The Magic of Disney Animation
+  (opened 2026-09-14) is added as nodes with [assumed] numbers, plus the missing guide-map places and the land rename.
