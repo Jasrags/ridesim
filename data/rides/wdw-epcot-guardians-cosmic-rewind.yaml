@@ -1,0 +1,165 @@
+# Guardians of the Galaxy: Cosmic Rewind (EPCOT) — ride config, schema 1.0, archetype multi_train_coaster (M18)
+# Confidence tags: [wiki] = Wikipedia, [rcdb] = RCDB, [fan] = fan sources, [assumed] = our placeholder
+# Research pass 2026-10-19 (pages opened; notes and quotes in the M18 research file):
+#   wiki https://en.wikipedia.org/wiki/Guardians_of_the_Galaxy:_Cosmic_Rewind
+#   rcdb https://rcdb.com/16823.htm ("Dual Station")
+#   bm   BlogMickey ride guide and preshow posts (2022): batches of up to 140, trains filled to 100% "most of the time"
+#   wdwm WDWMagic articles/forum (2022-2025): separate unload room, preshow rooms, launch interval counts (~30 s, 25 s min)
+#   tp   TouringPlans attraction page (2026): 4 min ride plus 14 min preshow, Lightning Lane Single Pass only
+#
+# Guest path [fan]: Galaxarium and Xandar Gallery (continuous queue) -> holding room -> Welcome Center (~2.5 min) -> Phase Chamber
+# (~3 min) -> two load lines, one per platform. Lightning Lane (Single Pass) merges at the first holding room [fan wdwm].
+# Ride [fan]: send-off screen and booster wheels, star-field room, the Eson room (vehicles turn; a ride delay can hold here),
+# reverse launch, main course, a second smaller launch, final scene, brakes, separate unload.
+# Capacity (Jason, 2026-10-19): 90% of the 2,000/hr design figure [rcdb][wiki] = 1,800/hr, one launch every 40 s. Two platforms
+# (Jason: dual-load model) each give a train 80 s: 64 s load + 12 s restraint check + 4 s clearance [assumed, fitted to 40 s].
+
+schema_version: "1.0"
+
+ride:
+  id: wdw.epcot.guardians_cosmic_rewind   # <resort>.<park>.<ride>, unique across all parks
+  family: guardians_cosmic_rewind
+  name: "Guardians of the Galaxy: Cosmic Rewind"
+  location:
+    resort: walt_disney_world
+    park: epcot
+    land: world_discovery              # [map]
+  other_versions: []
+  archetype: multi_train_coaster
+  ride_duration_s: 200                 # [wiki] 3:20 station to unload (rcdb 3:10, wdwm "just over 3 min")
+  height_restriction_in: 42            # [wiki][fan tp]
+  listed_capacity_per_hr: 2000         # [rcdb][wiki] design figure
+  data_conflicts:
+    - field: listed_capacity_per_hr
+      values: { rcdb_wiki_design: 2000, fan_wdwm_launch_count_30s: 2400, fan_2022_estimates: 2500 }
+      chosen: rcdb_wiki_design
+      note: "Built to 90% = 1,800/hr (Jason, 2026-10-19)."
+    - field: ride_duration_s
+      values: { wiki: 200, rcdb: 190, fan_wdwm: 185 }
+      chosen: wiki
+
+trains:
+  fleet_size: 8                        # [wiki] "8 trains with 5 cars"
+  max_in_service: 8
+  default_in_service: 8                # lap 200 + 35 unload + 80 platform = 315 s needs 7.9 trains at 40 s [derived]
+  cars_per_train: 5                    # [wiki]
+  seats_per_train: 20                  # [wiki] 2 rows of 2 per car
+  seats_per_row: 1                     # rows are 2 seats [wiki], but cast fill trains to 100% "most of the time" [fan bm], so parties share rows (as Rise)
+  layout: "5 cars x 2 rows of 2 (rotating)"
+  restraints: lap_bar                  # [fan] individual lap bars
+
+# No block list or timings were found. The 200 s ride is split into eight [assumed] stopping points, none longer than the 40 s
+# launch interval with its brake release: the send-off and booster, the Eson room before the launch, then the course in launch / mid-course / finale
+# pieces, each ending at a brake.
+blocks:
+  - { id: UNLOAD, kind: station, next: LOAD_A, alt_next: LOAD_B }   # [fan wdwm] separate unload room; dual-load station [rcdb]
+  - { id: LOAD_A, kind: station, next: SENDOFF }                     # [fan] left platform, 10 gates
+  - { id: LOAD_B, kind: station, next: SENDOFF }                     # [fan] right platform, 10 gates
+  - { id: SENDOFF, kind: brake, transit_s: { mean: 20, sd: 1 }, brake: &stop { hold_capable: true, stop_policy: stop_if_next_occupied, release_delay_s: { mean: 2, sd: 0.5 } }, next: ESON_ROOM }   # [assumed] send-off screen, booster wheels, star field
+  - { id: ESON_ROOM, kind: brake, transit_s: { mean: 36, sd: 2 }, brake: *stop, next: LAUNCH }       # [assumed] pre-launch scene; vehicles turn, ride delays hold here [fan]
+  - { id: LAUNCH, kind: launch, transit_s: { mean: 30, sd: 1 }, launch: { accel_s: 3, top_speed_mph: 60.3 }, next: MCBR_1 }   # reverse LSM launch [wiki], 60.3 mph [fan]; accel_s [assumed]; launch and first course section [assumed]
+  - { id: MCBR_1, kind: brake, transit_s: { mean: 20, sd: 1 }, brake: *stop, next: COURSE_2 }        # [assumed]
+  - { id: COURSE_2, kind: course, transit_s: { mean: 34, sd: 1 }, next: MCBR_2 }                     # [assumed]
+  - { id: MCBR_2, kind: brake, transit_s: { mean: 20, sd: 1 }, brake: *stop, next: FINALE }          # [assumed]
+  - { id: FINALE, kind: course, transit_s: { mean: 25, sd: 1 }, next: FINAL_BRAKE }                  # [assumed] second launch and final scene [fan]
+  - { id: FINAL_BRAKE, kind: brake, transit_s: { mean: 15, sd: 1 }, brake: *stop, next: UNLOAD }     # [assumed] trains wait here when unload is slow [fan wdwm]
+  # transit sum = 20 + 36 + 30 + 20 + 34 + 20 + 25 + 15 = 200 = ride_duration_s (every brake block + its 2 s release < 40 s)
+
+clearance:
+  rules: []
+
+station:
+  separate_load_unload: true           # [fan wdwm] unload is a separate room
+  unload_s:        { mean: 35, sd: 5 } # [assumed]
+  load_s:          { mean: 64, sd: 8 } # [assumed] fitted: two platforms x (64 + 12 + 4) s = one launch every 40 s
+  restraint_check_s: { mean: 12, sd: 3 }   # [assumed] individual lap bars
+  dispatch_clearance_s: { mean: 4, sd: 1 }  # [assumed]
+  target_dispatch_interval_s: 40       # derived: 3600 x 20 / 1800 (Jason, 2026-10-19)
+  min_dispatch_interval_s: 36          # [rcdb][wiki] design: 2,000/hr = one launch every 36 s
+  staff_at_station: 8                  # [assumed]
+  dispatch_rule: hold_for_full_or_max_wait
+  max_wait_after_ready_s: 5            # [assumed]; trains leave full "most of the time" [fan bm]
+
+failures:
+  # No average downtime found: "reliable" at rope drop most weeks, not in WDW's top 15 for downtime Dec 2024 - Dec 2025 [fan], one bad
+  # week (21.5% unplanned, Mar 2026 [fan TouringPlans]). Values are placeholders as the other rides.
+  brief_stop:
+    rate_per_hr: 0.4                   # [assumed]
+    duration_s: { mean: 180, sd: 60 }
+  long_downtime:
+    mtbf_hr: 12                        # [assumed] about one long stop a day
+    mttr_min: { mean: 30, sd: 15 }     # [assumed]
+  side_down:                           # one platform out [fan Inside the Magic, Sept 2025: one side down for several days]; rate [assumed], off in the days
+    rate_per_hr: 0.02
+    duration_s: { mean: 14400, sd: 7200 }
+  weather_hold: none                   # indoor
+
+preshow:                               # holding room (first room) [fan wdwm 2022-05-03]
+  enabled: true
+  rooms: 1                             # [fan bm] one chain of rooms
+  batch_size: 140                      # [fan bm] "up to 140"
+  duration_s: { mean: 180, sd: 20 }    # [fan wdwm] "a few minutes"; 180 [assumed]
+  turnover_s: { mean: 60, sd: 10 }     # [assumed] batches every 4-7 min [fan bm]
+  fill_rule: full_or_max_wait
+  max_fill_wait_s: 60                  # [assumed]
+  release_rule: when_load_area_has_room
+  load_area_capacity: 140              # [assumed] one batch waits for the Welcome Center
+  party_integrity: true
+  merge_point: true                    # [fan wdwm] Lightning Lane merges at the first holding room and enters first
+  bypass_for_single_rider: false       # no single rider line
+
+stages:
+  - id: welcome_center                 # [fan wdwm] Xandar Welcome Center, ~2.5 min
+    enabled: true
+    rooms: 1
+    batch_size: 140
+    duration_s: { mean: 150, sd: 10 }  # [fan wdwm]
+    turnover_s: { mean: 60, sd: 10 }   # [assumed]
+    fill_rule: full_or_max_wait
+    max_fill_wait_s: 60                # [assumed]
+    release_rule: when_load_area_has_room
+    load_area_capacity: 140            # [assumed]
+    party_integrity: true
+  - id: phase_chamber                  # [fan wdwm] Teleportation / Phase Chamber, ~3 min
+    enabled: true
+    rooms: 1
+    batch_size: 140
+    duration_s: { mean: 180, sd: 10 }  # [fan wdwm]
+    turnover_s: { mean: 30, sd: 5 }    # [assumed] guests leave by two exits to the load lines [fan]
+    fill_rule: full_or_max_wait
+    max_fill_wait_s: 60                # [assumed]
+    release_rule: when_load_area_has_room
+    load_area_capacity: 280            # [assumed] the two load lines hold about two batches
+    party_integrity: true
+
+queues:
+  party_split_policy: never
+  standby: { physical_capacity: 3000 } # [assumed] indoor queue ~60 min of standby before the outdoor overflow [fan 2025]
+  single_rider: { enabled: false }     # [fan tp] no single rider line
+  skip_line:
+    enabled: true                      # [fan tp] Lightning Lane Single Pass
+    merge_point: preshow_entrance      # [fan wdwm]
+    merge:
+      unit: guests
+      empty_lane_rule: pull_other
+      phase_hysteresis_guests: 20      # [assumed]
+      phases:                          # [assumed] same fan-reported placeholders as the other rides
+        - { name: normal,   when_ll_queue_guests_below: 60,  ll_per_standby: 2 }
+        - { name: elevated, when_ll_queue_guests_below: 200, ll_per_standby: 4 }
+        - { name: recovery, when_ll_queue_guests_below: null, ll_per_standby: 10 }
+  posted_wait: { algorithm: queue_len_over_throughput, padding_pct: 0 }
+
+validation_targets:
+  listed_capacity_per_hr: 2000
+  implied_dispatch_interval_s: 40      # target 1,800/hr: 3600 x 20 / 1800
+  theoretical_riders_per_hr_at_target: 1800
+  expect_four_trains_sufficient: false # 8 trains in service
+  avg_standby_wait_min_2026: 69        # [fan] Queue-Times 2026 (park calibration target)
+
+config_invariants:                     # enforced by the loader, applies to every ride
+  - "sum(block.transit_s.mean over non-station blocks) == ride.ride_duration_s (+/- 2 s)"
+  - "count(blocks) >= trains.max_in_service + 1"
+  - "trains.default_in_service <= trains.max_in_service <= trains.fleet_size"
+  - "every block with kind=brake defines brake.hold_capable, brake.stop_policy and brake.release_delay_s"
+  - "every stage (preshow and stages) has throughput >= ride.listed_capacity_per_hr; stages need the preshow and a unique id"
+  - "a dual-load station (alt_next) rejoins at one block; side_down needs it"
