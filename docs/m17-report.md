@@ -180,3 +180,12 @@ The busiest hour runs ~15 min high, the same pattern as Slinky. Every other attr
   - partial slowdowns in the continuous model (code);
   - `[user]` how many stops vs slowdowns an hour;
   - the vehicle count.
+
+## M24 follow-up: The Seas with Nemo & Friends (2026-10-19)
+- **Model:** continuous_load omnimover, built the way Jason chose for Spaceship Earth.
+  - Clam-mobiles of 2-3 [wiki], one party per vehicle; a party of 4+ takes consecutive vehicles.
+  - A vehicle every 3.27 s from the 2,200/hr theoretical at the standard 2 riders [fan TouringPlans]; 92 vehicles [derived].
+  - Scene times `[assumed]`, and the same full-stop holds as Spaceship Earth.
+- **Medium day, 10 seeds:** ~1,688/hr. It posts 7.2 / 17.5 min against 9 / 20, as it did as a simple ride, with no re-fit (appeal
+  0.72).
+- **Open `[user]`:** vehicle count, ride time, accessibility stops.

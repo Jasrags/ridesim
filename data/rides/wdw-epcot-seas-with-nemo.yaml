@@ -1,0 +1,117 @@
+# The Seas with Nemo & Friends (EPCOT, World Nature) — ride config, schema 1.0, archetype continuous_load (M24)
+# Confidence tags: [wiki] = Wikipedia, [fan] = fan sources, [assumed] = our placeholder
+# Research pass 2026-10-19 (pages opened; notes in the EPCOT rides research file):
+#   wiki https://en.wikipedia.org/wiki/The_Seas_with_Nemo_%26_Friends (omnimover "clam-mobiles", 2-3 riders)
+#   crk  crooksinwdw theoretical/operational hourly capacity (updated 2019-07-31): 2,200 / 1,980
+#   tp   TouringPlans (2026): ~4 min; "Standard capacity is two guests per vehicle"; Lightning Lane Multi Pass Tier 2
+#
+# An omnimover (as Haunted Mansion and Spaceship Earth): clam-mobiles through Nemo scenes, ending beside the main aquarium; guests then
+# walk into SeaBase [wiki]. Built as Spaceship Earth (Jason's choices there, 2026-10-19): one party per vehicle (up to 3, strangers never
+# share), and vehicles every 3.27 s from the 2,200/hr theoretical at the standard 2 riders [fan tp]; carried capacity emerges from the
+# party mix. No vehicle count was found; the count fills the loop [derived].
+
+schema_version: "1.0"
+
+ride:
+  id: wdw.epcot.seas_with_nemo         # <resort>.<park>.<ride>, unique across all parks
+  family: seas_with_nemo
+  name: "The Seas with Nemo & Friends"
+  location:
+    resort: walt_disney_world
+    park: epcot
+    land: world_nature                 # [map]
+  other_versions: []
+  archetype: continuous_load
+  ride_duration_s: 240                 # [fan tp] ~4 min
+  total_experience_s: 300              # [derived] ride plus the return run below
+  height_restriction_in: 0             # none
+  listed_capacity_per_hr: 2200         # [wiki][fan crk] theoretical
+  data_conflicts:
+    - field: listed_capacity_per_hr
+      values: { wiki_crk_theoretical: 2200, fan_crk_operational: 1980, fan_tp_line_speed: 1500 }
+      chosen: wiki_crk_theoretical
+      note: "Vehicles every 3.27 s at 2 riders; carried capacity emerges from one party per vehicle (as Spaceship Earth)."
+
+conveyor:
+  speed_fps: 1.5                       # [assumed] as Spaceship Earth
+  continuous: true
+  topology: closed_loop
+
+# Scene order follows the ride [wiki]; times [assumed], scaled so load + scenes + unload = 240 s.
+route:
+  - { id: load_zone,        kind: load,   est_s: 15 }
+  - { id: ocean_descent,    kind: scene,  est_s: 30 }
+  - { id: jellyfish,        kind: scene,  est_s: 30 }
+  - { id: sharks,           kind: scene,  est_s: 30 }
+  - { id: turtles,          kind: scene,  est_s: 30 }
+  - { id: dory_whale,       kind: scene,  est_s: 30 }
+  - { id: main_tank_finale, kind: scene,  est_s: 50 }   # Nemo projected into the real aquarium [wiki]
+  - { id: unload_zone,      kind: unload, est_s: 25 }
+  - { id: return_run,       kind: return, est_s: 60 }   # [assumed] unload back to load; not part of the 240 s ride
+
+vehicles:
+  count: 92                            # [derived] 300 s loop / 3.27 s spacing
+  seats_nominal: 2                     # [fan tp] standard 2
+  seats_max: 3                         # [wiki] 2-3 (a small child)
+  spacing_s: 3.27                      # [derived] 3600 x 2 / 2,200 theoretical
+  occupancy_target: { mean: 2.2, sd: 0.5 }   # [derived] one party per vehicle with the park's party mix; posted-wait fallback only
+
+load_zone:
+  type: moving_walkway_synced          # [assumed] as the other omnimovers
+  load_window_s: { mean: 15, sd: 3 }   # [assumed]
+  loaders: 3                           # [assumed]
+  board_fail_rate: 0.02                # [assumed] as Haunted Mansion
+
+unload_zone:
+  type: moving_walkway_synced          # [assumed]
+  unload_window_s: { mean: 25, sd: 4 } # [assumed]
+  unloaders: 2                         # [assumed]
+
+loading_shared:
+  accessibility_freeze_zones: [load_zone, unload_zone]   # [assumed] as Haunted Mansion
+  # Full-stop holds stand for wheelchair stops and slowdowns, as Spaceship Earth ([user] there: slowdowns for some guests, full stops
+  # for wheelchairs; slowdowns are not modeled).
+  accessibility_hold:
+    rate_per_hr: 8                     # [assumed] as Haunted Mansion
+    duration_s: { mean: 75, sd: 25 }   # [assumed]
+  party_vehicle_policy: contiguous_vehicles   # one party per vehicle; parties of 4+ take consecutive vehicles
+
+failures:
+  chain_stop:
+    rate_per_hr: 0.3                   # [assumed] as Haunted Mansion
+    duration_s: { mean: 240, sd: 120 }
+  long_downtime:
+    mtbf_hr: 30                        # [assumed]
+    mttr_min: { mean: 45, sd: 20 }
+  weather_hold: none                   # indoor
+
+queues:
+  party_split_policy: contiguous_vehicles
+  standby: { physical_capacity: 1200 } # [assumed]
+  single_rider: { enabled: false }     # none
+  skip_line:
+    enabled: true                      # [fan tp] Lightning Lane Multi Pass, Tier 2
+    merge_point: station_queue_entrance   # [assumed]
+    merge:
+      unit: guests
+      empty_lane_rule: pull_other
+      phase_hysteresis_guests: 20      # [assumed]
+      phases:                          # [assumed] same fan-reported placeholders as the other rides
+        - { name: normal,   when_ll_queue_guests_below: 60,  ll_per_standby: 2 }
+        - { name: elevated, when_ll_queue_guests_below: 200, ll_per_standby: 4 }
+        - { name: recovery, when_ll_queue_guests_below: null, ll_per_standby: 10 }
+  posted_wait: { algorithm: queue_len_over_throughput, padding_pct: 0 }
+
+validation_targets:
+  listed_capacity_per_hr: 2200
+  theoretical_riders_per_hr_at_target: 2200    # 3600 / 3.27 s x 2 riders
+  hard_ceiling_per_hr: 3300                    # 3600 / 3.27 s x 3 seats
+  expect_no_stacking: true
+  expect_capacity_loss_from_accessibility_holds: true
+  avg_standby_wait_min_2026: 9                 # [fan] Queue-Times 2026 (park calibration target)
+
+config_invariants:
+  - "sum(route.est_s for kinds load, scene, unload) == ride.ride_duration_s (+/- 5 s); route.est_s of kind return is extra loop time"
+  - "vehicles.count * vehicles.spacing_s ~= sum(route.est_s) (+/- 15%)"
+  - "ride.listed_capacity_per_hr <= 3600 / vehicles.spacing_s * vehicles.seats_max"
+  - "party sizes > seats_max must map to contiguous vehicles (party_vehicle_policy)"
