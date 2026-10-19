@@ -86,3 +86,29 @@ Not fitted: Canada Far and Wide (14 / 14) and the Short Film Festival (10 / 10).
   - Test Track 3.0 vehicle count and dispatch interval;
   - Anna & Elsa rooms in use;
   - Luminous viewing spots.
+
+## M18 follow-up: Guardians of the Galaxy: Cosmic Rewind (2026-10-19)
+- **Model** (Jason's choices): `data/rides/wdw-epcot-guardians-cosmic-rewind.yaml`, a multi_train_coaster on a new **dual-load
+  station**. The unload block's `alt_next` names a second load platform that rejoins at the same block. Trains take the first
+  free platform, both share the launch interval, and `side_down` closes the second platform (own stream; off in the days).
+  Existing rides' logs are byte-identical.
+- **Sourced:**
+  - 8 trains of 5 cars x 2 rows of 2 = 20 [wiki]. Jason's ride photo confirms 2 x 2 per vehicle [user].
+  - 3:20 ride [wiki]; two platforms with a separate unload [rcdb][fan].
+  - Preshow chain: holding room -> Welcome Center (~2.5 min) -> Phase Chamber (~3 min), batches of up to 140 [fan]; Single Pass
+    merges at the first room [fan].
+- **Built to 1,800/hr** (90% of the 2,000 design): 80 s per platform (64 + 12 + 4 `[assumed]`), so one launch every 40 s. Eight
+  `[assumed]` blocks, each under 40 s with its brake release. Fixed times give 1,800/hr; 7 trains are lap-bound at 1,600.
+- **Seating:** parties share the 2-seat rows (`seats_per_row: 1`), because trains leave full "most of the time" [fan BlogMickey].
+  With whole rows per party they averaged 17.8 of 20 seats.
+- **In the park:** ~1,555/hr, because of stops (~6% of the day) and timing variance.
+- **Re-fit (approved):** appeal 1.49 -> 1.38.
+
+Medium day, 10 seeds:
+
+| Attraction | Queue-Times 2026 | Sim |
+|---|---|---|
+| Guardians | 69 / 89 | 70.5 / 104.5 |
+
+The busiest hour runs ~15 min high, the same pattern as Slinky. Every other attraction is within 0.5 min of the table above.
+- **Open `[user]`:** load dwell per platform, how often the second platform is out, and whether cast seat strangers side by side.

@@ -43,9 +43,9 @@ trains:
   max_in_service: 8
   default_in_service: 8                # lap 200 + 35 unload + 80 platform = 315 s needs 7.9 trains at 40 s [derived]
   cars_per_train: 5                    # [wiki]
-  seats_per_train: 20                  # [wiki] 2 rows of 2 per car
+  seats_per_train: 20                  # [wiki] 2 rows of 2 per car; [user] Jason's ride photo: each vehicle is 2 rows x 2 seats = 4 (2026-10-19)
   seats_per_row: 1                     # rows are 2 seats [wiki], but cast fill trains to 100% "most of the time" [fan bm], so parties share rows (as Rise)
-  layout: "5 cars x 2 rows of 2 (rotating)"
+  layout: "5 cars x 2 rows of 2 (rotating)"   # [wiki][user]
   restraints: lap_bar                  # [fan] individual lap bars
 
 # No block list or timings were found. The 200 s ride is split into eight [assumed] stopping points, none longer than the 40 s

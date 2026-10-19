@@ -45,8 +45,8 @@ nodes:
   - { id: shops_world_celebration, kind: shop, x: 1680, y: 683, visit_min: { mean: 12, sd: 6 }, appeal: 0.30, thrill: 0.10 }
       # visit and appeal [assumed]. Position [osm] w782273946 w782273949 w295182226 · World Celebration shops · world_celebration · map 9, 10, 12
   # ride_simple
-  - { id: guardians, kind: ride, x: 2176, y: 698, ride_id: wdw.epcot.guardians_cosmic_rewind, lightning_lane: single_pass, appeal: 1.49, thrill: 0.90 }
-      # full ride model (ride file 2026-10-19, M18; was ride_simple 1,800/hr, 420 s, queue 2,400); tier [fan TouringPlans 2026-06-29]; appeal [assumed] (fitted 1.20 -> 1.49, tuning-log 2026-10-19), thrill [assumed]. Position [osm] w719079634 · Guardians of the Galaxy: Cosmic Rewind · world_discovery · map 13
+  - { id: guardians, kind: ride, x: 2176, y: 698, ride_id: wdw.epcot.guardians_cosmic_rewind, lightning_lane: single_pass, appeal: 1.38, thrill: 0.90 }
+      # full ride model (ride file 2026-10-19, M18; was ride_simple 1,800/hr, 420 s, queue 2,400); tier [fan TouringPlans 2026-06-29]; appeal [assumed] (fitted 1.20 -> 1.49; 1.49 -> 1.38 with the full model, tuning-log 2026-10-19), thrill [assumed]. Position [osm] w719079634 · Guardians of the Galaxy: Cosmic Rewind · world_discovery · map 13
   - { id: mission_space, kind: ride_simple, x: 2330, y: 905, capacity_per_hr: 1440, duration_s: 330, queue_capacity: 1200, lightning_lane: tier2, appeal: 0.62, thrill: 0.85 }
       # 1,440/hr [fan crooksinwdw operational, 2019]; 4 centrifuges x 10 capsules x 4 [fan]; Orange and Green as one ride; ~5.5 min [assumed]; tier [fan TouringPlans 2026-06-29]; appeal [assumed] (fitted 0.60 -> 0.62, tuning-log 2026-10-19), thrill [assumed]. Position [osm] w295316766 · Mission: SPACE · world_discovery · map 14
   - { id: test_track, kind: ride_simple, x: 2213, y: 1229, capacity_per_hr: 1080, duration_s: 300, queue_capacity: 1800, lightning_lane: tier1, appeal: 0.94, thrill: 0.75 }

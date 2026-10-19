@@ -270,3 +270,5 @@ numbers come from `data/`. Read both before changing simulation logic.
   merges before the preshow [fan].
 - Dual-load station (Jason): new coaster feature, trains alternate between two load platforms; `side_down` can take one out
   (seen Sept 2025 [fan]), off until there is a rate.
+- Guardians seats [user] (Jason's ride photo): each vehicle is 2 rows x 2 seats; parties share rows in the model (trains leave
+  full [fan]). In the park it carries ~1,555/hr; appeal re-fit 1.49 -> 1.38 (approved): 70.5 / 104.5 min vs 69 / 89.
