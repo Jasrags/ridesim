@@ -40,13 +40,14 @@ func TestCardFromEvents(t *testing.T) {
 		{T: mins(150), Src: "diner", Type: engine.EvBoard, Guest: 1<<8 | 3, N: 2},
 		{T: mins(160), Src: ps, Type: park.EvVisitEnd, Guest: 1, Block: "diner", Info: "rode"},
 		{T: mins(170), Src: ps, Type: park.EvLLLapse, Guest: 1, Block: "coaster"},
+		{T: mins(171), Src: ps, Type: park.EvLLRedeem, Guest: 1, Block: "coaster"},
 		{T: mins(175), Src: "diner", Type: engine.EvBalk, Guest: 1<<8 | 4, N: 2}, // dining balks cost nothing
 		{T: mins(10), Src: "meet", Type: engine.EvBalk, Guest: 2<<8 | 1, N: 1},
 		{T: mins(20), Src: "simple", Type: engine.EvQueueJoin, Guest: 2<<8 | 2, N: 1},
 		{T: mins(45), Src: "simple", Type: engine.EvRenege, Guest: 2<<8 | 2, N: 1},
 	}
 	c := Compute(evs, weights)
-	want := Card{Guests: 3, Experiences: 4, Balks: 1, Reneges: 1, LLLapsed: 1,
+	want := Card{Guests: 3, Experiences: 4, Balks: 1, Reneges: 1, LLLapsed: 1, LLRedeemed: 1,
 		WaitMin: 2*30 + 25, WaitOverMin: 2*10 + 5, WalkMin: 20, JamMin: 10,
 		Experience: 2*10 + 2*6, WaitPenalty: 0.5 * 25, BalkPenalty: 2, RenegePenalty: 5, WalkPenalty: 2, JamPenalty: 10, LapsePenalty: 6}
 	if c != want {

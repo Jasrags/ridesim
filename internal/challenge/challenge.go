@@ -108,6 +108,8 @@ func (c *Challenge) Evaluate(card score.Card, pr *metrics.ParkReport) []GoalResu
 			r.Value = float64(card.Reneges)
 		case config.MetricLLLapsed:
 			r.Value = float64(card.LLLapsed)
+		case config.MetricLLRedeemed:
+			r.Value = float64(card.LLRedeemed)
 		case config.MetricPostedAvgMin, config.MetricPostedPeakMin:
 			n := (*metrics.NodeReport)(nil)
 			if pr != nil {

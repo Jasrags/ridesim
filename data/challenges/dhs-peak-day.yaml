@@ -1,0 +1,15 @@
+# M15 challenge. Goals were set from runs on 2026-10-19: the no-lever day scores 33.56 with 65,257 balks and 11,690 passes
+# used; a known play meets all three (LL inventory 0.1 on Slinky, Star Tours, Toy Story Mania and Tower of Terror at
+# opening: 33.68, 63,675 balks, 11,314 used).
+schema_version: "1.0"
+challenge:
+  id: dhs_peak_day
+  title: "Peak day"
+  description: "A high-crowd day at Hollywood Studios. Turn fewer guests away and lift the day while still serving Lightning Lane guests."
+  scenario: dhs_high_day
+  scoring: guest_experience
+  levers: [ll_inventory, ll_merge, single_rider_open, single_rider_close, add_train, remove_train]
+  goals:
+    - { metric: score, at_least: 33.65 }
+    - { metric: balks, at_most: 64000 }
+    - { metric: ll_redeemed, at_least: 11000 }

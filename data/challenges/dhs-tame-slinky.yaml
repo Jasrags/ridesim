@@ -1,0 +1,15 @@
+# M15 challenge. Goals were set from runs on 2026-10-19: the no-lever day misses the Slinky goals (62.9 / 91.4 min),
+# and a known play meets all four (Slinky LL inventory 0.1 and merge 1:1 at opening: 48.52, 54.6 / 70.5 min, 8,345 used).
+schema_version: "1.0"
+challenge:
+  id: dhs_tame_slinky
+  title: "Tame Slinky"
+  description: "A medium day at Hollywood Studios. Bring Slinky Dog Dash's standby wait down without hurting the day or shutting out Lightning Lane guests."
+  scenario: dhs_medium_day
+  scoring: guest_experience
+  levers: [ll_inventory, ll_merge, single_rider_open, single_rider_close, add_train, remove_train]
+  goals:
+    - { metric: posted_avg_min, node: slinky_dog_dash, at_most: 55 }
+    - { metric: posted_peak_min, node: slinky_dog_dash, at_most: 72 }
+    - { metric: score, at_least: 48.5 }       # the no-lever day scores 48.43
+    - { metric: ll_redeemed, at_least: 8300 } # the no-lever day uses 8,494 passes

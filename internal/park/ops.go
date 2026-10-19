@@ -98,6 +98,9 @@ func (p *Park) applyLL(op config.OpsEvent) error {
 		return fmt.Errorf("ops %s: %s sells no Lightning Lane", op.Action, op.Node)
 	}
 	if op.Action == config.OpLLInventory {
+		if r.tier == config.LLSinglePass {
+			return fmt.Errorf("ops ll_inventory: %s is Single Pass, sold only before the day", op.Node)
+		}
 		p.logOp(op)
 		p.ll.setShare(r, *op.Value, p.sim.Now())
 		return nil

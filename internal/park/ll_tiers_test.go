@@ -161,3 +161,28 @@ func TestSimpleRideMergeRatio(t *testing.T) {
 		}
 	}
 }
+
+// In a tiered park the LL levers reach simple rides too; Single Pass inventory is sold before the day, so
+// ll_inventory refuses it while ll_merge still applies.
+func TestLLLeversInTieredPark(t *testing.T) {
+	ds, pf := tieredPark(t)
+	sim := engine.New(1)
+	p, err := New(sim, ds, pf, Options{Attendance: 100})
+	if err != nil {
+		t.Fatal(err)
+	}
+	p.Start()
+	one := 1.0
+	if err := p.Apply(config.OpsEvent{Action: config.OpLLInventory, Node: "filler", Value: &one}); err == nil {
+		t.Error("ll_inventory on a Single Pass ride accepted")
+	}
+	if err := p.Apply(config.OpsEvent{Action: config.OpLLMerge, Node: "filler", Value: &one}); err != nil {
+		t.Errorf("ll_merge on the Single Pass simple ride: %v", err)
+	}
+	if s := p.acts[p.g.Node("filler").Idx].(*simpleRide); s.llPer != 1 {
+		t.Errorf("simple ride merge ratio %d, want 1", s.llPer)
+	}
+	if err := p.Apply(config.OpsEvent{Action: config.OpLLInventory, Node: "coaster", Value: &one}); err != nil {
+		t.Errorf("ll_inventory on a tier 1 ride: %v", err)
+	}
+}

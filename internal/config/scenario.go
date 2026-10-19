@@ -597,6 +597,9 @@ func checkParkOps(ds *Dataset, park *ParkFile, ops []OpsEvent) string {
 			if !SellsLightningLane(park, n, rf) {
 				return fmt.Sprintf("ops %s at %s: %s sells no Lightning Lane", o.Action, o.At, o.Node)
 			}
+			if o.Action == OpLLInventory && n.LightningLane == LLSinglePass {
+				return fmt.Sprintf("ops ll_inventory at %s: %s is Single Pass, sold only before the day", o.At, o.Node)
+			}
 		}
 	}
 	return ""

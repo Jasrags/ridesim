@@ -231,3 +231,7 @@ numbers come from `data/`. Read both before changing simulation logic.
 - M15 adds two Lightning Lane levers (Jason), because DHS has almost nothing else to pull: `ll_inventory` (share of a ride's
   capacity sold per window, for windows not yet started) and `ll_merge` (LL guests per standby guest; replaces the authored
   merge phases or the simple-ride 2/3 cap). Both trade off inside the score; no invented costs.
+- Finding (2026-10-19): the LL levers barely move the whole-day score (48.4 +- 0.1 per guest on the medium day); they shift who
+  rides, not how many. M15 challenges therefore set goals on ride waits the levers can move, with the score as a floor
+  (Jason). Capacity and crowd-steering levers come with the trade-off milestone. Balks and reneges score only at rides,
+  shows and meets (dining and shops earn nothing and have no levers).

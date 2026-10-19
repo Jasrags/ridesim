@@ -66,13 +66,14 @@ const (
 	MetricBalks         = "balks"                 // guests
 	MetricReneges       = "reneges"               // guests
 	MetricLLLapsed      = "ll_lapsed"             // passes
+	MetricLLRedeemed    = "ll_redeemed"           // passes used: the park still serves its paying guests
 	MetricPostedAvgMin  = "posted_avg_min"        // a node's mean posted wait (report window)
 	MetricPostedPeakMin = "posted_peak_min"       // a node's highest clock-hour posted wait
 )
 
 var (
 	validMetrics = map[string]bool{MetricScore: true, MetricExperiences: true, MetricBalks: true, MetricReneges: true,
-		MetricLLLapsed: true, MetricPostedAvgMin: true, MetricPostedPeakMin: true}
+		MetricLLLapsed: true, MetricLLRedeemed: true, MetricPostedAvgMin: true, MetricPostedPeakMin: true}
 	// Levers a challenge may allow. crowd_scale is never one: it would change the day being scored.
 	challengeLevers = map[string]bool{OpAddTrain: true, OpRemoveTrain: true, OpSingleRiderOpen: true, OpSingleRiderClose: true,
 		OpCloseRide: true, OpLLInventory: true, OpLLMerge: true}

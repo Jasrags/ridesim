@@ -20,6 +20,7 @@ type Card struct {
 	Balks       int // guests who turned away on arrival at a ride, show or meet
 	Reneges     int // guests who left a ride, show or meet line
 	LLLapsed    int // passes that lapsed unused
+	LLRedeemed  int // passes used
 
 	WaitMin     float64 // guest-minutes waited at rides and meets
 	WaitOverMin float64 // guest-minutes past the comfort threshold
@@ -185,6 +186,8 @@ func (s *Scorer) parkEvent(e engine.Event) {
 		walk := e.D.Seconds() / 60
 		s.card.WalkMin += walk * n
 		s.card.WalkPenalty += s.w.WalkPenaltyPerMin * walk * n
+	case park.EvLLRedeem:
+		s.card.LLRedeemed++
 	case park.EvLLLapse:
 		n := s.size[e.Guest]
 		s.card.LLLapsed++
@@ -224,6 +227,6 @@ func (c Card) String() string {
 	fmt.Fprintf(&b, "  - reneges       %8.2f   %d guests\n", c.per(c.RenegePenalty), c.Reneges)
 	fmt.Fprintf(&b, "  - walking       %8.2f   %.0f min per guest\n", c.per(c.WalkPenalty), c.per(c.WalkMin))
 	fmt.Fprintf(&b, "  - jams          %8.2f   %.1f min per guest\n", c.per(c.JamPenalty), c.per(c.JamMin))
-	fmt.Fprintf(&b, "  - lapsed LL     %8.2f   %d passes\n", c.per(c.LapsePenalty), c.LLLapsed)
+	fmt.Fprintf(&b, "  - lapsed LL     %8.2f   %d passes (%d used)\n", c.per(c.LapsePenalty), c.LLLapsed, c.LLRedeemed)
 	return b.String()
 }
