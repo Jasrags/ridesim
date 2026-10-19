@@ -6,7 +6,9 @@ numbers come from `data/`. Read both before changing simulation logic.
 ## Stack
 - Go 1.22+, module `github.com/jasrags/ridesim`. Standard library plus `gopkg.in/yaml.v3` only;
   any other dependency needs a written justification and Jason's approval.
-- Layout follows spec §3: `cmd/ridesim`, `internal/{engine,config,ride,queue,guest,park,metrics}`.
+- Layout: `cmd/ridesim`, `internal/{engine,config,ride,queue,guest,park,metrics}` (spec §3), plus
+  `internal/{scenario,study,live,web,osm}` and ride archetypes under `internal/ride/`. Map:
+  `docs/CODEMAPS/architecture.md`.
 
 ## Determinism (hard requirement)
 - Simulated time is `engine.Time` / `engine.Duration`: int64 milliseconds. Never use `time.Now`,
@@ -30,8 +32,8 @@ numbers come from `data/`. Read both before changing simulation logic.
   with severity `error` (blocks loading) or `warn` (reported, loading continues).
 
 ## Workflow
-- Tests first for validation targets and invariants (each error-level check has a broken fixture
-  under `internal/config/testdata/`).
+- Tests first for validation targets and invariants (each error-level check has a test that patches a
+  valid fixture from `internal/config/testdata/` to break it).
 - Keep `go test ./...` green before moving to the next step. Small commits, conventional messages
   (`feat:`, `fix:`, `test:`, `docs:`, `chore:`, `refactor:`).
 - Real design choices go to Jason as a multiple-choice question; details are decided and noted.
