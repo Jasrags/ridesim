@@ -7,7 +7,7 @@ drop-tower cabs, simulator bays, preshows, standby / single-rider / Lightning La
 and guests choosing what to ride next as they walk the park. The same seed always produces a
 byte-identical event log, and every metric is computed from that log.
 
-Modeled today: Disney's Hollywood Studios (every headliner has a full ride model), Expedition Everest,
+Modeled today: Disney's Hollywood Studios (every ride has a full model), EPCOT (whole park on simple rides, calibrated), Expedition Everest,
 Haunted Mansion, and a synthetic test park.
 
 ## Run it
