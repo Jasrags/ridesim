@@ -29,16 +29,19 @@ type NodeJSON struct {
 }
 
 type RideJSON struct {
-	Node        string  `json:"node"`
-	Label       string  `json:"label"`
-	Kind        string  `json:"kind"`
-	Status      string  `json:"status"`
-	PostedMin   float64 `json:"posted_min"`
-	Waiting     int     `json:"waiting"`
-	Trains      int     `json:"trains,omitempty"`
-	SingleRider *bool   `json:"single_rider,omitempty"`
-	LL          bool    `json:"lightning_lane"`
-	History     []Point `json:"history"`
+	Node        string   `json:"node"`
+	Label       string   `json:"label"`
+	Kind        string   `json:"kind"`
+	Status      string   `json:"status"`
+	PostedMin   float64  `json:"posted_min"`
+	Waiting     int      `json:"waiting"`
+	Trains      int      `json:"trains,omitempty"`
+	SingleRider *bool    `json:"single_rider,omitempty"`
+	LL          bool     `json:"lightning_lane"`
+	LLLevers    bool     `json:"ll_levers,omitempty"`
+	LLShare     *float64 `json:"ll_share,omitempty"` // inventory share for windows not yet started (M15)
+	LLMerge     *int     `json:"ll_merge,omitempty"` // LL guests per standby guest set by ll_merge; absent = authored merge
+	History     []Point  `json:"history"`
 }
 
 type EdgeJSON struct {
@@ -68,7 +71,7 @@ func (s *Session) Snapshot() Snapshot {
 	for _, r := range v.Rides {
 		out.Rides = append(out.Rides, RideJSON{Node: r.Node, Label: r.Label, Kind: r.Kind, Status: r.Status,
 			PostedMin: r.Posted.Seconds() / 60, Waiting: r.Waiting, Trains: r.Trains, SingleRider: r.SingleRider,
-			LL: r.LightningLane, History: append([]Point{}, s.feed.posted[r.Node]...)})
+			LL: r.LightningLane, LLLevers: r.LLLevers, LLShare: r.LLShare, LLMerge: r.LLMerge, History: append([]Point{}, s.feed.posted[r.Node]...)})
 	}
 	for _, e := range v.Edges {
 		out.Edges = append(out.Edges, EdgeJSON{e.ID, e.From, e.To, e.Guests, e.Comfortable, e.Spill})

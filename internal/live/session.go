@@ -12,6 +12,7 @@ import (
 	"github.com/jasrags/ridesim/internal/engine"
 	"github.com/jasrags/ridesim/internal/park"
 	"github.com/jasrags/ridesim/internal/scenario"
+	"github.com/jasrags/ridesim/internal/score"
 )
 
 // Session is one played park day.
@@ -26,6 +27,11 @@ type Session struct {
 	done bool     // run_end logged
 
 	feed *feed
+
+	// A running guest-experience score (challenge play, M15); nil scoring = none.
+	scoring *config.Scoring
+	scorer  *score.Scorer
+	scored  int // log events read by scorer
 }
 
 type played struct {
@@ -60,6 +66,7 @@ func (s *Session) rebuild(ops []played, t engine.Time) error {
 		return err
 	}
 	s.park, s.ops, s.next, s.done, s.feed = p, ops, 0, false, newFeed()
+	s.resetScore()
 	return s.runTo(t)
 }
 
@@ -82,9 +89,49 @@ func (s *Session) runTo(t engine.Time) error {
 		s.sim.Emit(engine.Event{Type: engine.EvRunEnd, N: s.park.InPark()})
 		s.done = true
 	}
-	s.feed.scan(s.sim.Log.Events())
+	s.scan()
 	return nil
 }
+
+// scan reads new log events into the feed and the running score.
+func (s *Session) scan() {
+	evs := s.sim.Log.Events()
+	s.feed.scan(evs)
+	if s.scorer == nil {
+		return
+	}
+	for ; s.scored < len(evs); s.scored++ {
+		s.scorer.Add(evs[s.scored])
+	}
+}
+
+// EnableScore keeps a running score with weights w from now on (it reads the log from opening).
+func (s *Session) EnableScore(w config.Scoring) {
+	s.scoring = &w
+	s.resetScore()
+	s.scan()
+}
+
+func (s *Session) resetScore() {
+	if s.scoring == nil {
+		return
+	}
+	s.scorer, s.scored = score.New(*s.scoring), 0
+}
+
+// Card is the running score; false when scoring is not enabled.
+func (s *Session) Card() (score.Card, bool) {
+	if s.scorer == nil {
+		return score.Card{}, false
+	}
+	return s.scorer.Card(), true
+}
+
+// Seed is the session's seed.
+func (s *Session) Seed() uint64 { return s.run.Seed }
+
+// Warmup is the scenario's warm-up, which posted-wait stats skip.
+func (s *Session) Warmup() engine.Duration { return s.run.Warmup }
 
 // Now is the current sim time (offset from opening); End is the end of the day.
 func (s *Session) Now() engine.Time { return s.sim.Now() }
@@ -128,7 +175,7 @@ func (s *Session) Apply(op config.OpsEvent) (engine.Time, error) {
 	i := sort.Search(len(s.ops), func(i int) bool { return s.ops[i].At > engine.Duration(at) })
 	s.ops = append(s.ops[:i], append([]played{{ParkOp: scenario.ParkOp{At: engine.Duration(at), Op: op}, live: true}}, s.ops[i:]...)...)
 	s.next = i + 1
-	s.feed.scan(s.sim.Log.Events())
+	s.scan()
 	return at, nil
 }
 

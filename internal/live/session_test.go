@@ -7,6 +7,7 @@ import (
 	"github.com/jasrags/ridesim/internal/config"
 	"github.com/jasrags/ridesim/internal/engine"
 	"github.com/jasrags/ridesim/internal/scenario"
+	"github.com/jasrags/ridesim/internal/score"
 )
 
 func fixture(t *testing.T) (*config.Dataset, *config.ScenarioFile) {
@@ -157,5 +158,33 @@ func TestApplyRejectsBadLeverWithoutRecording(t *testing.T) {
 	}
 	if len(s.ops) != n {
 		t.Fatal("bad lever was recorded")
+	}
+}
+
+// The running score matches scoring the whole log, across levers and a jump back.
+func TestRunningScoreMatchesTheLog(t *testing.T) {
+	ds, sf := fixture(t)
+	s, err := New(ds, sf)
+	if err != nil {
+		t.Fatal(err)
+	}
+	w := config.Scoring{Experience: config.ExperiencePoints{Ride: 10, Show: 5, Meet: 5}, WaitComfortMin: 5, WaitPenaltyPerMin: 0.2,
+		BalkPenalty: 1, RenegePenalty: 2, WalkPenaltyPerMin: 0.1, JamPenaltyPerMin: 0.3, LLLapsePenalty: 2}
+	if _, ok := s.Card(); ok {
+		t.Fatal("card before scoring is enabled")
+	}
+	_ = s.Advance(90 * engine.Minute)
+	s.EnableScore(w)
+	if _, err := s.Apply(config.OpsEvent{Action: config.OpLLMerge, Node: "coaster", Value: v(1)}); err != nil {
+		t.Fatal(err)
+	}
+	_ = s.Advance(2 * engine.Hour)
+	if err := s.JumpTo(engine.Time(engine.Hour)); err != nil {
+		t.Fatal(err)
+	}
+	_ = s.Advance(s.End().Sub(s.Now()))
+	got, _ := s.Card()
+	if want := score.Compute(s.Log().Events(), w); got != want || got.Guests == 0 {
+		t.Fatalf("running card %+v\n log card %+v", got, want)
 	}
 }

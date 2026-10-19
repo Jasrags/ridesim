@@ -155,7 +155,11 @@ func writeOutcome(w io.Writer, c *challenge.Challenge, out *challenge.Outcome, w
 		if g.Met {
 			mark = "MET "
 		}
-		fmt.Fprintf(&b, "  %s  %-40s %8.2f\n", mark, g.Label(), g.Value)
+		v := fmt.Sprintf("%.2f", g.Value)
+		if g.Value == float64(int64(g.Value)) {
+			v = fmt.Sprintf("%.0f", g.Value)
+		}
+		fmt.Fprintf(&b, "  %s  %-40s %8s\n", mark, g.Label(), v)
 	}
 	b.WriteString("\n")
 	_, err := io.WriteString(w, b.String())

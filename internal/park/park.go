@@ -46,6 +46,7 @@ type Park struct {
 	board     []engine.Duration // posted waits guests see, by node index
 	closed    []bool            // rides the board shows closed (long downtime), by node index
 	ll        *lightningLane
+	llMerge   map[int]int // ll_merge ratios set on modeled rides, by node index (for the view only)
 	entrance  int
 	exit      int
 	elsewhere int // node index, -1 if none
@@ -70,7 +71,7 @@ func New(root *engine.Sim, ds *config.Dataset, cfg *config.ParkFile, opts Option
 	if err != nil {
 		return nil, err
 	}
-	p := &Park{root: root, sim: root.Scope(Scope), cfg: cfg, opts: opts, g: g, tt: NewTravelTime(cfg),
+	p := &Park{root: root, sim: root.Scope(Scope), cfg: cfg, opts: opts, g: g, tt: NewTravelTime(cfg), llMerge: map[int]int{},
 		acts: make([]activity, len(g.Nodes)), board: make([]engine.Duration, len(g.Nodes)), closed: make([]bool, len(g.Nodes)), elsewhere: -1,
 		closeAt: engine.Time(engine.Seconds(float64(cfg.Park.CloseHour-cfg.Park.OpenHour) * 3600)), states: map[string]int{}, crowd: 1}
 	openS := float64(cfg.Park.OpenHour * 3600)

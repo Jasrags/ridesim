@@ -32,6 +32,7 @@ type llRide struct {
 	tier     string // "" in an untiered park
 	appeal   float64
 	capacity float64 // guests/hr the inventory share applies to
+	share    float64 // inventory share for windows not yet started
 	per      int     // guests sellable per window at the current share
 	inv      []int   // guests still sellable per window
 }
@@ -66,7 +67,7 @@ func newLightningLane(p *Park, cfg *config.ParkLightningLane) (*lightningLane, e
 			continue
 		}
 		per := int(math.Round(cfg.InventoryShare * capacity * ll.window.Seconds() / 3600))
-		r := &llRide{node: n.Idx, tier: n.LightningLane, appeal: n.Appeal, capacity: capacity, per: per, inv: make([]int, windows)}
+		r := &llRide{node: n.Idx, tier: n.LightningLane, appeal: n.Appeal, capacity: capacity, share: cfg.InventoryShare, per: per, inv: make([]int, windows)}
 		for i := range r.inv {
 			r.inv[i] = per
 		}
@@ -93,7 +94,7 @@ func (ll *lightningLane) setShare(r *llRide, share float64, now engine.Time) {
 		sold := r.per - r.inv[w]
 		r.inv[w] = max(0, per-sold)
 	}
-	r.per = per
+	r.per, r.share = per, share
 }
 
 // advance runs the before-the-day bookings in a random party order.

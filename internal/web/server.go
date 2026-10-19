@@ -14,6 +14,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/jasrags/ridesim/internal/challenge"
 	"github.com/jasrags/ridesim/internal/config"
 	"github.com/jasrags/ridesim/internal/engine"
 	"github.com/jasrags/ridesim/internal/live"
@@ -32,7 +33,8 @@ type Server struct {
 	mu    sync.Mutex
 	sess  *live.Session
 	speed float64
-	id    string // export id
+	id    string          // export id
+	ch    *challengeState // nil outside challenge play
 
 	subMu sync.Mutex
 	subs  map[chan []byte]struct{}
@@ -41,6 +43,16 @@ type Server struct {
 // New wraps a session; exportID names the exported scenario.
 func New(sess *live.Session, exportID string) *Server {
 	return &Server{sess: sess, speed: 10, id: exportID, subs: map[chan []byte]struct{}{}}
+}
+
+// NewChallenge serves a challenge's day: only its levers are accepted and the page shows the running score
+// and goals. file is the challenge file's path, quoted in the leaderboard command. The session must be the
+// challenge's day.
+func NewChallenge(sess *live.Session, c *challenge.Challenge, file string) *Server {
+	s := New(sess, c.ID+"_played")
+	sess.EnableScore(c.Scoring)
+	s.ch = &challengeState{c: c, file: file}
+	return s
 }
 
 // Handler routes the page and the API.
@@ -98,12 +110,13 @@ func (s *Server) Run(interval time.Duration, stop <-chan struct{}) error {
 
 type stateJSON struct {
 	live.Snapshot
-	Speed  float64   `json:"speed"`
-	Speeds []float64 `json:"speeds"`
+	Speed     float64        `json:"speed"`
+	Speeds    []float64      `json:"speeds"`
+	Challenge *challengeJSON `json:"challenge,omitempty"`
 }
 
 func (s *Server) snapshotLocked() []byte {
-	b, err := json.Marshal(stateJSON{Snapshot: s.sess.Snapshot(), Speed: s.speed, Speeds: Speeds})
+	b, err := json.Marshal(stateJSON{Snapshot: s.sess.Snapshot(), Speed: s.speed, Speeds: Speeds, Challenge: s.challengeLocked()})
 	if err != nil {
 		return []byte(`{}`)
 	}
@@ -233,6 +246,10 @@ func (s *Server) handleLever(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	op = config.OpsEvent{Action: req.Action, Node: req.Node, Minutes: req.Minutes, Value: req.Value}
+	if s.ch != nil && !s.ch.c.Allows(op.Action) {
+		fail(w, http.StatusForbidden, fmt.Errorf("%s is not allowed in the %q challenge", op.Action, s.ch.c.Title))
+		return
+	}
 	s.mu.Lock()
 	_, err := s.sess.Apply(op)
 	msg := s.snapshotLocked()
@@ -270,6 +287,10 @@ func (s *Server) handleJump(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleExport(w http.ResponseWriter, r *http.Request) {
 	s.mu.Lock()
 	b := s.sess.Export(s.id)
+	if s.ch != nil {
+		b = append([]byte(fmt.Sprintf("# Challenge %s (%s), seed %d. Enter it on the leaderboard with:\n#   ridesim challenge -file %s -session %s.yaml -name YOUR_NAME\n",
+			s.ch.c.ID, s.ch.c.Title, s.sess.Seed(), s.ch.file, s.id)), b...)
+	}
 	s.mu.Unlock()
 	w.Header().Set("Content-Type", "application/yaml")
 	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%q", s.id+".yaml"))

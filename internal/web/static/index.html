@@ -71,10 +71,33 @@ main { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); ga
 #ops .live { color: var(--ink); }
 .toast { position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); background: var(--bad); color: #fff; padding: 8px 14px; border-radius: 6px; font-size: .85rem; max-width: 90vw; }
 .status { font-size: .78rem; color: var(--muted); }
+
+/* Challenge strip (M15): brief and goals left, the running score right. */
+.challenge { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 10px 28px; max-width: 1400px; margin: 0 auto; padding: 14px 18px; border-bottom: 1px solid var(--line); background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 9%, var(--panel)), var(--panel) 70%); }
+.challenge[hidden] { display: none; }
+.challenge h2 { margin: 0; font: 700 1.6rem/1.05 var(--f-display); }
+.challenge h2 small { font: 500 .72rem var(--f-mono); color: var(--accent); letter-spacing: .08em; text-transform: uppercase; margin-left: 8px; vertical-align: middle; }
+.challenge p { margin: 4px 0 10px; color: var(--muted); max-width: 70ch; }
+.goals { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; font: .8rem var(--f-mono); }
+.goals li { display: grid; grid-template-columns: 5.4em minmax(0, 1fr) auto; gap: 10px; align-items: center; }
+.goals .mark { font: 600 .64rem var(--f-mono); text-transform: uppercase; letter-spacing: .05em; padding: 2px 6px; border-radius: 999px; text-align: center; border: 1px solid currentColor; }
+.goals .met { color: var(--ok); } .goals .miss { color: var(--bad); } .goals .wait { color: var(--muted); }
+.scorebox { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 18px; align-content: start; }
+.scorebox .total { font: 700 3.4rem/0.9 var(--f-display); font-variant-numeric: tabular-nums; grid-row: span 2; }
+.scorebox .total small { display: block; font: 500 .7rem var(--f-mono); color: var(--muted); letter-spacing: .06em; text-transform: uppercase; margin-top: 6px; }
+.parts { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 2px 14px; font: .76rem var(--f-mono); color: var(--muted); }
+.parts b { color: var(--ink); font-weight: 600; }
+.parts .plus b { color: var(--ok); }
+.final { grid-column: 1 / -1; font: .78rem var(--f-mono); color: var(--muted); border-top: 1px dashed var(--line); padding-top: 8px; }
+.final b { color: var(--ink); }
+.final code { font: inherit; background: var(--bg); border: 1px solid var(--line); border-radius: 4px; padding: 1px 6px; user-select: all; overflow-wrap: anywhere; }
+.llset { display: inline-flex; align-items: center; gap: 4px; }
+.llset span { color: var(--muted); }
+.llset b { font-family: var(--f-mono); font-weight: 600; min-width: 4.5ch; text-align: center; }
 a.btn { font: 500 .8rem var(--f-mono); color: var(--ink); border: 1px solid var(--line); border-radius: 6px; padding: 5px 10px; text-decoration: none; background: var(--bg); }
 
 @media (max-width: 900px) {
-  main, .lower { grid-template-columns: 1fr; }
+  main, .lower, .challenge { grid-template-columns: 1fr; }
   .pane { border-right: 0; border-bottom: 1px solid var(--line); }
   .kpis { margin-left: 0; }
 }
@@ -98,6 +121,19 @@ a.btn { font: 500 .8rem var(--f-mono); color: var(--ink); border: 1px solid var(
   <span class="num" id="scrubv">09:00</span>
   <span>drag back to replay from an earlier time (levers after it are dropped)</span>
 </div>
+
+<section class="challenge" id="challenge" aria-labelledby="ch-title" hidden>
+  <div>
+    <h2 id="ch-title"></h2>
+    <p id="ch-brief"></p>
+    <ol class="goals" id="ch-goals" aria-label="Goals"></ol>
+  </div>
+  <div class="scorebox" aria-live="polite">
+    <div class="total num" id="ch-score">0<small>points per guest</small></div>
+    <div class="parts" id="ch-parts"></div>
+  </div>
+  <div class="final" id="ch-final" hidden></div>
+</section>
 
 <main>
   <section class="pane" aria-labelledby="map-h">
@@ -123,7 +159,7 @@ a.btn { font: 500 .8rem var(--f-mono); color: var(--ink); border: 1px solid var(
   </section>
   <section class="pane" aria-labelledby="park-h">
     <h3 id="park-h">Park levers</h3>
-    <div class="row"><label for="crowd">Crowd (share of the scenario's attendance, from now on)</label>
+    <div class="row" id="crowdrow"><label for="crowd">Crowd (share of the scenario's attendance, from now on)</label>
       <span><input type="range" id="crowd" min="0" max="200" step="10" value="100"> <b class="num" id="crowdset">100%</b></span></div>
     <div class="row"><span>Played session</span><a class="btn" id="export" href="/api/export" download>Export as scenario</a></div>
     <h3 style="margin-top:10px">Levers this session</h3>
@@ -170,6 +206,9 @@ a.btn { font: 500 .8rem var(--f-mono); color: var(--ink); border: 1px solid var(
     } catch (e) { toast("server unreachable: " + e.message); }
   }
   const lever = op => post("/api/lever", op);
+  // In a challenge only its levers are offered; free play offers every lever.
+  const allowed = action => !state || !state.challenge || state.challenge.levers.includes(action);
+  const LL_SHARE_STEP = 0.05, LL_MERGE_MAX = 10, LL_MERGE_FROM_AUTO = 2;
 
   function loadColor(ratio) { return ratio > 1 ? "var(--bad)" : ratio > 0.5 ? "var(--warn)" : "var(--ok)"; }
   function statusColor(s) { return s === "open" ? "var(--ok)" : s === "closed" ? "var(--closed)" : "var(--bad)"; }
@@ -286,7 +325,8 @@ a.btn { font: 500 .8rem var(--f-mono); color: var(--ink); border: 1px solid var(
       if (r.status !== "closed") big.appendChild(el("small", {}, "m"));
       card.appendChild(big);
       const lv = el("div", { class: "levers" });
-      if (r.trains) {
+      llControls(r, lv);
+      if (r.trains && allowed("add_train")) {
         const st = el("span", { class: "stepper" });
         const dn = el("button", { type: "button", "aria-label": "Remove a train from " + r.label }, "− train");
         const up = el("button", { type: "button", "aria-label": "Add a train to " + r.label }, "+ train");
@@ -294,12 +334,12 @@ a.btn { font: 500 .8rem var(--f-mono); color: var(--ink); border: 1px solid var(
         up.addEventListener("click", () => lever({ action: "add_train", node: r.node }));
         st.append(dn, up); lv.appendChild(st);
       }
-      if (r.single_rider !== undefined) {
+      if (r.single_rider !== undefined && allowed("single_rider_open")) {
         const b = el("button", { type: "button", "aria-pressed": String(r.single_rider) }, r.single_rider ? "Single rider: open" : "Single rider: closed");
         b.addEventListener("click", () => lever({ action: r.single_rider ? "single_rider_close" : "single_rider_open", node: r.node }));
         lv.appendChild(b);
       }
-      if (r.kind === "ride") {
+      if (r.kind === "ride" && allowed("close_ride")) {
         const b = el("button", { type: "button" }, "Close 30 min");
         b.disabled = r.status === "closed";
         b.addEventListener("click", () => lever({ action: "close_ride", node: r.node, minutes: 30 }));
@@ -311,6 +351,65 @@ a.btn { font: 500 .8rem var(--f-mono); color: var(--ink); border: 1px solid var(
       card.appendChild(sp);
       return card;
     }));
+  }
+
+  // llControls adds Lightning Lane steppers: the share of capacity sold for windows not yet started, and
+  // LL guests per standby guest at the merge ("auto" = the ride's authored merge).
+  function llControls(r, box) {
+    if (r.ll_share !== undefined && allowed("ll_inventory")) {
+      const pct = Math.round(r.ll_share * 100);
+      const set = v => lever({ action: "ll_inventory", node: r.node, value: Math.round(Math.min(1, Math.max(0, v)) * 100) / 100 });
+      box.appendChild(stepper("LL sold", pct + "%", "Sell less Lightning Lane on " + r.label, "Sell more Lightning Lane on " + r.label,
+        () => set(r.ll_share - LL_SHARE_STEP), () => set(r.ll_share + LL_SHARE_STEP), r.ll_share <= 0, r.ll_share >= 1));
+    }
+    if (r.ll_levers && allowed("ll_merge")) {
+      const cur = r.ll_merge;
+      const set = v => lever({ action: "ll_merge", node: r.node, value: Math.min(LL_MERGE_MAX, Math.max(0, v)) });
+      box.appendChild(stepper("merge", cur === undefined ? "auto" : cur + ":1", "Fewer LL guests per standby guest on " + r.label,
+        "More LL guests per standby guest on " + r.label, () => set(cur === undefined ? LL_MERGE_FROM_AUTO - 1 : cur - 1),
+        () => set(cur === undefined ? LL_MERGE_FROM_AUTO + 1 : cur + 1), cur === 0, cur === LL_MERGE_MAX));
+    }
+  }
+  function stepper(name, value, downLabel, upLabel, down, up, atMin, atMax) {
+    const st = el("span", { class: "llset" });
+    const dn = el("button", { type: "button", "aria-label": downLabel }, "−");
+    const upb = el("button", { type: "button", "aria-label": upLabel }, "+");
+    dn.disabled = atMin; upb.disabled = atMax;
+    dn.addEventListener("click", down); upb.addEventListener("click", up);
+    st.append(el("span", {}, name), dn, el("b", {}, value), upb);
+    return st;
+  }
+
+  const fmt = (v, d) => v.toLocaleString(undefined, { minimumFractionDigits: d, maximumFractionDigits: d });
+  function renderChallenge(s) {
+    const c = s.challenge, box = $("challenge");
+    box.hidden = !c;
+    $("crowdrow").hidden = !!c;
+    if (!c) return;
+    $("ch-title").replaceChildren(document.createTextNode(c.title), el("small", {}, c.daily ? "daily · seed " + c.seed : "challenge · seed " + c.seed));
+    $("ch-brief").textContent = c.description;
+    $("ch-goals").replaceChildren(...c.goals.map(g => {
+      const li = el("li");
+      const cls = g.pending ? "wait" : g.met ? "met" : "miss";
+      li.append(el("span", { class: "mark " + cls }, g.pending ? "at close" : g.met ? (s.done ? "met" : "on track") : (s.done ? "missed" : "behind")),
+        el("span", {}, g.label), el("span", { class: "num" }, g.pending ? "—" : fmt(g.value, Number.isInteger(g.value) ? 0 : 2)));
+      return li;
+    }));
+    const sc = c.score;
+    const total = $("ch-score");
+    total.replaceChildren(document.createTextNode(fmt(sc.score, 2)), el("small", {}, "points per guest"));
+    const part = (label, v, plus) => { const p = el("span", { class: plus ? "plus" : "" }, label + " "); p.appendChild(el("b", {}, (plus ? "+" : "−") + fmt(v, 2))); return p; };
+    $("ch-parts").replaceChildren(part("rides & shows", sc.experience, true), part("waits", sc.wait), part("balks", sc.balk),
+      part("reneges", sc.renege), part("walking", sc.walk), part("jams", sc.jam), part("lapsed LL", sc.lapse),
+      el("span", {}, `${sc.guests.toLocaleString()} guests · ${fmt(sc.experiences_per_guest, 2)} rides each`),
+      el("span", {}, `LL used ${sc.ll_redeemed.toLocaleString()} · lapsed ${sc.ll_lapsed.toLocaleString()}`));
+    const fin = $("ch-final");
+    fin.hidden = !s.done;
+    if (s.done) {
+      const met = c.goals.filter(g => g.met).length;
+      fin.replaceChildren(el("b", {}, `Day over: ${met} of ${c.goals.length} goals met, ${fmt(sc.score, 2)} points per guest. `),
+        document.createTextNode("Export the session, then enter it on the leaderboard: "), el("code", {}, c.verify));
+    }
   }
 
   function renderFeed(s) {
@@ -334,7 +433,7 @@ a.btn { font: 500 .8rem var(--f-mono); color: var(--ink); border: 1px solid var(
     sc.max = s.end / 1000;
     if (!scrubbing) { sc.value = s.t / 1000; $("scrubv").textContent = clock(s.t, s.open_hour); }
     if (document.activeElement !== $("crowd")) { $("crowd").value = Math.round(s.crowd * 100); $("crowdset").textContent = Math.round(s.crowd * 100) + "%"; }
-    renderSpeeds(s); renderMap(s); renderRides(s); renderFeed(s);
+    renderSpeeds(s); renderChallenge(s); renderMap(s); renderRides(s); renderFeed(s);
   }
 
   const sc = $("scrub");

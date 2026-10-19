@@ -119,6 +119,7 @@ func (p *Park) applyLL(op config.OpsEvent) error {
 		if !m.SetMergeRatio(v) {
 			return fmt.Errorf("ops ll_merge: %s has no Lightning Lane line", op.Node)
 		}
+		p.llMerge[n.Idx] = v
 	default:
 		return fmt.Errorf("ops ll_merge: %s has no merge to set", op.Node)
 	}

@@ -34,6 +34,12 @@ type RideView struct {
 	Trains            int   // coasters only
 	SingleRider       *bool // nil = no single-rider line
 	LightningLane     bool
+	// Lightning Lane levers (M15), set only for nodes that sell LL in this run. LLShare is the inventory
+	// share for windows not yet started (nil for Single Pass, sold before the day); LLMerge is the ratio
+	// set by ll_merge, or nil while the ride runs its authored merge.
+	LLLevers bool // the node sells Lightning Lane in this run, so ll_merge (and ll_inventory unless Single Pass) apply
+	LLShare  *float64
+	LLMerge  *int
 }
 
 type EdgeView struct {
@@ -85,6 +91,7 @@ func (p *Park) View() View {
 			}
 			rv.LightningLane = ra.ll
 		}
+		p.llView(n, &rv)
 		v.Rides = append(v.Rides, rv)
 	}
 	for _, e := range p.g.Edges {
@@ -96,6 +103,28 @@ func (p *Park) View() View {
 		v.Edges = append(v.Edges, ev)
 	}
 	return v
+}
+
+// llView fills the Lightning Lane lever state of node n.
+func (p *Park) llView(n *Node, rv *RideView) {
+	if p.ll == nil {
+		return
+	}
+	r := p.ll.ride(n.Idx)
+	if r == nil {
+		return
+	}
+	rv.LightningLane, rv.LLLevers = true, true
+	if r.tier != config.LLSinglePass {
+		share := r.share
+		rv.LLShare = &share
+	}
+	if s, ok := p.acts[n.Idx].(*simpleRide); ok {
+		m := s.llPer
+		rv.LLMerge = &m
+	} else if m, ok := p.llMerge[n.Idx]; ok {
+		rv.LLMerge = &m
+	}
 }
 
 // label turns a node id into a display name ("boat_ride" -> "Boat ride").
