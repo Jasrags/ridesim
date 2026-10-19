@@ -22,6 +22,8 @@ var parkChecks = []check[*ParkFile]{
 	{"park.decision", SevError, checkDecision},
 	{"park.lightning_lane", SevError, checkParkLightningLane},
 	{"park.map_positions", SevError, checkMapPositions},
+	{"park.gates", SevError, checkGates},
+	{"park.node_hours", SevError, checkNodeHours},
 }
 
 // checkMapPositions: map coordinates are optional, but all nodes have both x and y or none do.
@@ -135,8 +137,8 @@ func checkNodeFields(p *ParkFile) (bool, string) {
 			bad = append(bad, fmt.Sprintf("%s (%s): missing %s", n.ID, n.Kind, strings.Join(miss, ", ")))
 		}
 	}
-	if entrances != 1 || exits != 1 {
-		bad = append(bad, fmt.Sprintf("need one entrance and one exit, have %d and %d", entrances, exits))
+	if entrances < 1 || exits < 1 {
+		bad = append(bad, fmt.Sprintf("need at least one entrance and one exit, have %d and %d", entrances, exits))
 	}
 	if len(bad) > 0 {
 		return false, strings.Join(bad, "; ")

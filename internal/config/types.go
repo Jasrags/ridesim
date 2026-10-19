@@ -511,6 +511,9 @@ type ParkNode struct {
 	MeetS             *Dist    `yaml:"meet_s"`         // meet: seconds per party
 	QueueCapacity     int      `yaml:"queue_capacity"` // ride_simple: physical queue; overflow spills (0 = never)
 	LightningLane     string   `yaml:"lightning_lane"` // tier1 | tier2 | single_pass (rides only; empty = none)
+	Hours             string   `yaml:"hours"`          // "HH:MM-HH:MM" when an activity opens later or closes earlier than the park (M17)
+	ArrivalShare      float64  `yaml:"arrival_share"`  // entrance in a park with several gates: share of parties using it (M17)
+	Exit              string   `yaml:"exit"`           // entrance in a park with several gates: the exit its parties leave by (M17)
 	X                 *float64 `yaml:"x"`              // map position (front end); all nodes or none
 	Y                 *float64 `yaml:"y"`
 }
@@ -568,8 +571,8 @@ type Decision struct {
 	RerouteS           float64  `yaml:"reroute_s"`         // recompute routes from current walking times this often (0 = static; M9)
 	// M16 turn-away fixes, both off by default: guests skip options whose board wait is over their own patience,
 	// and shows whose next performance is already full when they choose.
-	PatienceAware   bool `yaml:"patience_aware"`
-	SkipFullShows   bool `yaml:"skip_full_shows"`
+	PatienceAware bool `yaml:"patience_aware"`
+	SkipFullShows bool `yaml:"skip_full_shows"`
 }
 
 type Utility struct {
