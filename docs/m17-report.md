@@ -232,3 +232,16 @@ Jason asked to pause before it.
 
 **Status:** every EPCOT ride with a Queue-Times target now has a full model. Medium day, 10 seeds: every attraction is within
 ~2 min of its Queue-Times average, except the two fixed-posting films.
+
+## Spot check `[user]` (Jason, 2026-10-19, 16:00 Eastern; Food & Wine Festival running)
+| Ride | Posted today | Sim medium day at 16:00 (6 seeds, mean and range) |
+|---|---|---|
+| Guardians | 75 | 70 (60-89) |
+| Test Track | 55 | 46 (29-53) |
+| Remy's | 65 | 42 (22-57) |
+
+- **Guardians** matches.
+- **Test Track** today is at the top of the model's range.
+- **Remy's** today is above every seed. A likely cause is the festival, which the model leaves out and which crowds World Showcase.
+- One reading is not enough to tune on. More `[user]` readings, especially on non-festival days, would show whether Remy's
+  afternoon is under-modeled.
