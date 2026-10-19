@@ -96,7 +96,7 @@ func TestParkScenarioOpsRun(t *testing.T) {
 			at = append(at, e.T.String()+" "+e.Info)
 		}
 	}
-	if len(at) != 4 || !strings.HasPrefix(at[2], "02:00:00.000 action=close_ride") {
+	if len(at) != 6 || !strings.HasPrefix(at[2], "02:00:00.000 action=close_ride") || !strings.HasPrefix(at[5], "04:00:00.000 action=ll_merge value=3") {
 		t.Fatalf("ops events %v", at)
 	}
 }

@@ -89,20 +89,24 @@ type simpleRide struct {
 	seats  int
 	trip   int
 	llHist [simpleLLWindow]int // Lightning Lane riders on each of the last simpleLLWindow vehicles
+	llPer  int                 // LL guests per standby guest: LL takes at most llPer/(llPer+1) of a vehicle
 }
 
 // simpleInterval is the ride_simple dispatch interval; validation checks a vehicle fits the largest party.
 const simpleInterval = config.RideSimpleIntervalS * engine.Second
 
 const (
-	simpleLLNum, simpleLLDen = 2, 3 // Lightning Lane takes at most 2/3 of a vehicle (spec normal 2:1 merge) [fan, assumed]
-	simpleLLWindow           = 15   // vehicles (15 min) of Lightning Lane use behind the posted wait
+	simpleLLPerStandby = 2  // Lightning Lane takes at most 2/3 of a vehicle (spec normal 2:1 merge) [fan, assumed]
+	simpleLLWindow     = 15 // vehicles (15 min) of Lightning Lane use behind the posted wait
 )
 
 func newSimpleRide(sim *engine.Sim, n *Node) *simpleRide {
-	s := &simpleRide{n: n, sim: sim, seats: int(math.Max(1, math.Round(n.CapacityPerHr*simpleInterval.Seconds()/3600)))}
+	s := &simpleRide{n: n, sim: sim, seats: int(math.Max(1, math.Round(n.CapacityPerHr*simpleInterval.Seconds()/3600))), llPer: simpleLLPerStandby}
 	return s
 }
+
+// setMergeRatio is the ll_merge lever: llPer LL guests per standby guest from the next vehicle on.
+func (s *simpleRide) setMergeRatio(llPer int) { s.llPer = llPer }
 
 func (s *simpleRide) start() {
 	var tick func()
@@ -122,7 +126,7 @@ func (s *simpleRide) posted() engine.Duration {
 	for _, n := range s.llHist {
 		ll += n
 	}
-	standby := math.Max(1-float64(ll)/simpleLLWindow/float64(s.seats), float64(simpleLLDen-simpleLLNum)/simpleLLDen)
+	standby := math.Max(1-float64(ll)/simpleLLWindow/float64(s.seats), 1/float64(s.llPer+1))
 	return engine.Seconds(float64(s.line.Guests()) / (s.n.CapacityPerHr / 3600 * standby))
 }
 func (s *simpleRide) queueGuests() int { return s.line.Guests() + s.llLine.Guests() }
@@ -175,7 +179,7 @@ func (s *simpleRide) dispatch() {
 			s.sim.Emit(engine.Event{Type: engine.EvBoard, Train: s.trip, Guest: p.ID, N: p.Size, Info: p.Lane.String()})
 		}
 	}
-	board(&s.llLine, s.seats*simpleLLNum/simpleLLDen)
+	board(&s.llLine, s.seats*s.llPer/(s.llPer+1))
 	board(&s.line, s.seats)
 	board(&s.llLine, s.seats) // seats standby could not use
 	s.llHist[s.trip%simpleLLWindow] = llRiders

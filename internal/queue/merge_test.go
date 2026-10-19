@@ -91,3 +91,23 @@ func TestMergeEmptyLaneAndNoBanking(t *testing.T) {
 		t.Fatal("LL got priority from credit banked while its line was empty")
 	}
 }
+
+// SetRatio (M15 ll_merge lever) replaces every phase's ratio; 0 hands LL only what standby leaves.
+func TestMergeSetRatioOverridesPhases(t *testing.T) {
+	for _, c := range []struct {
+		queue, set int
+		want       float64
+	}{{10, 1, 1}, {500, 3, 3}} {
+		m := testMerge("guests")
+		m.Update(c.queue)
+		m.SetRatio(c.set)
+		if got := ratio(m, 1, 1, 8000); got < c.want*0.99 || got > c.want*1.01 {
+			t.Errorf("queue %d, ratio set to %d: %.2f LL per standby guest", c.queue, c.set, got)
+		}
+	}
+	m := testMerge("guests")
+	m.SetRatio(0)
+	if got := ratio(m, 1, 1, 1000); got != 0 {
+		t.Errorf("ratio 0: %.2f LL per standby guest while both lines wait, want 0", got)
+	}
+}

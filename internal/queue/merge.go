@@ -21,7 +21,8 @@ type Merge struct {
 	byParties  bool
 
 	phase  int
-	credit int // LL units the merge may still admit before the next standby unit
+	credit int  // LL units the merge may still admit before the next standby unit
+	fixed  *int // ratio set by the ll_merge lever (M15); nil = the phase's authored ratio
 }
 
 // NewMerge builds a merge from a ride's skip_line.merge section. Phases must be validated
@@ -38,6 +39,22 @@ func (m *Merge) units(p *guest.Party) int {
 		return 1
 	}
 	return p.Size
+}
+
+// SetRatio fixes LL units per standby unit for every phase from now on (the ll_merge lever). Phase
+// changes are still logged, but no longer change the ratio.
+func (m *Merge) SetRatio(llPerStandby int) {
+	m.fixed = &llPerStandby
+	if llPerStandby == 0 {
+		m.credit = 0
+	}
+}
+
+func (m *Merge) llPerStandby() int {
+	if m.fixed != nil {
+		return *m.fixed
+	}
+	return m.Phase().LLPerStandby
 }
 
 // Update recomputes the phase for an LL queue of llGuests guests.
@@ -78,6 +95,6 @@ func (m *Merge) Took(p *guest.Party, llWaiting bool) {
 		return
 	}
 	if llWaiting {
-		m.credit += m.Phase().LLPerStandby * m.units(p)
+		m.credit += m.llPerStandby() * m.units(p)
 	}
 }

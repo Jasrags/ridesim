@@ -39,6 +39,9 @@ func (c *Coaster) SingleRiderOpen() bool { return c.lines.SingleRiderOpen() }
 // SetSingleRiderOpen opens or closes the single-rider line (an operations lever).
 func (c *Coaster) SetSingleRiderOpen(open bool) { c.lines.SetSingleRiderOpen(open) }
 
+// SetMergeRatio implements the park's ll_merge lever.
+func (c *Coaster) SetMergeRatio(llPerStandby int) bool { return c.lines.SetMergeRatio(llPerStandby) }
+
 // Sample implements lines.Ride (preshow timings use the station stream).
 func (c *Coaster) Sample(d config.Dist) engine.Duration {
 	return c.sample(d, engine.StreamStationTimes)

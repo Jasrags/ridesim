@@ -133,7 +133,7 @@ func TestSnapshotHasMapRidesAndFeed(t *testing.T) {
 	s, _ := New(ds, sf)
 	_ = s.Advance(2*engine.Hour + 30*engine.Minute) // past the scripted 02:00 closure
 	snap := s.Snapshot()
-	if len(snap.Nodes) == 0 || len(snap.Rides) == 0 || len(snap.Edges) == 0 || len(snap.Ops) != 4 {
+	if len(snap.Nodes) == 0 || len(snap.Rides) == 0 || len(snap.Edges) == 0 || len(snap.Ops) != 6 {
 		t.Fatalf("snapshot %d nodes %d rides %d edges %d ops", len(snap.Nodes), len(snap.Rides), len(snap.Edges), len(snap.Ops))
 	}
 	found := false

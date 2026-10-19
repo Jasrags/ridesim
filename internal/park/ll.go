@@ -30,8 +30,10 @@ type lightningLane struct {
 type llRide struct {
 	node   int
 	tier   string // "" in an untiered park
-	appeal float64
-	inv    []int // guests still sellable per window
+	appeal   float64
+	capacity float64 // guests/hr the inventory share applies to
+	per      int     // guests sellable per window at the current share
+	inv      []int   // guests still sellable per window
 }
 
 type booking struct {
@@ -64,13 +66,34 @@ func newLightningLane(p *Park, cfg *config.ParkLightningLane) (*lightningLane, e
 			continue
 		}
 		per := int(math.Round(cfg.InventoryShare * capacity * ll.window.Seconds() / 3600))
-		r := &llRide{node: n.Idx, tier: n.LightningLane, appeal: n.Appeal, inv: make([]int, windows)}
+		r := &llRide{node: n.Idx, tier: n.LightningLane, appeal: n.Appeal, capacity: capacity, per: per, inv: make([]int, windows)}
 		for i := range r.inv {
 			r.inv[i] = per
 		}
 		ll.rides = append(ll.rides, r)
 	}
 	return ll, nil
+}
+
+// ride is the inventory of node, or nil when it sells no Lightning Lane.
+func (ll *lightningLane) ride(node int) *llRide {
+	for _, r := range ll.rides {
+		if r.node == node {
+			return r
+		}
+	}
+	return nil
+}
+
+// setShare is the ll_inventory lever: windows starting at or after now sell share of capacity. Passes
+// already sold stay valid, so a window can be left with nothing to sell.
+func (ll *lightningLane) setShare(r *llRide, share float64, now engine.Time) {
+	per := int(math.Round(share * r.capacity * ll.window.Seconds() / 3600))
+	for w := ll.windowAt(now); w < len(r.inv); w++ {
+		sold := r.per - r.inv[w]
+		r.inv[w] = max(0, per-sold)
+	}
+	r.per = per
 }
 
 // advance runs the before-the-day bookings in a random party order.

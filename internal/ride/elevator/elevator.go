@@ -355,3 +355,6 @@ func (r *Ride) SingleRiderOpen() bool { return r.lines.SingleRiderOpen() }
 
 // SetSingleRiderOpen opens or closes the single-rider line (an operations lever).
 func (r *Ride) SetSingleRiderOpen(open bool) { r.lines.SetSingleRiderOpen(open) }
+
+// SetMergeRatio implements the park's ll_merge lever.
+func (r *Ride) SetMergeRatio(llPerStandby int) bool { return r.lines.SetMergeRatio(llPerStandby) }

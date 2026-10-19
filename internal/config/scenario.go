@@ -127,10 +127,13 @@ const (
 	OpSingleRiderClose = "single_rider_close"
 	OpCloseRide        = "close_ride"
 	OpCrowdScale       = "crowd_scale"
+	OpLLInventory      = "ll_inventory" // value: share of hourly capacity sold per return window, from now on (M15)
+	OpLLMerge          = "ll_merge"     // value: whole LL guests per standby guest at the merge (M15)
 
 	CauseOpsClosure = "ops_closure" // operations closed the ride: the board shows it closed
 
 	MaxCrowdScale = 2.0 // crowd scale thins a day drawn at this multiple of attendance
+	MaxLLMerge    = 10  // highest ll_merge ratio, the authored recovery phase's 10:1
 )
 
 type WeatherWindow struct {
@@ -533,10 +536,30 @@ func OpShape(o OpsEvent, park bool) string {
 		if o.Node != "" || o.Minutes != 0 || o.Value == nil || *o.Value < 0 || *o.Value > MaxCrowdScale {
 			return fmt.Sprintf("crowd_scale needs value in [0, %g] and nothing else", MaxCrowdScale)
 		}
+	case OpLLInventory:
+		if o.Node == "" || o.Minutes != 0 || o.Value == nil || *o.Value < 0 || *o.Value > 1 {
+			return "ll_inventory needs node and value in [0, 1]"
+		}
+	case OpLLMerge:
+		if o.Node == "" || o.Minutes != 0 || o.Value == nil || *o.Value < 0 || *o.Value > MaxLLMerge || *o.Value != float64(int(*o.Value)) {
+			return fmt.Sprintf("ll_merge needs node and a whole value in [0, %d]", MaxLLMerge)
+		}
 	default:
 		return fmt.Sprintf("unknown park ops action %q", o.Action)
 	}
 	return ""
+}
+
+// SellsLightningLane reports whether park node n (with ride file rf, nil for a simple ride) sells Lightning
+// Lane: in a tiered park the node declares a tier; otherwise it is a modeled ride with a skip line.
+func SellsLightningLane(park *ParkFile, n ParkNode, rf *File) bool {
+	if park.LightningLane == nil {
+		return false
+	}
+	if park.HasLLTiers() {
+		return n.LightningLane != ""
+	}
+	return rf != nil && rf.RideInfoQueues().SkipLine.Enabled
 }
 
 // checkParkOps is the cross-file check: each op names a node that supports it.
@@ -569,6 +592,10 @@ func checkParkOps(ds *Dataset, park *ParkFile, ops []OpsEvent) string {
 		case OpCloseRide:
 			if rf == nil {
 				return fmt.Sprintf("ops close_ride at %s: %s is not a modeled ride", o.At, o.Node)
+			}
+		case OpLLInventory, OpLLMerge:
+			if !SellsLightningLane(park, n, rf) {
+				return fmt.Sprintf("ops %s at %s: %s sells no Lightning Lane", o.Action, o.At, o.Node)
 			}
 		}
 	}

@@ -14,3 +14,5 @@ scenario:
     - { at: "01:30", action: add_train, node: coaster }
     - { at: "02:00", action: close_ride, node: coaster, minutes: 20 }
     - { at: "03:00", action: crowd_scale, value: 1.5 }
+    - { at: "03:30", action: ll_inventory, node: coaster, value: 0.2 }
+    - { at: "04:00", action: ll_merge, node: coaster, value: 3 }

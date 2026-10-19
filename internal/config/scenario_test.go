@@ -158,6 +158,12 @@ func TestParkScenarioChecks(t *testing.T) {
 		{"scenario.ride_refs", "action: close_ride, node: coaster", "action: close_ride, node: nowhere"},
 		{"scenario.ride_refs", "action: add_train, node: coaster", "action: add_train, node: filler"},
 		{"scenario.ride_refs", "action: close_ride, node: coaster", "action: close_ride, node: dining"},
+		{"scenario.ops", "action: ll_inventory, node: coaster, value: 0.2", "action: ll_inventory, node: coaster, value: 1.2"},
+		{"scenario.ops", "action: ll_inventory, node: coaster, value: 0.2", "action: ll_inventory, value: 0.2"},
+		{"scenario.ops", "action: ll_merge, node: coaster, value: 3", "action: ll_merge, node: coaster, value: 2.5"},
+		{"scenario.ops", "action: ll_merge, node: coaster, value: 3", "action: ll_merge, node: coaster, value: 11"},
+		{"scenario.ride_refs", "action: ll_merge, node: coaster", "action: ll_merge, node: filler"},
+		{"scenario.ride_refs", "action: ll_inventory, node: coaster", "action: ll_inventory, node: hub"},
 	}
 	for _, c := range cases {
 		t.Run(c.check+"/"+c.new, func(t *testing.T) {

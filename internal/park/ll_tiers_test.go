@@ -140,3 +140,24 @@ func TestUntieredParkSellsOnlyHostedRides(t *testing.T) {
 		}
 	}
 }
+
+// The ll_merge lever on a simple ride sets LL guests per standby guest: 1 boards LL up to half a vehicle,
+// 0 seats LL only where standby leaves room.
+func TestSimpleRideMergeRatio(t *testing.T) {
+	for _, c := range []struct{ ratio, wantLL int }{{1, 4}, {0, 0}} {
+		sim := engine.New(1)
+		s := newSimpleRide(sim, &Node{ParkNode: config.ParkNode{ID: "r", Kind: config.NodeRideSimple, CapacityPerHr: 540, DurationS: 60}})
+		s.setMergeRatio(c.ratio)
+		for i := int64(1); i <= 20; i++ {
+			lane := guest.Standby
+			if i <= 10 {
+				lane = guest.LightningLane
+			}
+			s.visit(&guest.Party{ID: i, Size: 1}, lane)
+		}
+		s.dispatch()
+		if got := 10 - s.llLine.Guests(); got != c.wantLL {
+			t.Errorf("ratio %d: %d LL boarded of 9 seats, want %d", c.ratio, got, c.wantLL)
+		}
+	}
+}

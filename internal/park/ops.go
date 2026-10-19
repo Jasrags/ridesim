@@ -20,6 +20,10 @@ type singleRiderLine interface {
 	SetSingleRiderOpen(open bool)
 }
 
+type merger interface {
+	SetMergeRatio(llPerStandby int) bool
+}
+
 type stopper interface {
 	Stop(cause string)
 	Resume(cause string)
@@ -31,6 +35,9 @@ type stopper interface {
 func (p *Park) Apply(op config.OpsEvent) error {
 	if bad := opShapeErr(op); bad != nil {
 		return bad
+	}
+	if op.Action == config.OpLLInventory || op.Action == config.OpLLMerge {
+		return p.applyLL(op)
 	}
 	var ra *rideAct
 	if op.Action != config.OpCrowdScale {
@@ -73,6 +80,44 @@ func (p *Park) Apply(op config.OpsEvent) error {
 	case config.OpCrowdScale:
 		p.logOp(op)
 		p.crowd = *op.Value
+	}
+	return nil
+}
+
+// applyLL runs the Lightning Lane levers on a node that sells LL in this run.
+func (p *Park) applyLL(op config.OpsEvent) error {
+	n := p.g.Node(op.Node)
+	if n == nil {
+		return fmt.Errorf("ops %s: no node %q", op.Action, op.Node)
+	}
+	var r *llRide
+	if p.ll != nil {
+		r = p.ll.ride(n.Idx)
+	}
+	if r == nil {
+		return fmt.Errorf("ops %s: %s sells no Lightning Lane", op.Action, op.Node)
+	}
+	if op.Action == config.OpLLInventory {
+		p.logOp(op)
+		p.ll.setShare(r, *op.Value, p.sim.Now())
+		return nil
+	}
+	v := int(*op.Value)
+	switch act := p.acts[n.Idx].(type) {
+	case *simpleRide:
+		p.logOp(op)
+		act.setMergeRatio(v)
+	case *rideAct:
+		m, ok := act.r.(merger)
+		if !ok {
+			return fmt.Errorf("ops ll_merge: %s has no merge to set", op.Node)
+		}
+		p.logOp(op)
+		if !m.SetMergeRatio(v) {
+			return fmt.Errorf("ops ll_merge: %s has no Lightning Lane line", op.Node)
+		}
+	default:
+		return fmt.Errorf("ops ll_merge: %s has no merge to set", op.Node)
 	}
 	return nil
 }

@@ -1,6 +1,7 @@
 package park
 
 import (
+	"math"
 	"testing"
 
 	"github.com/jasrags/ridesim/internal/config"
@@ -126,3 +127,53 @@ func TestViewReflectsLeversAndChangesNothing(t *testing.T) {
 		}
 	}
 }
+
+// ll_inventory resets what windows not yet started can sell to the new share, less what they already sold;
+// started windows keep theirs. It is logged as an ops event.
+func TestLLInventoryLeverResetsFutureWindows(t *testing.T) {
+	p, sim := newFixturePark(t, 1, Options{Attendance: 300})
+	r := p.ll.ride(p.g.Node("coaster").Idx)
+	at := engine.Time(90 * engine.Minute) // inside window 1; window 2 is the first not yet started
+	sim.RunUntil(at)
+	before := append([]int(nil), r.inv...)
+	sold := make([]int, len(r.inv))
+	for i, v := range r.inv {
+		sold[i] = r.per - v
+	}
+	if err := p.Apply(config.OpsEvent{Action: config.OpLLInventory, Node: "coaster", Value: scale(0.5)}); err != nil {
+		t.Fatal(err)
+	}
+	per := int(math.Round(0.5 * r.capacity)) // 60-min windows
+	for w := range r.inv {
+		want := before[w]
+		if w >= 2 {
+			want = max(0, per-sold[w])
+		}
+		if r.inv[w] != want {
+			t.Errorf("window %d: %d sellable, want %d", w, r.inv[w], want)
+		}
+	}
+	if n, _ := count(sim, EvParkOps, Scope); n != 1 {
+		t.Fatalf("%d ops events, want 1", n)
+	}
+}
+
+func TestLLLeversNeedALightningLaneRide(t *testing.T) {
+	p, _ := newFixturePark(t, 1, Options{Attendance: 10})
+	for _, op := range []config.OpsEvent{
+		{Action: config.OpLLInventory, Node: "filler", Value: scale(0.5)}, // untiered park: simple rides sell no LL
+		{Action: config.OpLLMerge, Node: "hub", Value: scale(1)},
+		{Action: config.OpLLMerge, Node: "coaster", Value: scale(1.5)}, // whole numbers only
+		{Action: config.OpLLMerge, Node: "coaster", Value: scale(11)},
+		{Action: config.OpLLInventory, Node: "coaster", Value: scale(1.2)},
+		{Action: config.OpLLInventory, Node: "coaster"},
+	} {
+		if err := p.Apply(op); err == nil {
+			t.Errorf("%+v accepted", op)
+		}
+	}
+	if err := p.Apply(config.OpsEvent{Action: config.OpLLMerge, Node: "coaster", Value: scale(0)}); err != nil {
+		t.Errorf("ll_merge 0 on the coaster: %v", err)
+	}
+}
+
