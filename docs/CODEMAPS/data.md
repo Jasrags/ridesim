@@ -4,7 +4,7 @@
 All files `schema_version: "1.0"`; strict decode; values carry provenance tags
 `[wiki] [rcdb] [fan] [map] [osm] [user] [assumed]`. Files are read-only on disk.
 
-## data/rides (10)  common keys: ride, failures, queues, [preshow], [stages], validation_targets, config_invariants
+## data/rides (11)  common keys: ride, failures, queues, [preshow], [stages], validation_targets, config_invariants
   coaster:    trains blocks clearance station [barn] [layout guest_path exit_path]
   continuous: conveyor route vehicles load_zone unload_zone loading_shared
   elevator:   vehicles sides cycle        bays: bays cycle
