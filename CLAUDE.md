@@ -237,3 +237,9 @@ numbers come from `data/`. Read both before changing simulation logic.
   rides, not how many. M15 challenges therefore set goals on ride waits the levers can move, with the score as a floor
   (Jason). Capacity and crowd-steering levers come with the trade-off milestone. Balks and reneges score only at rides,
   shows and meets (dining and shops earn nothing and have no levers).
+
+## Decisions log (M16 kickoff, Hollywood Studios realism, 2026-10-19)
+- Before another park (Jason): fix turn-aways (guests walking to a ride only to balk, ~30,000 a day), research the missing DHS
+  data (theater sizes, restaurant seats, meet times, LL purchase share, 2025 attendance), add the missing guide-map places, the
+  Animation Courtyard rename and the Vacation Fun closure, and a full Alien Swirling Saucers model. [user] widths and ride
+  timings wait for Jason's next visit.
