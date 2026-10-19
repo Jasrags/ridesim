@@ -176,4 +176,3 @@ func TestLLLeversNeedALightningLaneRide(t *testing.T) {
 		t.Errorf("ll_merge 0 on the coaster: %v", err)
 	}
 }
-

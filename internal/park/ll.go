@@ -28,8 +28,8 @@ type lightningLane struct {
 }
 
 type llRide struct {
-	node   int
-	tier   string // "" in an untiered park
+	node     int
+	tier     string // "" in an untiered park
 	appeal   float64
 	capacity float64 // guests/hr the inventory share applies to
 	per      int     // guests sellable per window at the current share
