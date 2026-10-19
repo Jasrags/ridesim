@@ -4,6 +4,8 @@
 All files `schema_version: "1.0"`; strict decode; values carry provenance tags
 `[wiki] [rcdb] [fan] [map] [osm] [user] [assumed]`. Files are read-only on disk.
 
+## data/parks (3): park-synthetic, wdw-dhs (M9), wdw-epcot (M17: node hours, two gates)
+
 ## data/rides (11)  common keys: ride, failures, queues, [preshow], [stages], validation_targets, config_invariants
   coaster:    trains blocks clearance station [barn] [layout guest_path exit_path]
   continuous: conveyor route vehicles load_zone unload_zone loading_shared

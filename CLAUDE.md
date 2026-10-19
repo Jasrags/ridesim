@@ -76,6 +76,7 @@ numbers come from `data/`. Read both before changing simulation logic.
 - `go run ./cmd/ridesim run -scenario data/scenarios/park-medium-day.yaml -log out/park.jsonl` (park day, M7)
 - `go run ./cmd/ridesim serve -scenario data/scenarios/park-medium-day.yaml` (web control room, M8; http://127.0.0.1:8080/)
 - `go run ./cmd/ridesim run -scenario data/scenarios/dhs-medium-day.yaml` (Hollywood Studios day, M9; serve works the same)
+- `go run ./cmd/ridesim run -scenario data/scenarios/epcot-medium-day.yaml` (EPCOT day, M17; serve works the same)
 - `go run ./cmd/ridesim serve -challenge data/challenges/dhs-tame-slinky.yaml` (challenge play, M15; daily ones take -date)
 - `go run ./cmd/ridesim challenge -file data/challenges/dhs-tame-slinky.yaml [-session played.yaml -name NAME]` (baseline, or verify onto out/leaderboard.json)
 - `go run ./cmd/ridesim osm-import -config osm/wdw-dhs/import.yaml -out out/dhs-draft.yaml -svg out/dhs-draft.svg` (draft park from OSM, M9)
@@ -257,3 +258,8 @@ numbers come from `data/`. Read both before changing simulation logic.
 - Per-area hours (Jason): nodes can open later than the park (World Showcase ~11:00); other parks unchanged.
 - Two gates (Jason): the main entrance and the International Gateway; a share of parties uses each ([assumed] until sourced).
 - The Food & Wine Festival is left out for now (Jason); festivals can be a scenario layer later.
+- Correction (research 2026-10-19): World Showcase as an area opens with the park; only its restaurants, shops and the two
+  Circle-Vision films open ~11:00 [fan], so node hours are set on those (Frozen Ever After and Remy open at 9:00).
+- EPCOT International Gateway share 20% [assumed] (Jason). EPCOT calibration (approved): 14 ride/meet appeals fitted to
+  Queue-Times 2026; Canada Far and Wide and the Short Film Festival post fixed waits and are not fitted. Luminous, Food & Wine,
+  Friendship boats and Play Zone are not modeled yet. Results in docs/m17-report.md.

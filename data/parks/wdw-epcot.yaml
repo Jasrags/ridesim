@@ -28,16 +28,16 @@ nodes:
   # exit
   - { id: exit_ig, kind: exit, x: 709, y: 2398 }   # [osm] w1525709564 · International Gateway · entrance
   # ride_simple
-  - { id: spaceship_earth, kind: ride_simple, x: 1555, y: 548, capacity_per_hr: 2160, duration_s: 900, queue_capacity: 2400, lightning_lane: tier2, appeal: 0.60, thrill: 0.10 }
-      # 2,160/hr operational [fan crooksinwdw operational, 2019]; ~15 min [assumed]; tier [fan TouringPlans 2026-06-29]; appeal, thrill [assumed]. Position [osm] w146221550 · Spaceship Earth · world_celebration · map 1
+  - { id: spaceship_earth, kind: ride_simple, x: 1555, y: 548, capacity_per_hr: 2160, duration_s: 900, queue_capacity: 2400, lightning_lane: tier2, appeal: 0.70, thrill: 0.10 }
+      # 2,160/hr operational [fan crooksinwdw operational, 2019]; ~15 min [assumed]; tier [fan TouringPlans 2026-06-29]; appeal [assumed] (fitted 0.60 -> 0.70, tuning-log 2026-10-19), thrill [assumed]. Position [osm] w146221550 · Spaceship Earth · world_celebration · map 1
   # meet
-  - { id: meet_mickey_friends, kind: meet, x: 1443, y: 1028, meet_s: { mean: 90, sd: 25 }, appeal: 0.60, thrill: 0.0 }
-      # Mickey, Minnie and Goofy [fan TouringPlans]; time per party [assumed]; appeal [assumed]. Position [osm] n11998956198 · Meet Mickey & Friends (CommuniCore Hall) · world_celebration · map 2
+  - { id: meet_mickey_friends, kind: meet, x: 1443, y: 1028, meet_s: { mean: 90, sd: 25 }, appeal: 0.55, thrill: 0.0 }
+      # Mickey, Minnie and Goofy [fan TouringPlans]; time per party [assumed]; appeal [assumed] (fitted 0.60 -> 0.55, tuning-log 2026-10-19). Position [osm] n11998956198 · Meet Mickey & Friends (CommuniCore Hall) · world_celebration · map 2
   # ride_simple
   - { id: short_film_festival, kind: ride_simple, x: 1181, y: 1572, capacity_per_hr: 1700, duration_s: 1080, queue_capacity: 900, lightning_lane: tier2, appeal: 0.40, thrill: 0.05 }
       # continuous 4D films; seats and capacity [assumed]; ~18 min (lead only); tier [fan TouringPlans 2026-06-29]; appeal, thrill [assumed]. Position [osm] n4009891497 · Disney & Pixar Short Film Festival · world_celebration · map 3
-  - { id: figment, kind: ride_simple, x: 932, y: 1473, capacity_per_hr: 1980, duration_s: 360, queue_capacity: 1500, lightning_lane: tier2, appeal: 0.45, thrill: 0.10 }
-      # 1,980/hr [fan crooksinwdw operational, 2019]; ~6 min [assumed]; tier [fan TouringPlans 2026-06-29]; appeal, thrill [assumed]. Position [osm] n2989730651 · Journey Into Imagination With Figment · world_celebration · map 4
+  - { id: figment, kind: ride_simple, x: 932, y: 1473, capacity_per_hr: 1980, duration_s: 360, queue_capacity: 1500, lightning_lane: tier2, appeal: 0.72, thrill: 0.10 }
+      # 1,980/hr [fan crooksinwdw operational, 2019]; ~6 min [assumed]; tier [fan TouringPlans 2026-06-29]; appeal [assumed] (fitted 0.45 -> 0.72, tuning-log 2026-10-19), thrill [assumed]. Position [osm] n2989730651 · Journey Into Imagination With Figment · world_celebration · map 4
   # dining
   - { id: festival_favorites, kind: dining, x: 1451, y: 1099, seats: 30, service_time_min: { mean: 8, sd: 3 }, appeal: 0.30 }
       # snack window; seats and times [assumed]. Position [osm] n11998956199 · Festival Favorites · world_celebration · map 8
@@ -45,12 +45,12 @@ nodes:
   - { id: shops_world_celebration, kind: shop, x: 1680, y: 683, visit_min: { mean: 12, sd: 6 }, appeal: 0.30, thrill: 0.10 }
       # visit and appeal [assumed]. Position [osm] w782273946 w782273949 w295182226 · World Celebration shops · world_celebration · map 9, 10, 12
   # ride_simple
-  - { id: guardians, kind: ride_simple, x: 2176, y: 698, capacity_per_hr: 1800, duration_s: 420, queue_capacity: 2400, lightning_lane: single_pass, appeal: 1.20, thrill: 0.90 }
-      # 2,000/hr [wiki] x 90% (Jason's rule); 3:20 ride [wiki] + boarding; the 14-min preshow sits in the wait [fan TouringPlans]; tier [fan TouringPlans 2026-06-29]; appeal, thrill [assumed]. Position [osm] w719079634 · Guardians of the Galaxy: Cosmic Rewind · world_discovery · map 13
-  - { id: mission_space, kind: ride_simple, x: 2330, y: 905, capacity_per_hr: 1440, duration_s: 330, queue_capacity: 1200, lightning_lane: tier2, appeal: 0.60, thrill: 0.85 }
-      # 1,440/hr [fan crooksinwdw operational, 2019]; 4 centrifuges x 10 capsules x 4 [fan]; Orange and Green as one ride; ~5.5 min [assumed]; tier [fan TouringPlans 2026-06-29]; appeal, thrill [assumed]. Position [osm] w295316766 · Mission: SPACE · world_discovery · map 14
-  - { id: test_track, kind: ride_simple, x: 2213, y: 1229, capacity_per_hr: 1080, duration_s: 300, queue_capacity: 1800, lightning_lane: tier1, appeal: 1.10, thrill: 0.75 }
-      # 1,080/hr [fan crooksinwdw operational, 2019] (Test Track 3.0, 2025, has no published figure); single rider line not modeled for simple rides; tier [fan TouringPlans 2026-06-29]; appeal, thrill [assumed]. Position [osm] w295315993 · Test Track · world_discovery · map 15
+  - { id: guardians, kind: ride_simple, x: 2176, y: 698, capacity_per_hr: 1800, duration_s: 420, queue_capacity: 2400, lightning_lane: single_pass, appeal: 1.49, thrill: 0.90 }
+      # 2,000/hr [wiki] x 90% (Jason's rule); 3:20 ride [wiki] + boarding; the 14-min preshow sits in the wait [fan TouringPlans]; tier [fan TouringPlans 2026-06-29]; appeal [assumed] (fitted 1.20 -> 1.49, tuning-log 2026-10-19), thrill [assumed]. Position [osm] w719079634 · Guardians of the Galaxy: Cosmic Rewind · world_discovery · map 13
+  - { id: mission_space, kind: ride_simple, x: 2330, y: 905, capacity_per_hr: 1440, duration_s: 330, queue_capacity: 1200, lightning_lane: tier2, appeal: 0.62, thrill: 0.85 }
+      # 1,440/hr [fan crooksinwdw operational, 2019]; 4 centrifuges x 10 capsules x 4 [fan]; Orange and Green as one ride; ~5.5 min [assumed]; tier [fan TouringPlans 2026-06-29]; appeal [assumed] (fitted 0.60 -> 0.62, tuning-log 2026-10-19), thrill [assumed]. Position [osm] w295316766 · Mission: SPACE · world_discovery · map 14
+  - { id: test_track, kind: ride_simple, x: 2213, y: 1229, capacity_per_hr: 1080, duration_s: 300, queue_capacity: 1800, lightning_lane: tier1, appeal: 0.94, thrill: 0.75 }
+      # 1,080/hr [fan crooksinwdw operational, 2019] (Test Track 3.0, 2025, has no published figure); single rider line not modeled for simple rides; tier [fan TouringPlans 2026-06-29]; appeal [assumed] (fitted 1.10 -> 0.94, tuning-log 2026-10-19), thrill [assumed]. Position [osm] w295315993 · Test Track · world_discovery · map 15
   # dining
   - { id: refreshment_station, kind: dining, x: 2013, y: 1261, seats: 30, service_time_min: { mean: 8, sd: 3 }, appeal: 0.30 }
       # snack window (stand-in position: Taste Track); seats and times [assumed]. Position [osm] w196386511 · Refreshment Station (stand-in: Taste Track) · world_discovery · map 17
@@ -64,14 +64,14 @@ nodes:
       # walk-through, ~150 guests at a time, ~20 min [fan TouringPlans]; appeal, thrill [assumed]. Position [osm] r21099075 · Journey of Water, Inspired by Moana (walk-through) · world_nature · map 21
   - { id: awesome_planet, kind: ride_simple, x: 803, y: 868, capacity_per_hr: 1600, duration_s: 900, queue_capacity: 900, appeal: 0.35, thrill: 0.05 }
       # film; 428 seats (lead only), 15 min [fan TouringPlans] (WDWMagic: 10); capacity [assumed]; appeal, thrill [assumed]. Position [osm] w782275579 · Awesome Planet · world_nature · map 22
-  - { id: soarin, kind: ride_simple, x: 746, y: 1265, capacity_per_hr: 1879, duration_s: 330, queue_capacity: 2000, lightning_lane: tier2, appeal: 0.80, thrill: 0.40 }
-      # 1,879/hr [fan crooksinwdw operational, 2019] (3 theaters x 87 x 8 cycles/hr); Soarin' Across America since 2026-05-26 [fan]; ~5.5 min [assumed]; tier [fan TouringPlans 2026-06-29]; appeal, thrill [assumed]. Position [osm] r10729202 · Soarin' Around the World · world_nature · map 23
-  - { id: living_with_the_land, kind: ride_simple, x: 520, y: 973, capacity_per_hr: 1440, duration_s: 840, queue_capacity: 1200, lightning_lane: tier2, appeal: 0.50, thrill: 0.05 }
-      # 1,440/hr [fan crooksinwdw operational, 2019]; ~14 min [assumed]; tier [fan TouringPlans 2026-06-29]; appeal, thrill [assumed]. Position [osm] w958012721 · Living with the Land · world_nature · map 24
-  - { id: seas_with_nemo, kind: ride_simple, x: 980, y: 552, capacity_per_hr: 1980, duration_s: 300, queue_capacity: 1200, lightning_lane: tier2, appeal: 0.45, thrill: 0.05 }
-      # 1,980/hr [fan crooksinwdw operational, 2019]; ~5 min [assumed]; tier [fan TouringPlans 2026-06-29]; appeal, thrill [assumed]. Position [osm] w307684414 · The Seas with Nemo & Friends · world_nature · map 25
-  - { id: turtle_talk, kind: ride_simple, x: 1125, y: 554, capacity_per_hr: 540, duration_s: 1020, queue_capacity: 400, lightning_lane: tier2, appeal: 0.40, thrill: 0.00 }
-      # ~100 per show, 17 min [fan TouringPlans] (~350/hr); modeled continuous at 540/hr, the least that lets Lightning Lane seat a party of 6 [assumed]; tier [fan TouringPlans 2026-06-29]; appeal, thrill [assumed]. Position [osm] n2990152020 · Turtle Talk With Crush · world_nature · map 26
+  - { id: soarin, kind: ride_simple, x: 746, y: 1265, capacity_per_hr: 1879, duration_s: 330, queue_capacity: 2000, lightning_lane: tier2, appeal: 0.70, thrill: 0.40 }
+      # 1,879/hr [fan crooksinwdw operational, 2019] (3 theaters x 87 x 8 cycles/hr); Soarin' Across America since 2026-05-26 [fan]; ~5.5 min [assumed]; tier [fan TouringPlans 2026-06-29]; appeal [assumed] (fitted 0.80 -> 0.70, tuning-log 2026-10-19), thrill [assumed]. Position [osm] r10729202 · Soarin' Around the World · world_nature · map 23
+  - { id: living_with_the_land, kind: ride_simple, x: 520, y: 973, capacity_per_hr: 1440, duration_s: 840, queue_capacity: 1200, lightning_lane: tier2, appeal: 0.73, thrill: 0.05 }
+      # 1,440/hr [fan crooksinwdw operational, 2019]; ~14 min [assumed]; tier [fan TouringPlans 2026-06-29]; appeal [assumed] (fitted 0.50 -> 0.73, tuning-log 2026-10-19), thrill [assumed]. Position [osm] w958012721 · Living with the Land · world_nature · map 24
+  - { id: seas_with_nemo, kind: ride_simple, x: 980, y: 552, capacity_per_hr: 1980, duration_s: 300, queue_capacity: 1200, lightning_lane: tier2, appeal: 0.72, thrill: 0.05 }
+      # 1,980/hr [fan crooksinwdw operational, 2019]; ~5 min [assumed]; tier [fan TouringPlans 2026-06-29]; appeal [assumed] (fitted 0.45 -> 0.72, tuning-log 2026-10-19), thrill [assumed]. Position [osm] w307684414 · The Seas with Nemo & Friends · world_nature · map 25
+  - { id: turtle_talk, kind: ride_simple, x: 1125, y: 554, capacity_per_hr: 540, duration_s: 1020, queue_capacity: 400, lightning_lane: tier2, appeal: 0.57, thrill: 0.00 }
+      # ~100 per show, 17 min [fan TouringPlans] (~350/hr); modeled continuous at 540/hr, the least that lets Lightning Lane seat a party of 6 [assumed]; tier [fan TouringPlans 2026-06-29]; appeal [assumed] (fitted 0.40 -> 0.57, tuning-log 2026-10-19), thrill [assumed]. Position [osm] n2990152020 · Turtle Talk With Crush · world_nature · map 26
   - { id: seabase, kind: ride_simple, x: 1054, y: 566, capacity_per_hr: 1200, duration_s: 1800, appeal: 0.35, thrill: 0.00 }
       # walk-through aquarium; capacity and visit time [assumed]; appeal, thrill [assumed]. Position [osm] n2990152021 · SeaBase Aquarium (stand-in: SeaBase Gift Shop) · world_nature · map 27
   # dining
@@ -87,8 +87,8 @@ nodes:
   - { id: shops_showcase_plaza, kind: shop, x: 1623, y: 1827, visit_min: { mean: 12, sd: 6 }, appeal: 0.30, thrill: 0.10 }
       # visit and appeal [assumed]. Position [osm] w295321043 w295320342 · Showcase Plaza shops (Port of Entry, Disney Traders) · showcase_plaza · map 81, 82
   # ride_simple
-  - { id: gran_fiesta, kind: ride_simple, x: 2431, y: 1722, capacity_per_hr: 1490, duration_s: 450, queue_capacity: 900, appeal: 0.40, thrill: 0.05 }
-      # 1,656/hr [wiki] x 90%; 15 riders a boat [wiki] (lead: ~20); ~7.5 min [assumed]; appeal, thrill [assumed]. Position [osm] n2441107360 · Gran Fiesta Tour Starring The Three Caballeros · mexico · map 31
+  - { id: gran_fiesta, kind: ride_simple, x: 2431, y: 1722, capacity_per_hr: 1490, duration_s: 450, queue_capacity: 900, appeal: 0.71, thrill: 0.05 }
+      # 1,656/hr [wiki] x 90%; 15 riders a boat [wiki] (lead: ~20); ~7.5 min [assumed]; appeal [assumed] (fitted 0.40 -> 0.71, tuning-log 2026-10-19), thrill [assumed]. Position [osm] n2441107360 · Gran Fiesta Tour Starring The Three Caballeros · mexico · map 31
   # dining
   - { id: la_cantina, kind: dining, x: 2099, y: 1899, seats: 150, service_time_min: { mean: 25, sd: 8 }, appeal: 0.45, hours: "11:00-21:00" }
       # quick service, lakeside seating; WDWMagic Medium [fan]; seats and times [assumed]; World Showcase dining opens ~11:00 [fan Ziggy 2026]. Position [osm] w295598762 · La Cantina de San Angel · mexico · map 43
@@ -102,11 +102,11 @@ nodes:
   - { id: shops_mexico, kind: shop, x: 2289, y: 1856, visit_min: { mean: 12, sd: 6 }, appeal: 0.30, thrill: 0.10, hours: "11:00-21:00" }
       # visit and appeal [assumed]; World Showcase shops open ~11:00 [fan Ziggy 2026]. Position [osm] w295598761 n2993384458 n2993384457 n4852402694 · Mexico shops · mexico
   # meet
-  - { id: meet_anna_elsa, kind: meet, x: 2391, y: 2086, meet_s: { mean: 30, sd: 10 }, appeal: 0.70, thrill: 0.0 }
-      # ~400 guests/hr from TouringPlans' line speed over several rooms [fan] / ~3.3 per party = ~30 s per party (derived); sd [assumed]; appeal [assumed]. Position [osm] w685999005 · Meet Anna and Elsa at Royal Sommerhus · norway · map 32
+  - { id: meet_anna_elsa, kind: meet, x: 2391, y: 2086, meet_s: { mean: 30, sd: 10 }, appeal: 0.89, thrill: 0.0 }
+      # ~400 guests/hr from TouringPlans' line speed over several rooms [fan] / ~3.3 per party = ~30 s per party (derived); sd [assumed]; appeal [assumed] (fitted 0.70 -> 0.89, tuning-log 2026-10-19). Position [osm] w685999005 · Meet Anna and Elsa at Royal Sommerhus · norway · map 32
   # ride_simple
-  - { id: frozen_ever_after, kind: ride_simple, x: 2637, y: 2128, capacity_per_hr: 900, duration_s: 300, queue_capacity: 1500, lightning_lane: tier1, appeal: 1.00, thrill: 0.30 }
-      # 900/hr [fan crooksinwdw operational, 2019]; ~5 min [assumed]; opens with the park [fan ResortsGal]; tier [fan TouringPlans 2026-06-29]; appeal, thrill [assumed]. Position [osm] n4213210754 · Frozen Ever After · norway · map 33
+  - { id: frozen_ever_after, kind: ride_simple, x: 2637, y: 2128, capacity_per_hr: 900, duration_s: 300, queue_capacity: 1500, lightning_lane: tier1, appeal: 0.91, thrill: 0.30 }
+      # 900/hr [fan crooksinwdw operational, 2019]; ~5 min [assumed]; opens with the park [fan ResortsGal]; tier [fan TouringPlans 2026-06-29]; appeal [assumed] (fitted 1.00 -> 0.91, tuning-log 2026-10-19), thrill [assumed]. Position [osm] n4213210754 · Frozen Ever After · norway · map 33
   # dining
   - { id: kringla, kind: dining, x: 2443, y: 2159, seats: 80, service_time_min: { mean: 8, sd: 3 }, appeal: 0.40, hours: "11:00-21:00" }
       # bakery; WDWMagic Low [fan]; seats and times [assumed]; World Showcase dining opens ~11:00 [fan Ziggy 2026]. Position [osm] n2993376231 · Kringla Bakeri Og Kafe · norway · map 47
@@ -192,8 +192,8 @@ nodes:
   - { id: shops_morocco, kind: shop, x: 850, y: 3128, visit_min: { mean: 12, sd: 6 }, appeal: 0.30, thrill: 0.10, hours: "11:00-21:00" }
       # visit and appeal [assumed]; World Showcase shops open ~11:00 [fan Ziggy 2026]. Position [osm] n4852402677 n4852402678 n2991768096 n2991768097 n2991768098 · Morocco shops · morocco
   # ride_simple
-  - { id: remy, kind: ride_simple, x: 470, y: 3028, capacity_per_hr: 1998, duration_s: 280, queue_capacity: 1800, lightning_lane: tier1, appeal: 1.05, thrill: 0.30 }
-      # 2,220/hr [wiki] x 90%; 36 vehicles of 6, 4:40 [wiki]; opens with the park [fan ResortsGal]; tier [fan TouringPlans 2026-06-29]; appeal, thrill [assumed]. Position [osm] w688994559 · Remy's Ratatouille Adventure · france · map 38
+  - { id: remy, kind: ride_simple, x: 470, y: 3028, capacity_per_hr: 1998, duration_s: 280, queue_capacity: 1800, lightning_lane: tier1, appeal: 1.34, thrill: 0.30 }
+      # 2,220/hr [wiki] x 90%; 36 vehicles of 6, 4:40 [wiki]; opens with the park [fan ResortsGal]; tier [fan TouringPlans 2026-06-29]; appeal [assumed] (fitted 1.05 -> 1.34, tuning-log 2026-10-19), thrill [assumed]. Position [osm] w688994559 · Remy's Ratatouille Adventure · france · map 38
   # show
   - { id: palais_du_cinema, kind: show, x: 411, y: 2793, capacity_guests: 350, duration_min: 18, schedule: ["11:00", "11:30", "12:00", "12:30", "13:00", "13:30", "14:00", "14:30", "15:00", "15:30", "16:00", "16:30", "17:00", "17:30", "18:00", "18:30", "19:00", "19:30", "20:00", "20:30"], appeal: 0.35, thrill: 0.00 }
       # Beauty and the Beast Sing-Along (15 min) alternates with Impressions de France (18 min) [fan]; seats and schedule [assumed]; appeal [assumed]. Position [osm] w305094846 · Palais du Cinéma (Beauty and the Beast Sing-Along / Impressions de France) · france · map 37
