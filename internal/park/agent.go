@@ -28,6 +28,7 @@ type agent struct {
 	state  string
 	gone   bool
 
+	gate     int     // index into Park.gates: where the party enters and leaves
 	thin     float64 // crowd-scale draw: arrives while thin < crowd / MaxCrowdScale
 	advanced bool    // made its before-the-day Lightning Lane bookings
 
@@ -83,7 +84,7 @@ func (p *Park) enter(a *agent) {
 		p.ll.advanceFor(a, p.sim.Now())
 	}
 	p.inPark += a.size
-	a.at = p.entrance
+	a.at = p.entranceOf(a)
 	p.sim.Emit(engine.Event{Type: EvParkArrive, Guest: a.id, N: a.size})
 	p.decide(a)
 }
@@ -92,12 +93,12 @@ func (p *Park) enter(a *agent) {
 func (p *Park) decide(a *agent) {
 	now := p.sim.Now()
 	if now >= a.leaveAt {
-		p.walkTo(a, p.exit, func() { p.leave(a) })
+		p.walkTo(a, p.exitOf(a), func() { p.leave(a) })
 		return
 	}
 	c := p.choose(a)
 	if c < 0 {
-		p.walkTo(a, p.exit, func() { p.leave(a) })
+		p.walkTo(a, p.exitOf(a), func() { p.leave(a) })
 		return
 	}
 	p.sim.Emit(engine.Event{Type: EvChoose, Guest: a.id, Block: p.g.Nodes[c].ID})
@@ -130,6 +131,9 @@ func (p *Park) arriveAt(a *agent, c int) {
 		p.sim.After(0, func() { p.visitDone(a, c, e) }) // never re-enter the activity synchronously
 	}
 	p.setState(a, p.g.Nodes[c].Kind)
+	if p.turnAwayOutOfHours(c, party) {
+		return
+	}
 	act.visit(party, lane)
 }
 
@@ -231,6 +235,9 @@ func (p *Park) choose(a *agent) int {
 		}
 		walkS := p.g.Distance(a.at, n.Idx) / p.cfg.Congestion.FreeSpeedFps
 		eta := now.Add(engine.Seconds(walkS))
+		if !p.inHours(n.Idx, eta) {
+			continue // not open yet (or closed) by the time the party would get there
+		}
 		waitMin := p.board[n.Idx].Seconds() / 60
 		u := w.Appeal*n.Appeal + w.ThrillMatch*(1-math.Abs(n.Thrill-a.thrill))
 		switch n.Kind {

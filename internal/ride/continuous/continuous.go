@@ -301,7 +301,7 @@ func (r *Ride) Stopped() bool { return r.stopCount > 0 }
 
 // Closed reports a long downtime in progress: the sign says closed (decision 2026-10-17).
 func (r *Ride) Closed() bool {
-	return r.stopDepth[CauseLongDowntime] > 0 || r.stopDepth[config.CauseOpsClosure] > 0
+	return r.stopDepth[CauseLongDowntime] > 0 || r.stopDepth[config.CauseOpsClosure] > 0 || r.stopDepth[config.CauseAreaHours] > 0
 }
 
 // Stop halts the whole chain for cause. Causes nest.

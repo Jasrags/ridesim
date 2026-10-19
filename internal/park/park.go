@@ -46,10 +46,11 @@ type Park struct {
 	board     []engine.Duration // posted waits guests see, by node index
 	closed    []bool            // rides the board shows closed (long downtime), by node index
 	ll        *lightningLane
-	llMerge   map[int]int // ll_merge ratios set on modeled rides, by node index (for the view only)
-	entrance  int
-	exit      int
-	elsewhere int // node index, -1 if none
+	llMerge   map[int]int      // ll_merge ratios set on modeled rides, by node index (for the view only)
+	gates     []gate           // entrance/exit pairs; one in a single-gate park
+	hours     [][2]engine.Time // per node: open from, to (offsets from opening; the park's day when unset)
+	scopes    []*engine.Sim    // per node: its event scope
+	elsewhere int              // node index, -1 if none
 	closeAt   engine.Time
 	meals     [][2]engine.Time
 
@@ -82,13 +83,16 @@ func New(root *engine.Sim, ds *config.Dataset, cfg *config.ParkFile, opts Option
 		}
 		p.meals = append(p.meals, [2]engine.Time{engine.Time(engine.Seconds(from - openS)), engine.Time(engine.Seconds(to - openS))})
 	}
+	p.buildGates()
+	if err := p.buildHours(); err != nil {
+		return nil, err
+	}
+	p.scopes = make([]*engine.Sim, len(g.Nodes))
 	for _, n := range g.Nodes {
 		scope := root.Scope(n.ID)
+		p.scopes[n.Idx] = scope
 		switch n.Kind {
-		case config.NodeEntrance:
-			p.entrance = n.Idx
-		case config.NodeExit:
-			p.exit = n.Idx
+		case config.NodeEntrance, config.NodeExit:
 		case config.NodeRide:
 			a, err := p.hostRide(ds, scope, n)
 			if err != nil {
@@ -237,6 +241,7 @@ func (p *Park) Start() {
 	for _, s := range p.starts {
 		s()
 	}
+	p.startHours()
 	for _, e := range p.g.Edges {
 		// N = comfortable capacity C in guests (length, or the capacity floor, x width x comfortable density).
 		c := int(math.Round(math.Max(e.LengthFt, p.cfg.Congestion.MinCapacityLengthFt) * e.WidthFt * p.cfg.Congestion.ComfortableDensityPerSqft))
@@ -251,8 +256,9 @@ func (p *Park) Start() {
 			if lp, ok := a.(postLogger); ok {
 				lp.logPosted(p.board[i])
 			}
-			if ra, ok := a.(*rideAct); ok {
-				p.closed[i] = ra.closed()
+			p.closed[i] = !p.inHours(i, p.sim.Now())
+			if ra, ok := a.(*rideAct); ok && ra.closed() {
+				p.closed[i] = true
 			}
 		}
 		p.sim.After(engine.Seconds(p.cfg.Decision.PostedWaitRefreshS), refresh)
@@ -350,6 +356,7 @@ func (p *Park) drawParties() {
 			a := &agent{id: id, size: size, arrive: t, count: make([]int, len(p.g.Nodes)),
 				meals: make([]bool, len(p.meals)), llBooked: make([]bool, len(p.g.Nodes))}
 			a.thin = traits.Float64()
+			a.gate = p.pickGate()
 			a.patience = engine.Seconds(norm(gc.PatienceMin, 5) * 60)
 			a.thrill = math.Min(1, norm(gc.ThrillTolerance, 0))
 			a.leaveAt = t.Add(engine.Seconds(norm(gc.StayHours, 1) * 3600))

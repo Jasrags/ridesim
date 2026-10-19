@@ -131,6 +131,7 @@ const (
 	OpLLMerge          = "ll_merge"     // value: whole LL guests per standby guest at the merge (M15)
 
 	CauseOpsClosure = "ops_closure" // operations closed the ride: the board shows it closed
+	CauseAreaHours  = "area_hours"  // the ride's area has not opened yet (node hours, M17)
 
 	MaxCrowdScale = 2.0 // crowd scale thins a day drawn at this multiple of attendance
 	MaxLLMerge    = 10  // highest ll_merge ratio, the authored recovery phase's 10:1

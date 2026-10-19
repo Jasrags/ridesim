@@ -173,7 +173,7 @@ func closedSpans(evs []engine.Event) []span {
 	var out []span
 	depth, since := 0, engine.Time(0)
 	for _, e := range evs {
-		if e.Info != config.FailLongDowntime && e.Info != config.CauseOpsClosure && e.Info != config.FailOpeningDelay {
+		if e.Info != config.FailLongDowntime && e.Info != config.CauseOpsClosure && e.Info != config.FailOpeningDelay && e.Info != config.CauseAreaHours {
 			continue
 		}
 		switch e.Type {

@@ -75,7 +75,7 @@ func (r *Ride) Stopped() bool { return r.stopCount > 0 }
 
 // Closed reports a long downtime or an ops closure in progress: the sign says closed.
 func (r *Ride) Closed() bool {
-	return r.stopDepth[CauseLongDowntime] > 0 || r.stopDepth[config.CauseOpsClosure] > 0
+	return r.stopDepth[CauseLongDowntime] > 0 || r.stopDepth[config.CauseOpsClosure] > 0 || r.stopDepth[config.CauseAreaHours] > 0
 }
 
 // Stop adds a ride-wide stop cause; every cab pauses where it is. Causes nest.
