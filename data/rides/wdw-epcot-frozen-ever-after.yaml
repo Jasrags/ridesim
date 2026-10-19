@@ -1,0 +1,126 @@
+# Frozen Ever After (EPCOT, Norway) — ride config, schema 1.0, archetype multi_train_coaster (M20)
+# Confidence tags: [wiki] = Wikipedia, [fan] = fan sources, [assumed] = our placeholder
+# Research pass 2026-10-19 (pages opened; notes and quotes in the M20 research file):
+#   wiki https://en.wikipedia.org/wiki/Frozen_Ever_After
+#   crk  crooksinwdw theoretical/operational hourly capacity (updated 2019-07-31): 1,000 / 900
+#   c101 Coaster101 (2016-06-24): combined load/unload, block system "only one boat can enter a block at a time"
+#   wdwm WDWMagic forum, a former Maelstrom operator (2016-06-23): parties not put in the same row; Maelstrom ran 10-11 boats, Frozen 9 at opening
+#   tp   TouringPlans attraction page and Data Dumps (2023, 2026): downtime, line speed 7 min per 100 (~860/hr)
+#
+# The 2016 retheme of Maelstrom on the same flume [wiki]. Viking boats of 16 (4 rows of 4, a 4th seat for a small child [fan tp])
+# run on blocks [fan c101]. Path [wiki][fan c101]: one combined station, Olaf and Sven, trolls, the lift, Anna and Kristoff at the top,
+# the Let It Go room, backwards down a small dip through two rotating switch tracks, Marshmallow, forward down the 28 ft drop, the
+# castle, the In Summer finale, back to the station.
+# Capacity (Jason, 2026-10-19): 900/hr (crooksinwdw operational = 90% of 1,000): one boat every 64 s. Seating (Jason): whole rows of 4,
+# separate parties are not put in one row [fan wdwm].
+
+schema_version: "1.0"
+
+ride:
+  id: wdw.epcot.frozen_ever_after      # <resort>.<park>.<ride>, unique across all parks
+  family: frozen_ever_after
+  name: "Frozen Ever After"
+  location:
+    resort: walt_disney_world
+    park: epcot
+    land: norway                       # [map]
+  other_versions:
+    - { resort: disneyland_paris, park: walt_disney_studios_park, status: operating, note: "World of Frozen version (2026), different layout" }
+  archetype: multi_train_coaster       # boats on blocks; see header
+  ride_duration_s: 300                 # [wiki][fan tp] 5 min
+  height_restriction_in: 0             # [wiki] none
+  listed_capacity_per_hr: 1000         # [wiki][fan crk] theoretical
+  data_conflicts:
+    - field: listed_capacity_per_hr
+      values: { wiki_crk_theoretical: 1000, fan_crk_operational: 900, fan_tp_line_speed: 860 }
+      chosen: wiki_crk_theoretical
+      note: "Built to 900/hr, crooksinwdw's operational figure (Jason, 2026-10-19)."
+    - field: trains.fleet_size
+      values: { fan_coasterpedia: 32, fan_wdwm_in_service_2016: 9 }
+      chosen: null
+      note: "Coasterpedia's 32 has no source; the operator's 9-11 in service fits one boat every ~60 s."
+
+trains:                                # one train = one boat
+  fleet_size: 12                       # [assumed] spares beyond the 9-11 run [fan wdwm]
+  max_in_service: 10                   # [assumed] Maelstrom ran 10-11 [fan wdwm]
+  default_in_service: 9                # [fan wdwm] Frozen ran 9 at opening; lap 300 + 64 = 364 s needs ~6 at 64 s, the rest queue at blocks
+  cars_per_train: 1
+  seats_per_train: 16                  # [wiki] 4 rows x 4
+  seats_per_row: 4                     # [fan wdwm] a party takes whole rows; separate parties are not put in one row (Jason)
+  layout: "4 rows of 4 (3 adults + a small child per bench [fan tp])"
+  restraints: none                     # [assumed] boat
+
+# Scene order [wiki][fan c101]; no timings were found. Ten [assumed] blocks of 300 s in all, each shorter than the 64 s interval.
+blocks:
+  - { id: STATION, kind: station, next: OLAF_SVEN }   # [fan c101] combined load/unload
+  - { id: OLAF_SVEN, kind: brake, transit_s: { mean: 30, sd: 2 }, brake: &block { hold_capable: true, stop_policy: stop_if_next_occupied, release_delay_s: { mean: 2, sd: 0.5 } }, next: TROLLS }   # [assumed]
+  - { id: TROLLS, kind: brake, transit_s: { mean: 30, sd: 2 }, brake: *block, next: LIFT }
+  - { id: LIFT, kind: lift, transit_s: { mean: 35, sd: 1 }, next: SUMMIT }                            # [wiki] the lift
+  - { id: SUMMIT, kind: brake, transit_s: { mean: 30, sd: 2 }, brake: *block, next: LET_IT_GO }      # Anna, Kristoff, Olaf skating [wiki]
+  - { id: LET_IT_GO, kind: brake, transit_s: { mean: 40, sd: 2 }, brake: *block, next: BACKWARD_DIP }  # "two gates open" into Let It Go [fan]
+  - { id: BACKWARD_DIP, kind: brake, transit_s: { mean: 30, sd: 2 }, brake: *block, next: MARSHMALLOW }  # backwards through two rotating switches [wiki]
+  - { id: MARSHMALLOW, kind: brake, transit_s: { mean: 30, sd: 2 }, brake: *block, next: DROP }
+  - { id: DROP, kind: course, transit_s: { mean: 20, sd: 1 }, next: CASTLE }                         # [wiki] 28 ft drop, forward
+  - { id: CASTLE, kind: brake, transit_s: { mean: 30, sd: 2 }, brake: *block, next: FINALE }
+  - { id: FINALE, kind: brake, transit_s: { mean: 25, sd: 2 }, brake: *block, next: STATION }        # In Summer finale, run to the station
+  # transit sum = 30 + 30 + 35 + 30 + 40 + 30 + 30 + 20 + 30 + 25 = 300 = ride_duration_s
+
+clearance:
+  rules: []
+
+station:
+  separate_load_unload: false          # [fan c101] one station
+  unload_s:        { mean: 15, sd: 3 } # [assumed]
+  load_s:          { mean: 33, sd: 5 } # [assumed] fitted: 15 + 33 + 10 + 4 + the next boat's 2 s brake release = one boat every 64 s
+  restraint_check_s: { mean: 10, sd: 2 }   # [assumed] seating check
+  dispatch_clearance_s: { mean: 4, sd: 1 }  # [assumed]
+  target_dispatch_interval_s: 64       # derived: 3600 x 16 / 900 (Jason, 2026-10-19)
+  min_dispatch_interval_s: 57.6        # derived from the 1,000/hr theoretical
+  staff_at_station: 4                  # [assumed]
+  dispatch_rule: hold_for_full_or_max_wait
+  max_wait_after_ready_s: 5            # [assumed]
+
+failures:
+  # TouringPlans Data Dumps [fan]: weekly unplanned downtime 21% (Feb 2023) and 12% (Apr 2023); unavailable in the first hour on
+  # 43%, 19%, 27% of days (2023) and 11% (Feb-Mar 2026). Fitted (Jason, 2026-10-19) to ~12% a day: late openings 0.15 x 45 min
+  # (~7 min) + 3 long stops x 25 min (75) + ~5 brief stops x 3 min (14) = ~96 min of a 12 h day.
+  brief_stop:
+    rate_per_hr: 0.4                   # [assumed] as the other rides
+    duration_s: { mean: 180, sd: 60 }
+  long_downtime:
+    mtbf_hr: 4                         # fitted (see above)
+    mttr_min: { mean: 25, sd: 10 }     # fitted; one 2020 outage of 20 min then an evacuation [fan]
+  opening_delay:
+    probability: 0.15                  # fitted between 11% (2026) and the 2023 rates [fan tp]
+    duration_s: { mean: 2700, sd: 1800 }   # [assumed] 45 +- 30 min, as Rise
+  weather_hold: none                   # the flume's outdoor run is short; not modeled
+
+queues:
+  party_split_policy: never
+  standby: { physical_capacity: 2000 } # [assumed] standby often spills into the courtyard [fan]
+  single_rider: { enabled: false }     # [fan tp] none
+  skip_line:
+    enabled: true                      # [fan tp] Lightning Lane Multi Pass, Tier 1
+    merge_point: station_queue_entrance   # [fan] one cast-member merge point inside the queue; spot [assumed]
+    merge:
+      unit: guests
+      empty_lane_rule: pull_other
+      phase_hysteresis_guests: 20      # [assumed]
+      phases:                          # [assumed] same fan-reported placeholders as the other rides
+        - { name: normal,   when_ll_queue_guests_below: 60,  ll_per_standby: 2 }
+        - { name: elevated, when_ll_queue_guests_below: 200, ll_per_standby: 4 }
+        - { name: recovery, when_ll_queue_guests_below: null, ll_per_standby: 10 }
+  posted_wait: { algorithm: queue_len_over_throughput, padding_pct: 0 }
+
+validation_targets:
+  listed_capacity_per_hr: 1000
+  implied_dispatch_interval_s: 64      # target 900/hr: 3600 x 16 / 900
+  theoretical_riders_per_hr_at_target: 900
+  expect_four_trains_sufficient: false # 9 boats in service
+  avg_standby_wait_min_2026: 42        # [fan] Queue-Times 2026 (park calibration target)
+
+config_invariants:                     # enforced by the loader, applies to every ride
+  - "sum(block.transit_s.mean over non-station blocks) == ride.ride_duration_s (+/- 2 s)"
+  - "count(blocks) >= trains.max_in_service + 1"
+  - "trains.default_in_service <= trains.max_in_service <= trains.fleet_size"
+  - "every block with kind=brake defines brake.hold_capable, brake.stop_policy and brake.release_delay_s"

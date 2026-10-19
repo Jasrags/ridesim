@@ -105,8 +105,8 @@ nodes:
   - { id: meet_anna_elsa, kind: meet, x: 2391, y: 2086, meet_s: { mean: 30, sd: 10 }, appeal: 0.89, thrill: 0.0 }
       # ~400 guests/hr from TouringPlans' line speed over several rooms [fan] / ~3.3 per party = ~30 s per party (derived); sd [assumed]; appeal [assumed] (fitted 0.70 -> 0.89, tuning-log 2026-10-19). Position [osm] w685999005 · Meet Anna and Elsa at Royal Sommerhus · norway · map 32
   # ride_simple
-  - { id: frozen_ever_after, kind: ride_simple, x: 2637, y: 2128, capacity_per_hr: 900, duration_s: 300, queue_capacity: 1500, lightning_lane: tier1, appeal: 0.91, thrill: 0.30 }
-      # 900/hr [fan crooksinwdw operational, 2019]; ~5 min [assumed]; opens with the park [fan ResortsGal]; tier [fan TouringPlans 2026-06-29]; appeal [assumed] (fitted 1.00 -> 0.91, tuning-log 2026-10-19), thrill [assumed]. Position [osm] n4213210754 · Frozen Ever After · norway · map 33
+  - { id: frozen_ever_after, kind: ride, x: 2637, y: 2128, ride_id: wdw.epcot.frozen_ever_after, lightning_lane: tier1, appeal: 0.74, thrill: 0.30 }
+      # full ride model (ride file 2026-10-19, M20; was ride_simple 900/hr, 300 s, queue 1,500); opens with the park [fan ResortsGal]; tier [fan TouringPlans 2026-06-29]; appeal [assumed] (fitted 1.00 -> 0.91; 0.91 -> 0.74 with the full model, tuning-log 2026-10-19), thrill [assumed]. Position [osm] n4213210754 · Frozen Ever After · norway · map 33
   # dining
   - { id: kringla, kind: dining, x: 2443, y: 2159, seats: 80, service_time_min: { mean: 8, sd: 3 }, appeal: 0.40, hours: "11:00-21:00" }
       # bakery; WDWMagic Low [fan]; seats and times [assumed]; World Showcase dining opens ~11:00 [fan Ziggy 2026]. Position [osm] n2993376231 · Kringla Bakeri Og Kafe · norway · map 47

@@ -287,3 +287,5 @@ numbers come from `data/`. Read both before changing simulation logic.
   (crooksinwdw operational = 90% of 1,000): one 16-seat boat every 64 s. Parties take whole rows of 4 (a former operator: separate
   parties are not put in one row [fan]). Downtime ~12% a day incl. late openings (TouringPlans: 12-21% weekly in 2023; down in the
   first hour on 11% of days, Feb-Mar 2026 [fan]).
+- Frozen re-fit (approved): appeal 0.91 -> 0.74; ~553/hr in the park (whole rows of 4 leave boats ~68% full), 42.4 / 80.7 min vs
+  42 / 57. TouringPlans' ~860/hr line speed hints boats fill better than the operator's no-shared-rows account: [user] check.

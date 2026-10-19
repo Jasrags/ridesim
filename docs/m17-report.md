@@ -130,3 +130,19 @@ The busiest hour runs ~15 min high, the same pattern as Slinky. Every other attr
   - how many groups the show holds;
   - when the single-rider line opens;
   - stops per day.
+
+## M20 follow-up: Frozen Ever After (2026-10-19)
+- **Model** (Jason's choices): boats on ten blocks with one combined load/unload station [fan Coaster101]. The scene order runs
+  through the lift, the backwards dip and the forward 28 ft drop [wiki]. It runs 9 boats [fan, former operator]. Built to 900/hr
+  (crooksinwdw operational): one 16-seat boat every 64 s.
+- **Seating:** whole rows of 4. The former operator says separate parties are not put in one row [fan WDWMagic 2016]. With the
+  park's party mix, boats leave ~68% full.
+- **Downtime:** fitted to ~12% a day from TouringPlans' 2023 weekly figures (12-21%) and the first-hour outages (11% of days in
+  Feb-Mar 2026). That gives late openings on 15% of days and a 25-min stop every ~4 h.
+- **Medium day, 10 seeds:** ~553/hr. With the approved re-fit (appeal 0.91 -> 0.74) it posts 42.4 / 80.7 min against 42 / 57.
+  The busiest hour overshoots more than the other headliners: late openings and long stops build the line, and 553/hr empties it
+  slowly.
+- **Open:**
+  - The row rule is the biggest lever. TouringPlans' line speed (~860/hr) suggests fuller boats than the operator's account. A
+    `[user]` look at how cast seat a party of 2 would settle it.
+  - Boat count `[user]`.
