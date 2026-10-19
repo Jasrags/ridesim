@@ -221,3 +221,13 @@ numbers come from `data/`. Read both before changing simulation logic.
 - Fixes pass (Jason, 2026-10-18): park runs map brief_stop -> chain_stop for continuous rides; new failure `opening_delay` (Rise: 25%
   of days, 45 +- 30 min) enabled in the DHS days, Rise long stops 19 -> 16 min and appeal 1.02 -> 1.06 (approved). Partial outages
   stay off until data; preshow drain order unchanged.
+
+## Decisions log (M15 kickoff, guest score and challenges, 2026-10-19)
+- The game roadmap starts (Jason): the guest score and challenges come first, on Hollywood Studios, with a local leaderboard
+  where a submitted session is rerun to verify its score.
+- The score rewards guest experience only (Jason): points per guest for rides, shows and meets completed, minus waits past a
+  comfort threshold, balks and reneges, walking and jam time, and lapsed LL passes. It is computed from the event log only;
+  every weight is [assumed], lives in a scoring data file and is logged in tuning-log.md.
+- M15 adds two Lightning Lane levers (Jason), because DHS has almost nothing else to pull: `ll_inventory` (share of a ride's
+  capacity sold per window, for windows not yet started) and `ll_merge` (LL guests per standby guest; replaces the authored
+  merge phases or the simple-ride 2/3 cap). Both trade off inside the score; no invented costs.
