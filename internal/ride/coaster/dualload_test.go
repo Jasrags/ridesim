@@ -138,3 +138,38 @@ func TestMultiLoadDispatchesFromEveryPlatform(t *testing.T) {
 		t.Errorf("side_down by platform %v: want only further platforms", down)
 	}
 }
+
+// With more trains than the main loop has blocks, start-up fills the further platforms instead of putting two
+// trains in one block.
+func TestStartPlacesTrainsOnFurtherPlatforms(t *testing.T) {
+	f := dualFixture(t, true)
+	blocks := []config.Block{}
+	for _, b := range f.Blocks {
+		if b.ID == "UNLOAD" {
+			b.AltNext = config.Refs{"LOAD_B", "LOAD_C"}
+		}
+		blocks = append(blocks, b)
+		if b.ID == "LOAD_B" {
+			blocks = append(blocks, config.Block{ID: "LOAD_C", Kind: config.BlockStation, Next: "LIFT"})
+		}
+	}
+	f.Blocks = blocks
+	f.Trains.FleetSize, f.Trains.MaxInService = 6, 6 // main loop: UNLOAD, LOAD, LIFT, COURSE, BRAKE
+	sim := engine.New(1)
+	c, err := New(sim, f, Options{Trains: 6, FixedTimes: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	c.Start()
+	at := map[string]int{}
+	for _, e := range sim.Log.Events() {
+		if e.Type == engine.EvTrainEnter && e.T == 0 {
+			if at[e.Block]++; at[e.Block] > 1 {
+				t.Fatalf("two trains placed in %s at start: %v", e.Block, at)
+			}
+		}
+	}
+	if len(at) != 6 {
+		t.Fatalf("placed in %v, want 6 blocks", at)
+	}
+}

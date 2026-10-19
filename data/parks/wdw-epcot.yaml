@@ -49,8 +49,8 @@ nodes:
       # full ride model (ride file 2026-10-19, M18; was ride_simple 1,800/hr, 420 s, queue 2,400); tier [fan TouringPlans 2026-06-29]; appeal [assumed] (fitted 1.20 -> 1.49; 1.49 -> 1.38 with the full model, tuning-log 2026-10-19), thrill [assumed]. Position [osm] w719079634 · Guardians of the Galaxy: Cosmic Rewind · world_discovery · map 13
   - { id: mission_space, kind: ride, x: 2330, y: 905, ride_id: wdw.epcot.mission_space, lightning_lane: tier2, appeal: 0.62, thrill: 0.85 }
       # full ride model (simulator_bays, ride file 2026-10-19, M22; was ride_simple 1,440/hr, 330 s, queue 1,200); tier [fan TouringPlans 2026-06-29]; appeal [assumed] (fitted 0.60 -> 0.62, tuning-log 2026-10-19), thrill [assumed]. Position [osm] w295316766 · Mission: SPACE · world_discovery · map 14
-  - { id: test_track, kind: ride_simple, x: 2213, y: 1229, capacity_per_hr: 1080, duration_s: 300, queue_capacity: 1800, lightning_lane: tier1, appeal: 0.94, thrill: 0.75 }
-      # 1,080/hr [fan crooksinwdw operational, 2019] (Test Track 3.0, 2025, has no published figure); single rider line not modeled for simple rides; tier [fan TouringPlans 2026-06-29]; appeal [assumed] (fitted 1.10 -> 0.94, tuning-log 2026-10-19), thrill [assumed]. Position [osm] w295315993 · Test Track · world_discovery · map 15
+  - { id: test_track, kind: ride, x: 2213, y: 1229, ride_id: wdw.epcot.test_track, lightning_lane: tier1, appeal: 0.80, thrill: 0.75 }
+      # full ride model (4-bay coaster, ride file 2026-10-19, M26; was ride_simple 1,080/hr, 300 s, queue 1,800); tier [fan TouringPlans 2026-06-29]; appeal [assumed] (fitted 1.10 -> 0.94; 0.94 -> 0.80 with the full model, tuning-log 2026-10-19), thrill [assumed]. Position [osm] w295315993 · Test Track · world_discovery · map 15
   # dining
   - { id: refreshment_station, kind: dining, x: 2013, y: 1261, seats: 30, service_time_min: { mean: 8, sd: 3 }, appeal: 0.30 }
       # snack window (stand-in position: Taste Track); seats and times [assumed]. Position [osm] w196386511 · Refreshment Station (stand-in: Taste Track) · world_discovery · map 17

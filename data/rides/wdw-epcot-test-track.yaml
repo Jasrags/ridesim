@@ -1,0 +1,141 @@
+# Test Track (EPCOT, World Discovery; "Test Track 3.0", reopened 2025) — ride config, schema 1.0, archetype multi_train_coaster (M26)
+# Confidence tags: [wiki] = Wikipedia, [fan] = fan sources, [assumed] = our placeholder
+# Research pass 2026-10-19 (pages opened; notes and quotes in the M26 research file):
+#   wiki https://en.wikipedia.org/wiki/Test_Track (6 seats, 2 rows of 3; up to 29 cars; ~5 min; 65.1 mph)
+#   crk  crooksinwdw theoretical/operational hourly capacity (2019, pre-3.0): 1,200 / 1,080
+#   ug   Unofficial Guides (2025-07-24): no Design Studio in 3.0, guests "go direct to the boarding station"
+#   wdwm WDWMagic forum (2026-03-04): "Bay 4 (rows 7 & 8) is closed off", "a 25% drop in capacity at the loading platform";
+#        "cars get backed up at the end of the ride waiting to enter the platform"
+#   bm   BlogMickey / KennyThePirate (2026-08-01): rows 7-8 unused for about a year, all 8 loading again since ~2026-07-30
+#   tp   TouringPlans (2025-09-11, 2026): parties of 4 split 2 front / 2 back, single riders fill empty seats; line speed 5 min per
+#        100; breaks down "roughly 4 out of every 10 days", often down at opening; closes in inclement weather (outdoor finale)
+#
+# Model (Jason, 2026-10-19): 6-seat cars on blocks, a separate unload, then four parallel load bays (8 rows = 4 bays of 2 [fan wdwm]) on
+# the multi-load station; cars take the first free bay and all bays share the dispatch interval. Built to 1,080/hr (crooksinwdw
+# operational, pre-3.0; no 3.0 count was found) = one car every 20 s, so each bay gets 80 s per car. Seats fill one by one (parties may
+# split across the rows [fan tp]) and single riders fill gaps. Scene order (3.0) [wiki][fan]: hill climb, city sensor view, smart
+# road, the house and mirror design change, wooded highway and tunnel near-miss, futuristic car and dome city, the outdoor loop.
+
+schema_version: "1.0"
+
+ride:
+  id: wdw.epcot.test_track             # <resort>.<park>.<ride>, unique across all parks
+  family: test_track
+  name: "Test Track"
+  location:
+    resort: walt_disney_world
+    park: epcot
+    land: world_discovery              # [map]
+  other_versions: []
+  archetype: multi_train_coaster       # slot cars on blocks
+  ride_duration_s: 300                 # [wiki] ~5 min (TouringPlans: 4)
+  height_restriction_in: 40            # [wiki]
+  listed_capacity_per_hr: 1200         # [fan crk] theoretical (pre-3.0); TouringPlans 2026 line speed implies ~1,200
+  data_conflicts:
+    - field: listed_capacity_per_hr
+      values: { fan_crk_theoretical_2019: 1200, fan_crk_operational_2019: 1080, fan_tp_line_speed_2026: 1200 }
+      chosen: fan_crk_theoretical_2019
+      note: "Built to 1,080/hr (Jason, 2026-10-19). Test Track 3.0 has no published count."
+    - field: trains.fleet_size
+      values: { wiki: 29, fan_mickeyblog_2020_max_running: 25, lead_intercot: 31 }
+      chosen: wiki
+
+trains:                                # one train = one car
+  fleet_size: 29                       # [wiki] "29 for maximum capacity"
+  max_in_service: 22                   # [assumed] (2020: "usually maxes out at 25" [fan])
+  default_in_service: 22               # lap 300 + 15 unload + 80 bay = 395 s needs ~19.8 at 20 s; the rest wait at unload [fan wdwm]
+  cars_per_train: 1
+  seats_per_train: 6                   # [wiki] 2 rows of 3
+  seats_per_row: 1                     # parties may split across rows, single riders fill odd seats [fan tp]
+  layout: "2 rows of 3"
+  restraints: seat_belt                # [fan] seatbelt check after boarding
+
+# Scene order [wiki][fan]; eighteen [assumed] stopping points of ~16.7 s so each, with its 1 s release, is under the 20 s interval.
+blocks:
+  - { id: UNLOAD, kind: station, next: BAY_1, alt_next: [BAY_2, BAY_3, BAY_4] }   # [fan wdwm] cars back up here to enter the platform
+  - { id: BAY_1, kind: station, next: HILL_CLIMB }   # [fan wdwm] rows 1-2
+  - { id: BAY_2, kind: station, next: HILL_CLIMB }   # rows 3-4
+  - { id: BAY_3, kind: station, next: HILL_CLIMB }   # rows 5-6
+  - { id: BAY_4, kind: station, next: HILL_CLIMB }   # rows 7-8 (closed July 2025 - July 2026 [fan bm])
+  - { id: HILL_CLIMB, kind: brake, transit_s: { mean: 16.7, sd: 0.5 }, brake: &car { hold_capable: true, stop_policy: stop_if_next_occupied, release_delay_s: { mean: 1, sd: 0.3 } }, next: CITY_1 }
+  - { id: CITY_1, kind: brake, transit_s: { mean: 16.7, sd: 0.5 }, brake: *car, next: CITY_2 }
+  - { id: CITY_2, kind: brake, transit_s: { mean: 16.7, sd: 0.5 }, brake: *car, next: SMART_ROAD_1 }
+  - { id: SMART_ROAD_1, kind: brake, transit_s: { mean: 16.7, sd: 0.5 }, brake: *car, next: SMART_ROAD_2 }
+  - { id: SMART_ROAD_2, kind: brake, transit_s: { mean: 16.7, sd: 0.5 }, brake: *car, next: HOUSE }
+  - { id: HOUSE, kind: brake, transit_s: { mean: 16.7, sd: 0.5 }, brake: *car, next: MIRROR }
+  - { id: MIRROR, kind: brake, transit_s: { mean: 16.7, sd: 0.5 }, brake: *car, next: HIGHWAY_1 }
+  - { id: HIGHWAY_1, kind: brake, transit_s: { mean: 16.7, sd: 0.5 }, brake: *car, next: HIGHWAY_2 }
+  - { id: HIGHWAY_2, kind: brake, transit_s: { mean: 16.7, sd: 0.5 }, brake: *car, next: TUNNEL }
+  - { id: TUNNEL, kind: brake, transit_s: { mean: 16.7, sd: 0.5 }, brake: *car, next: FUTURE_CAR }
+  - { id: FUTURE_CAR, kind: brake, transit_s: { mean: 16.7, sd: 0.5 }, brake: *car, next: DOME_CITY_1 }
+  - { id: DOME_CITY_1, kind: brake, transit_s: { mean: 16.7, sd: 0.5 }, brake: *car, next: DOME_CITY_2 }
+  - { id: DOME_CITY_2, kind: brake, transit_s: { mean: 16.7, sd: 0.5 }, brake: *car, next: LAUNCH_DOORS }
+  - { id: LAUNCH_DOORS, kind: brake, transit_s: { mean: 16.7, sd: 0.5 }, brake: *car, next: OUTDOOR_LOOP }   # finale doors [fan]
+  - { id: OUTDOOR_LOOP, kind: course, transit_s: { mean: 16.7, sd: 0.5 }, next: RETURN }                   # [wiki] 65.1 mph loop around the building
+  - { id: RETURN, kind: brake, transit_s: { mean: 16.7, sd: 0.5 }, brake: *car, next: BRAKE_RUN_1 }
+  - { id: BRAKE_RUN_1, kind: brake, transit_s: { mean: 16.7, sd: 0.5 }, brake: *car, next: BRAKE_RUN_2 }
+  - { id: BRAKE_RUN_2, kind: brake, transit_s: { mean: 16.7, sd: 0.5 }, brake: *car, next: UNLOAD }
+  # transit sum = 18 x 16.7 = 300.6 = ride_duration_s (+/- 2 s)
+
+clearance:
+  rules: []
+
+station:
+  separate_load_unload: true           # [fan wdwm] unload before the load platform
+  unload_s:        { mean: 15, sd: 3 } # [assumed]
+  load_s:          { mean: 58, sd: 8 } # [assumed] fitted: four bays x (58 + 16 + 6) s = one car every 20 s
+  restraint_check_s: { mean: 16, sd: 4 }   # [fan] seatbelt check; time [assumed]
+  dispatch_clearance_s: { mean: 6, sd: 1 } # [assumed]
+  target_dispatch_interval_s: 20       # derived: 3600 x 6 / 1080 (Jason, 2026-10-19)
+  min_dispatch_interval_s: 18          # derived from the 1,200/hr theoretical
+  staff_at_station: 8                  # [assumed]
+  dispatch_rule: hold_for_full_or_max_wait
+  max_wait_after_ready_s: 5            # [assumed]
+
+failures:
+  # TouringPlans [fan]: breaks down "roughly 4 out of every 10 days" and is often down at opening; closes in inclement weather (outdoor
+  # finale; scenarios script weather windows). No downtime % or repair time found: rates [assumed].
+  brief_stop:
+    rate_per_hr: 0.4                   # [assumed]
+    duration_s: { mean: 180, sd: 60 }
+  long_downtime:
+    mtbf_hr: 30                        # [assumed] ~0.4 long stops a 12 h day ([fan] 4 days in 10)
+    mttr_min: { mean: 45, sd: 20 }     # [assumed]
+  opening_delay:
+    probability: 0.3                   # [assumed] "often down at opening" [fan tp]
+    duration_s: { mean: 2700, sd: 1800 }   # [assumed] as Rise
+  side_down:                           # one load bay out [fan bm: bay 4 closed July 2025 - July 2026]; rate [assumed], off in the days
+    rate_per_hr: 0.01
+    duration_s: { mean: 14400, sd: 7200 }
+  weather_hold: scripted               # [fan tp] closes in inclement weather
+
+queues:
+  party_split_policy: never
+  standby: { physical_capacity: 2500 } # [assumed]
+  single_rider: { enabled: true, fill_only_empty_seats: true }   # [fan tp] fills empty seats; closed since 2026-10-14 for a Disney test [fan]
+  skip_line:
+    enabled: true                      # [fan tp] Lightning Lane Multi Pass, Tier 1
+    merge_point: station_queue_entrance   # [assumed] one canopy for standby, single rider and LL [fan]
+    merge:
+      unit: guests
+      empty_lane_rule: pull_other
+      phase_hysteresis_guests: 20      # [assumed]
+      phases:                          # [assumed] same fan-reported placeholders as the other rides
+        - { name: normal,   when_ll_queue_guests_below: 60,  ll_per_standby: 2 }
+        - { name: elevated, when_ll_queue_guests_below: 200, ll_per_standby: 4 }
+        - { name: recovery, when_ll_queue_guests_below: null, ll_per_standby: 10 }
+  posted_wait: { algorithm: queue_len_over_throughput, padding_pct: 0 }
+
+validation_targets:
+  listed_capacity_per_hr: 1200
+  implied_dispatch_interval_s: 20      # target 1,080/hr: 3600 x 6 / 1080
+  theoretical_riders_per_hr_at_target: 1080
+  expect_four_trains_sufficient: false
+  avg_standby_wait_min_2026: 58        # [fan] Queue-Times 2026 (park calibration target)
+
+config_invariants:
+  - "sum(block.transit_s.mean over non-station blocks) == ride.ride_duration_s (+/- 2 s)"
+  - "count(blocks) >= trains.max_in_service + 1"
+  - "trains.default_in_service <= trains.max_in_service <= trains.fleet_size"
+  - "every block with kind=brake defines brake.hold_capable, brake.stop_policy and brake.release_delay_s"
+  - "a multi-load station (alt_next) rejoins at one block; side_down needs it"

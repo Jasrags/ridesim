@@ -211,3 +211,24 @@ None needed a re-fit.
 
 **Status:** every EPCOT ride with a Queue-Times target now has a full model except Test Track. That needs a new archetype, and
 Jason asked to pause before it.
+
+## M26 follow-up: Test Track (2026-10-19)
+- **Finding:** Test Track 3.0 has no Design Studio [wiki][fan Unofficial Guides], so it is a coaster model with no new archetype.
+- **Multi-load station:** `alt_next` now takes a list. Test Track's 8 load rows are 4 bays of 2 [fan WDWMagic forum]. Cars take the
+  first free bay, and the bays share the dispatch interval. `side_down` closes one further bay (bay 4 was closed July 2025 - July
+  2026 [fan]); it is off in the days.
+- **Start-up bug fixed:** with more trains than the main loop has blocks, start-up put two trains in one block. Further platforms
+  now take the extras. Earlier rides never hit it, so their logs are unchanged.
+- **Built to 1,080/hr** (crooksinwdw operational, pre-3.0; no 3.0 count exists): 80 s per bay, one car every 20 s, 22 of 29 cars
+  [wiki].
+  - Seats fill one by one: parties split across rows and single riders fill gaps [fan TouringPlans].
+  - The single-rider line stays enabled. It has been closed since 2026-10-14 for a Disney test [fan]; a scenario can close it.
+- **Failures `[assumed]`** from "breaks down roughly 4 days in 10" and "often down at opening" [fan TouringPlans]: late openings
+  on 30% of days, plus long and brief stops. Weather closures (outdoor loop) are scripted per scenario.
+- **Medium day, 10 seeds:** ~851/hr. With the approved re-fit (appeal 0.94 -> 0.80) it posts 57.0 / 94.5 min against 58 / 77.
+  The busiest hour runs high because late openings build the line.
+- **Lead (not applied, Jason):** Expedition Everest's single-rider line closed permanently in September 2026 [fan]. It is noted in
+  the Everest file, to change later.
+
+**Status:** every EPCOT ride with a Queue-Times target now has a full model. Medium day, 10 seeds: every attraction is within
+~2 min of its Queue-Times average, except the two fixed-posting films.

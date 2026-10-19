@@ -252,9 +252,18 @@ func (c *Coaster) Start() {
 	}
 	b := c.load
 	placed := make([]*block, 0, c.opts.Trains)
-	for range c.opts.Trains {
+	used := map[*block]bool{}
+	for len(placed) < c.opts.Trains && !used[b] {
 		placed = append(placed, b)
+		used[b] = true
 		b = prev[b]
+	}
+	// The main-loop walk skips a multi-load station's further platforms; trains beyond the loop fill those.
+	for _, l := range c.loads {
+		if len(placed) < c.opts.Trains && !used[l] {
+			placed = append(placed, l)
+			used[l] = true
+		}
 	}
 	for _, pb := range placed {
 		t := c.newTrain()

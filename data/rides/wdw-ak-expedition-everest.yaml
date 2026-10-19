@@ -133,6 +133,8 @@ failures:
 
 queues:
   standby: { physical_capacity: 1400 }  # [assumed]
+  # Lead (2026-10-19, not applied; Jason): the single rider line closed permanently in September 2026 after a Disney test of a
+  # new operating procedure [fan Inside the Magic / DisneyBlog]. Kept on because the M1-M2 validation used it.
   single_rider: { enabled: true, fill_only_empty_seats: true }
   skip_line:
     enabled: true                      # [wiki] Lightning Lane available; pass issuance/allocation still TBD (milestone M4)
