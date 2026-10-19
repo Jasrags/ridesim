@@ -249,3 +249,11 @@ numbers come from `data/`. Read both before changing simulation logic.
   cycle (2 sides x 11 two-seat cars, one party per car), so the party mix sets capacity; both sides run (the one-side state seen
   2026-09-22 stays a side_down failure, off). Vacation Fun is removed (closed from 2026-10-28). The Magic of Disney Animation
   (opened 2026-09-14) is added as nodes with [assumed] numbers, plus the missing guide-map places and the land rename.
+
+## Decisions log (M17 kickoff, EPCOT, 2026-10-19)
+- Next park is EPCOT (Jason), built like Hollywood Studios: 2026 guide map (Jason's image: names, lands, map numbers) plus an
+  OSM extract under `osm/wdw-epcot/`, rides as `ride_simple` at 90% of listed capacity first, calibrate to Queue-Times 2026, then
+  full models one at a time.
+- Per-area hours (Jason): nodes can open later than the park (World Showcase ~11:00); other parks unchanged.
+- Two gates (Jason): the main entrance and the International Gateway; a share of parties uses each ([assumed] until sourced).
+- The Food & Wine Festival is left out for now (Jason); festivals can be a scenario layer later.
