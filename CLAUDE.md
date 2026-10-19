@@ -281,3 +281,9 @@ numbers come from `data/`. Read both before changing simulation logic.
 - Remy's downtime [assumed] (Jason): a long stop every 12 h (~7% with brief stops). In the park ~1,683/hr; appeal re-fit
   1.34 -> 1.28 (approved): 45.9 / 70.1 min vs 46 / 62. `seats_per_row` is the seating unit a party gets to itself, not the
   physical row (documented in config/types.go; rename deferred, Jason).
+
+## Decisions log (M20, Frozen Ever After, 2026-10-19)
+- Frozen Ever After (Jason): coaster model with boats on blocks and one combined load/unload station [fan]; built to 900/hr
+  (crooksinwdw operational = 90% of 1,000): one 16-seat boat every 64 s. Parties take whole rows of 4 (a former operator: separate
+  parties are not put in one row [fan]). Downtime ~12% a day incl. late openings (TouringPlans: 12-21% weekly in 2023; down in the
+  first hour on 11% of days, Feb-Mar 2026 [fan]).
